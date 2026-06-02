@@ -184,6 +184,7 @@ export default function HomeScreen() {
         <View
           style={{
             flexDirection: "row",
+            alignItems: "stretch",
             paddingHorizontal: 16,
             gap: 10,
             marginBottom: 24,

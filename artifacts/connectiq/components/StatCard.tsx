@@ -49,7 +49,7 @@ export function StatCard({
   }));
 
   return (
-    <Animated.View style={[animStyle, style]}>
+    <Animated.View style={[{ flex: 1 }, animStyle, style]}>
       <LinearGradient
         colors={gradColors}
         start={{ x: 0, y: 0 }}

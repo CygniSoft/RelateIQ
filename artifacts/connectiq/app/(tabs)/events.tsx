@@ -283,7 +283,7 @@ export default function EventsScreen() {
           </Animated.View>
 
           {/* Stats */}
-          <View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "stretch" }}>
             <StatCard
               label="Events"
               value={events.length}
