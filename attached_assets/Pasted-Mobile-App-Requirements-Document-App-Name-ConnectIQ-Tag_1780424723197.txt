@@ -1,0 +1,704 @@
+Mobile App Requirements Document
+App Name: ConnectIQ
+Tagline: Scan a business card. Never lose the relationship.
+1. Product Overview
+
+ConnectIQ is an AI-powered mobile networking assistant that scans business cards, captures meeting context, sends an instant personalized introduction email, reminds users to follow up, and measures the ROI of networking events.
+
+The app is not just a business card scanner. It helps users remember who they met, why the relationship matters, what was discussed, what follow-up is needed, and whether the connection eventually created business value.
+
+2. Target Users
+Primary Users
+Business owners
+Sales professionals
+Recruiters
+Consultants
+Real estate professionals
+Event attendees
+Chamber of Commerce members
+Startup founders
+Partnership managers
+Secondary Users
+Event organizers
+Corporate sales teams
+Staffing agencies
+B2B service providers
+Franchise owners
+3. Core Problem
+
+People collect business cards at events but often fail to:
+
+Remember where they met the person
+Recall what was discussed
+Follow up on time
+Track business opportunities
+Measure event ROI
+Connect contacts with CRM or email tools
+4. Main Product Goals
+
+The app should help users:
+
+Scan and save business card information quickly.
+Add meeting context using text, voice, or predefined tags.
+Send an instant personalized introduction email to the scanned contact.
+Generate an AI-powered relationship summary.
+Create follow-up reminders and tasks.
+Track networking ROI by event.
+Prioritize high-value contacts.
+Integrate with email, calendar, CRM, and contacts.
+5. Key Features
+5.1 User Registration and Login
+Requirements
+
+Users should be able to register using:
+
+Email and password
+Google login
+Apple login
+Microsoft login
+Profile Fields
+Full name
+Company name
+Job title
+Phone number
+Email address
+Website
+LinkedIn profile
+Company description
+Default email signature
+Default intro message
+Functional Notes
+
+The user profile will be used to generate outgoing emails after a card is scanned.
+
+5.2 Business Card Scanning
+Requirements
+
+The app should allow users to scan a business card using the mobile camera.
+
+Extracted Fields
+
+The system should extract:
+
+First name
+Last name
+Company name
+Job title
+Email address
+Phone number
+Mobile number
+Website
+Address
+LinkedIn URL
+QR code data
+Logo, if available
+Notes from card
+Functional Requirements
+Use OCR to detect card details.
+Allow the user to edit extracted data.
+Detect duplicate contacts.
+Support front and back card scanning.
+Save original card image.
+Allow manual entry if scan fails.
+Support multiple languages in later versions.
+5.3 Context Capture After Scan
+
+Immediately after scanning, the app should ask the user to capture meeting context.
+
+Required Fields
+Event name
+Event location
+Date and time
+Contact category
+Reason for connection
+Follow-up action
+Priority level
+Contact Categories
+Potential client
+Partner
+Supplier
+Investor
+Candidate
+Referral source
+Friend
+Vendor
+Media
+Other
+Follow-Up Actions
+Send intro email
+Schedule meeting
+Send proposal
+Send company profile
+Make introduction
+Call later
+Add to newsletter
+No follow-up needed
+Input Methods
+Text input
+Voice note
+Quick tags
+AI-assisted suggestions
+5.4 Instant Introduction Email
+Main Requirement
+
+After scanning a business card, the app should automatically generate and send a personalized email to the scanned contact.
+
+Email Should Include
+Greeting using contact name
+Event or meeting context
+User’s name and company
+Short description of what the user does
+Mention of discussion or reason for connecting
+Next step
+User’s contact details
+Signature
+Example Email
+
+Subject: Great meeting you at [Event Name]
+
+Hi [First Name],
+
+It was great meeting you at [Event Name].
+
+I enjoyed learning more about [Company Name] and our conversation about [Discussion Topic].
+
+As mentioned, I’m [User Name] from [User Company], where we help [target customers] with [services].
+
+I look forward to staying connected.
+
+Best regards,
+[User Name]
+
+Functional Requirements
+User can review before sending.
+User can enable auto-send mode.
+User can select email tone:
+Professional
+Friendly
+Short
+Sales-focused
+Partnership-focused
+Email must be sent from the user’s connected email account.
+Email should be logged in the contact timeline.
+5.5 AI Relationship Summary
+Requirement
+
+The app should create a short AI-generated memory summary for each contact.
+
+Summary Should Include
+Where the user met the person
+What the person does
+What was discussed
+Why the contact is important
+Recommended next step
+Potential business value
+Example
+
+Met Raj Singh at the Indo-Canadian Chamber event in Toronto. Raj is VP Operations at ABC Manufacturing. He is exploring staffing support for warehouse and production roles. Follow-up required: send CygniSoft manufacturing staffing profile this week.
+
+5.6 Voice Notes
+Requirements
+
+Users should be able to record a short voice note after scanning a card.
+
+Functional Requirements
+Record voice note
+Convert speech to text
+Attach transcript to contact
+Use transcript to generate AI summary
+Allow playback
+Allow editing transcript
+5.7 Contact Management
+Requirements
+
+Users should be able to view, search, filter, and manage saved contacts.
+
+Contact Profile Should Include
+Name
+Company
+Job title
+Email
+Phone
+Website
+LinkedIn
+Business card image
+Event name
+Meeting notes
+AI summary
+Follow-up status
+Relationship score
+Timeline of activity
+Tags
+Revenue opportunity
+CRM sync status
+Filters
+Event
+Date scanned
+Category
+Priority
+Follow-up due
+Contact type
+Relationship score
+Deal value
+Location
+5.8 Follow-Up Reminders
+Requirements
+
+The app should help users follow up after networking.
+
+Reminder Options
+Same day
+Tomorrow
+In 3 days
+In 1 week
+In 1 month
+Custom date
+Reminder Types
+Email follow-up
+Phone call
+Meeting request
+Proposal follow-up
+Introduction follow-up
+Relationship check-in
+Notifications
+Push notification
+Email reminder
+Calendar reminder
+5.9 AI Follow-Up Suggestions
+Requirement
+
+The app should recommend what to do next with each contact.
+
+AI Suggestions
+Send meeting request
+Send company profile
+Send proposal
+Introduce to another contact
+Add to CRM
+Mark as hot lead
+Archive as low priority
+Reconnect after 30 days
+5.10 Event Management
+Requirements
+
+Users should be able to create and manage events.
+
+Event Fields
+Event name
+Location
+Date
+Organizer
+Event type
+Cost of attending
+Notes
+Number of contacts scanned
+Meetings booked
+Opportunities created
+Revenue generated
+Event Types
+Conference
+Trade show
+Chamber event
+Rotary event
+Networking dinner
+Sponsorship event
+Business meeting
+Referral meeting
+Custom
+5.11 Networking ROI Dashboard
+Requirement
+
+The app should measure the business value generated from networking.
+
+Metrics
+Number of cards scanned
+Number of intro emails sent
+Number of follow-ups completed
+Meetings booked
+Proposals sent
+Deals won
+Estimated deal value
+Actual revenue
+Cost per lead
+Revenue per event
+ROI percentage
+Example
+
+Event: Toronto Business Expo
+Cards scanned: 38
+Meetings booked: 7
+Proposals sent: 3
+Deals won: 1
+Revenue generated: $18,000
+Event cost: $1,200
+ROI: 1,400%
+
+5.12 Relationship Score
+Requirement
+
+The app should assign each contact a relationship score from 0 to 100.
+
+Scoring Factors
+Priority selected by user
+Email sent
+Email opened
+Follow-up completed
+Meeting booked
+Proposal sent
+Deal value
+Recent activity
+Contact responsiveness
+Strategic relevance
+Score Categories
+80 to 100: High-value contact
+50 to 79: Warm relationship
+20 to 49: Low engagement
+0 to 19: Dormant contact
+5.13 CRM Integration
+Required Integrations
+HubSpot
+Salesforce
+Zoho CRM
+Pipedrive
+Monday.com
+Google Contacts
+Outlook Contacts
+Sync Data
+Contact details
+Notes
+Event name
+Follow-up task
+Relationship score
+Lead status
+Deal value
+Email history
+5.14 Email Integration
+Supported Platforms
+Gmail
+Outlook
+Microsoft 365
+Requirements
+Send email from connected account
+Track sent emails
+Detect replies
+Log email activity
+Support email templates
+Allow user approval before sending
+5.15 Calendar Integration
+Supported Platforms
+Google Calendar
+Outlook Calendar
+Apple Calendar
+Requirements
+Create follow-up reminders
+Book meetings
+Add event attendance
+Show scheduled follow-ups
+Link contacts to meetings
+5.16 AI Assistant
+Requirement
+
+The app should include an AI assistant that helps the user manage networking relationships.
+
+Example Commands
+“Who should I follow up with today?”
+“Show my top contacts from last week.”
+“Which event gave me the best ROI?”
+“Draft a follow-up email to Raj.”
+“Who are my hot leads from the manufacturing event?”
+“Remind me who Sarah is.”
+5.17 Contact Timeline
+Requirement
+
+Each contact should have a timeline of relationship activity.
+
+Timeline Events
+Card scanned
+Intro email sent
+Email opened
+Reply received
+Follow-up reminder created
+Meeting booked
+Proposal sent
+Deal won
+Notes added
+Contact updated
+5.18 Tags and Segmentation
+Requirements
+
+Users should be able to tag contacts.
+
+Example Tags
+Manufacturing
+Logistics
+Healthcare
+Staffing lead
+Technology partner
+Investor
+Hot lead
+Canada expansion
+Follow up soon
+Referral
+5.19 Team Features
+Requirements
+
+For business accounts, users should be able to create teams.
+
+Team Features
+Shared contacts
+Shared event dashboard
+Team networking ROI
+Assign follow-ups
+View team activity
+Export contacts
+Admin roles
+Permission control
+Roles
+Owner
+Admin
+Team member
+Viewer
+5.20 Export and Import
+Export Formats
+CSV
+Excel
+vCard
+PDF report
+Import Sources
+Phone contacts
+Google Contacts
+Outlook Contacts
+CRM contacts
+CSV upload
+6. Main User Flows
+Flow 1: Scan and Send Intro Email
+User opens app.
+User taps “Scan Card.”
+Camera opens.
+User scans card.
+App extracts details.
+User reviews and edits details.
+User enters event and meeting context.
+AI generates summary and intro email.
+User approves email.
+Email is sent.
+Contact is saved.
+Follow-up reminder is created.
+Flow 2: Add Contact Manually
+User taps “Add Contact.”
+User enters contact details.
+User adds event and notes.
+AI generates relationship summary.
+User saves contact.
+Flow 3: Follow-Up Reminder
+User receives reminder.
+User opens contact.
+AI suggests follow-up email.
+User approves or edits.
+Email is sent.
+Timeline is updated.
+Flow 4: Event ROI Review
+User opens Events dashboard.
+User selects event.
+App shows cards scanned, follow-ups, meetings, proposals, and revenue.
+User can export report.
+7. Screens Required
+Mobile Screens
+Splash screen
+Login screen
+Signup screen
+User profile setup
+Home dashboard
+Scan card screen
+Scan result review screen
+Add context screen
+AI email preview screen
+Contact saved confirmation screen
+Contacts list
+Contact detail page
+Contact timeline
+Follow-up reminders
+Events list
+Event detail dashboard
+ROI dashboard
+AI assistant screen
+Settings
+Integrations
+Subscription page
+Team management
+Export screen
+8. Admin Panel Requirements
+Admin Features
+User management
+Subscription management
+Usage tracking
+OCR scan monitoring
+Email delivery logs
+AI usage logs
+Failed scan reports
+CRM sync logs
+Support ticket access
+App analytics
+9. Subscription Model
+Free Plan
+25 card scans per month
+Basic contact storage
+Manual follow-up reminders
+Limited AI summaries
+Professional Plan
+Unlimited scans
+AI summaries
+AI follow-up emails
+Event ROI dashboard
+Email integration
+Calendar integration
+Team Plan
+Everything in Professional
+Shared contacts
+Team event dashboard
+Admin controls
+CRM integration
+Team reporting
+Enterprise Plan
+Custom integrations
+Advanced permissions
+Dedicated support
+Custom branding
+API access
+Advanced analytics
+10. Notifications
+Notification Types
+Follow-up due
+Email reply received
+Meeting scheduled
+Contact not followed up
+High-value contact reminder
+Event ROI summary
+Weekly networking summary
+11. AI Functional Requirements
+AI Should Be Able To
+Extract business card details
+Summarize voice notes
+Generate relationship summaries
+Draft intro emails
+Draft follow-up emails
+Recommend next steps
+Score contact value
+Identify event ROI patterns
+Suggest warm introductions
+Detect duplicate contacts
+12. Non-Functional Requirements
+Performance
+Card scan result should appear within 5 seconds.
+Contact search should return results instantly.
+App should work smoothly on iOS and Android.
+Security
+Encrypt user data.
+Secure email and CRM connections.
+Support OAuth login.
+Allow users to delete contacts.
+Allow users to delete account.
+Store business card images securely.
+Privacy
+Ask user permission before sending emails.
+Clearly disclose what data is stored.
+Allow users to control AI processing.
+Support consent and unsubscribe options where needed.
+Reliability
+App should save scanned card even if email sending fails.
+Failed emails should be retryable.
+Offline scan drafts should be saved locally and synced later.
+13. MVP Scope
+Must-Have MVP Features
+User signup and profile
+Business card scanning
+OCR extraction
+Manual edit
+Event and context capture
+AI relationship summary
+AI intro email generation
+Gmail/Outlook email sending
+Contact list
+Contact detail page
+Follow-up reminders
+Basic event dashboard
+Phase 2 Features
+CRM integrations
+ROI dashboard
+Relationship score
+Voice notes
+Team features
+AI assistant
+Email open tracking
+Calendar integration
+Phase 3 Features
+Warm introduction engine
+Advanced analytics
+Enterprise admin panel
+Custom branding
+API access
+Multi-language OCR
+14. Suggested Technology Stack
+Mobile App
+React Native or Flutter
+Backend
+Node.js or Python
+PostgreSQL
+Redis
+Cloud storage for card images
+AI
+OCR service
+LLM for summaries and emails
+Speech-to-text for voice notes
+Integrations
+Gmail API
+Microsoft Graph API
+Google Calendar API
+HubSpot API
+Salesforce API
+Hosting
+AWS, Google Cloud, or Azure
+15. Success Metrics
+Product Metrics
+Number of scans per user
+Percentage of scans with context added
+Number of intro emails sent
+Follow-up completion rate
+Contact-to-meeting conversion rate
+Event ROI generated
+Monthly active users
+Paid conversion rate
+Business Metrics
+Free-to-paid conversion
+Average revenue per user
+Churn rate
+Team account adoption
+CRM integration usage
+16. Competitive Positioning
+
+ConnectIQ should not be positioned as a business card scanner.
+
+It should be positioned as:
+
+An AI networking assistant that helps professionals remember contacts, follow up faster, and measure the ROI of every networking event.
+
+Differentiators
+Instant intro email after scan
+AI relationship memory
+Event-based ROI tracking
+Follow-up automation
+Relationship scoring
+CRM-ready contact intelligence
+17. Future Opportunities
+
+Potential future features:
+
+Event organizer partnerships
+Branded event networking dashboards
+AI-generated digital business card
+LinkedIn enrichment
+Referral tracking
+Team leaderboards
+Partnership opportunity detection
+AI-powered contact matching
+White-label version for chambers and associations

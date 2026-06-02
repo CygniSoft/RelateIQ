@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "19A2VcDvS6xQhnC30E3VA"
+uri = "file://artifacts/connectiq/assets/images/icon.png"
+type = "image"
+title = "generated_image"
