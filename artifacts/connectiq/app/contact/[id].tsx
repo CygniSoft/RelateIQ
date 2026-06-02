@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import * as Contacts from "expo-contacts";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -101,8 +102,9 @@ export default function ContactDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { contacts, updateContact, deleteContact, addTimelineEvent } = useApp();
+  const { contacts, updateContact, deleteContact, addTimelineEvent, profile } = useApp();
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [savedToPhone, setSavedToPhone] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "email">("overview");
 
@@ -131,6 +133,60 @@ export default function ContactDetailScreen() {
     if (score >= 50) return "#F59E0B";
     if (score >= 20) return "#4F8EFF";
     return "#6B7490";
+  }
+
+  async function handleSaveToContacts() {
+    if (Platform.OS === "web") {
+      Alert.alert("Not supported", "Saving to phone contacts requires the mobile app.");
+      return;
+    }
+
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission denied",
+        "ConnectIQ needs access to your contacts to save this person.",
+      );
+      return;
+    }
+
+    try {
+      const newContact: Contacts.Contact = {
+        contactType: Contacts.ContactTypes.Person,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        jobTitle: contact.jobTitle,
+        company: contact.company,
+        emails: contact.email
+          ? [{ email: contact.email, label: "work", isPrimary: true }]
+          : undefined,
+        phoneNumbers: contact.phone
+          ? [{ number: contact.phone, label: "work", isPrimary: true }]
+          : undefined,
+        urlAddresses: contact.linkedIn
+          ? [{ url: contact.linkedIn, label: "LinkedIn" }]
+          : undefined,
+        note: [
+          contact.eventName ? `Met at ${contact.eventName}` : "",
+          contact.meetingNotes ?? "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      };
+
+      await Contacts.addContactAsync(newContact);
+      setSavedToPhone(true);
+      addTimelineEvent(contact.id, {
+        type: "note",
+        title: "Saved to phone contacts",
+        description: "Contact exported to device address book",
+        date: new Date().toISOString(),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Saved!", `${contact.firstName} ${contact.lastName} added to your phone contacts.`);
+    } catch (err) {
+      Alert.alert("Error", "Could not save contact. Please try again.");
+    }
   }
 
   async function handleSendEmail() {
@@ -346,6 +402,12 @@ export default function ContactDetailScreen() {
                 updateContact(contact.id, { meetingBooked: true });
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               },
+            },
+            {
+              icon: savedToPhone ? "check" : "user-plus",
+              label: savedToPhone ? "Saved" : "Save",
+              color: savedToPhone ? "#10B981" : "#7B5EFF",
+              onPress: handleSaveToContacts,
             },
           ].map((action) => (
             <Pressable

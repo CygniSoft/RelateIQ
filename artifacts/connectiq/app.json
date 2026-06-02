@@ -32,6 +32,12 @@
       "expo-font",
       "expo-web-browser",
       [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow ConnectIQ to save contacts to your phone."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Allow ConnectIQ to access your photos to scan business cards.",
