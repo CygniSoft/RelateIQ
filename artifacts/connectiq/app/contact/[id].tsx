@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/ContactCard";
 import { useApp, TimelineEvent } from "@/context/AppContext";
+import { sendEmail } from "@/lib/emailApi";
 import { useColors } from "@/hooks/useColors";
 
 function TimelineItem({
@@ -132,16 +133,31 @@ export default function ContactDetailScreen() {
     return "#6B7490";
   }
 
-  function handleSendEmail() {
-    updateContact(contact.id, { emailSent: true });
-    addTimelineEvent(contact.id, {
-      type: "email_sent",
-      title: "Follow-up email sent",
-      description: "Sent from ConnectIQ",
-      date: new Date().toISOString(),
+  async function handleSendEmail() {
+    const emailBody =
+      contact.introEmailDraft ||
+      `Hi ${contact.firstName},\n\nGreat connecting with you!\n\nLooking forward to staying in touch.\n\nBest regards,`;
+
+    const result = await sendEmail({
+      to: contact.email,
+      subject: `Following up${contact.eventName ? ` — met at ${contact.eventName}` : ""}`,
+      body: emailBody,
+      fromName: profile.name,
     });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setShowEmailModal(false);
+
+    if (result.success) {
+      updateContact(contact.id, { emailSent: true });
+      addTimelineEvent(contact.id, {
+        type: "email_sent",
+        title: "Email sent",
+        description: `Sent to ${contact.email}`,
+        date: new Date().toISOString(),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowEmailModal(false);
+    } else {
+      Alert.alert("Send failed", result.error ?? "Could not send email. Check your Gmail credentials.");
+    }
   }
 
   function handleAddNote() {

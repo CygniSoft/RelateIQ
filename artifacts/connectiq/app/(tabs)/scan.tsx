@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScanFrame } from "@/components/ScanFrame";
 import { useApp, ContactCategory, FollowUpAction, Priority } from "@/context/AppContext";
+import { sendEmail } from "@/lib/emailApi";
 import { useColors } from "@/hooks/useColors";
 
 type ScanStep = "idle" | "scanning" | "review" | "context" | "email" | "done";
@@ -117,7 +118,7 @@ export default function ScanScreen() {
     setStep("email");
   }
 
-  function handleSaveContact() {
+  async function handleSaveContact() {
     addContact({
       ...extracted,
       cardImageUri,
@@ -136,6 +137,17 @@ export default function ScanScreen() {
       meetingBooked: false,
       dealValue: dealValue ? parseInt(dealValue) * 1000 : undefined,
     });
+
+    // Fire real email — don't block on result, contact is already saved
+    sendEmail({
+      to: extracted.email,
+      subject: `Great meeting you${eventName ? ` at ${eventName}` : ""}`,
+      body: emailDraft,
+      fromName: profile.name,
+    }).catch(() => {
+      // Silent — email failure doesn't block the save
+    });
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setStep("done");
     setTimeout(() => {
