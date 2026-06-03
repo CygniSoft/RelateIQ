@@ -561,6 +561,12 @@ export default function ProfileScreen() {
   };
 
   function handleSignOut() {
+    if (Platform.OS === "web") {
+      if (window.confirm("Sign out? Your data will remain saved on this device.")) {
+        router.replace("/(tabs)");
+      }
+      return;
+    }
     Alert.alert(
       "Sign Out",
       "Are you sure you want to sign out? Your data will remain saved on this device.",
@@ -578,6 +584,12 @@ export default function ProfileScreen() {
   }
 
   function handleClearData() {
+    if (Platform.OS === "web") {
+      if (window.confirm("This will permanently delete all contacts, events, and notes. This cannot be undone.")) {
+        clearAllData().then(() => setShowPrivacy(false));
+      }
+      return;
+    }
     Alert.alert(
       "Clear All Data",
       "This will permanently delete all contacts, events, and notes. This cannot be undone.",
