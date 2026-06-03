@@ -136,11 +136,16 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
   const stats = useMemo(() => {
-    const totalScans = contacts.length;
-    const emailsSent = contacts.filter((c) => c.emailSent).length;
-    const meetingsBooked = contacts.filter((c) => c.meetingBooked).length;
+    const totalContacts = contacts.length;
+    const totalEvents = events.length;
     const totalRevenue = events.reduce((s, e) => s + e.revenueGenerated, 0);
-    return { totalScans, emailsSent, meetingsBooked, totalRevenue };
+    const revenueFormatted =
+      totalRevenue >= 1_000_000
+        ? `$${(totalRevenue / 1_000_000).toFixed(1)}M`
+        : totalRevenue >= 1000
+        ? `$${(totalRevenue / 1000).toFixed(0)}K`
+        : `$${totalRevenue}`;
+    return { totalContacts, totalEvents, totalRevenue, revenueFormatted };
   }, [contacts, events]);
 
   const recentContacts = useMemo(
@@ -192,23 +197,23 @@ export default function HomeScreen() {
         >
           <StatCard
             label="Contacts"
-            value={stats.totalScans}
+            value={stats.totalContacts}
             colors={["#4F8EFF", "#2563EB"]}
             icon={<Feather name="users" size={20} color="#fff" />}
             index={0}
           />
           <StatCard
-            label="Emails Sent"
-            value={stats.emailsSent}
+            label="Events"
+            value={stats.totalEvents}
             colors={["#7B5EFF", "#6D28D9"]}
-            icon={<Feather name="mail" size={20} color="#fff" />}
+            icon={<Feather name="calendar" size={20} color="#fff" />}
             index={1}
           />
           <StatCard
-            label="Meetings"
-            value={stats.meetingsBooked}
+            label="Revenue"
+            value={stats.revenueFormatted}
             colors={["#10B981", "#047857"]}
-            icon={<Feather name="calendar" size={20} color="#fff" />}
+            icon={<Feather name="trending-up" size={20} color="#fff" />}
             index={2}
           />
         </View>
