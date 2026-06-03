@@ -1,11 +1,15 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
+  Linking,
   Modal,
   Platform,
   Pressable,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   View,
@@ -171,11 +175,375 @@ function EditProfileModal({
   );
 }
 
+function NotificationsModal({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const [prefs, setPrefs] = useState({
+    followUpReminders: true,
+    emailAlerts: true,
+    meetingReminders: true,
+    weeklyDigest: false,
+    newContactTips: true,
+  });
+
+  const rows: Array<{ key: keyof typeof prefs; label: string; sub: string }> = [
+    {
+      key: "followUpReminders",
+      label: "Follow-up Reminders",
+      sub: "Get reminded when a follow-up is due",
+    },
+    {
+      key: "emailAlerts",
+      label: "Email Sent Alerts",
+      sub: "Confirm when an intro email is delivered",
+    },
+    {
+      key: "meetingReminders",
+      label: "Meeting Reminders",
+      sub: "Notification 1 hour before booked meetings",
+    },
+    {
+      key: "weeklyDigest",
+      label: "Weekly Digest",
+      sub: "Summary of your networking activity",
+    },
+    {
+      key: "newContactTips",
+      label: "Onboarding Tips",
+      sub: "Helpful suggestions as you build your network",
+    },
+  ];
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingHorizontal: 20,
+            paddingTop: insets.top + 16,
+            paddingBottom: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          }}
+        >
+          <Pressable onPress={onClose}>
+            <Ionicons name="close" size={24} color={colors.foreground} />
+          </Pressable>
+          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: "600" as const }}>
+            Notifications
+          </Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <Text style={{ color: colors.mutedForeground, fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
+            Choose which notifications ConnectIQ sends you. Changes take effect immediately.
+          </Text>
+          {rows.map((row, i) => (
+            <View
+              key={row.key}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: 14,
+                borderBottomWidth: i < rows.length - 1 ? 1 : 0,
+                borderBottomColor: colors.border,
+                gap: 14,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "500" as const }}>
+                  {row.label}
+                </Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 2 }}>
+                  {row.sub}
+                </Text>
+              </View>
+              <Switch
+                value={prefs[row.key]}
+                onValueChange={(v) => setPrefs((p) => ({ ...p, [row.key]: v }))}
+                trackColor={{ false: colors.border, true: colors.primary + "88" }}
+                thumbColor={prefs[row.key] ? colors.primary : colors.mutedForeground}
+              />
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+function PrivacyModal({
+  visible,
+  onClose,
+  onClearData,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onClearData: () => void;
+}) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  const items = [
+    {
+      icon: "database" as const,
+      title: "Local Storage Only",
+      body: "All your contacts, events, and notes are stored on your device. ConnectIQ never uploads your personal data to external servers.",
+    },
+    {
+      icon: "mail" as const,
+      title: "Email via Gmail",
+      body: "Emails are sent using your own Gmail account through your App Password. ConnectIQ does not store or log email content.",
+    },
+    {
+      icon: "eye-off" as const,
+      title: "No Analytics Tracking",
+      body: "We don't track your usage, contacts, or networking activity. Your business relationships stay private.",
+    },
+    {
+      icon: "lock" as const,
+      title: "Contacts Permission",
+      body: "The Contacts permission is only used when you explicitly tap \"Save to Phone Contacts\". It is never accessed automatically.",
+    },
+  ];
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingHorizontal: 20,
+            paddingTop: insets.top + 16,
+            paddingBottom: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          }}
+        >
+          <Pressable onPress={onClose}>
+            <Ionicons name="close" size={24} color={colors.foreground} />
+          </Pressable>
+          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: "600" as const }}>
+            Privacy & Data
+          </Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          {items.map((item) => (
+            <View
+              key={item.title}
+              style={{
+                flexDirection: "row",
+                gap: 14,
+                marginBottom: 24,
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor: colors.secondary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Feather name={item.icon} size={18} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" as const, marginBottom: 4 }}>
+                  {item.title}
+                </Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 19 }}>
+                  {item.body}
+                </Text>
+              </View>
+            </View>
+          ))}
+
+          <View
+            style={{
+              marginTop: 8,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              paddingTop: 24,
+            }}
+          >
+            <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" as const, marginBottom: 8 }}>
+              Data Management
+            </Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 19, marginBottom: 20 }}>
+              This will permanently delete all contacts, events, and notes stored on this device. Your profile will be reset to defaults.
+            </Text>
+            <Pressable
+              onPress={onClearData}
+              style={{
+                backgroundColor: "#FF475718",
+                borderWidth: 1,
+                borderColor: "#FF475744",
+                borderRadius: 12,
+                paddingVertical: 14,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#FF4757", fontSize: 15, fontWeight: "600" as const }}>
+                Clear All App Data
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+function HelpModal({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  const faqs = [
+    {
+      q: "How do I scan a business card?",
+      a: "Tap the Scan tab, then press \"Scan Business Card\". You can use your camera or pick a photo from your gallery. ConnectIQ will extract the contact's details automatically.",
+    },
+    {
+      q: "How does AI intro email work?",
+      a: "After scanning a card and adding meeting context, ConnectIQ generates a personalised intro email based on the contact's role and your conversation notes. You can edit it before sending.",
+    },
+    {
+      q: "How do I set up Gmail sending?",
+      a: "Go to your Google Account → Security → 2-Step Verification → App Passwords. Generate a password for ConnectIQ, then ask your admin to add it to the app secrets (GMAIL_USER and GMAIL_APP_PASSWORD).",
+    },
+    {
+      q: "Where is my data stored?",
+      a: "Everything is stored locally on your device using AsyncStorage. Nothing is sent to external servers except the emails you choose to send through Gmail.",
+    },
+    {
+      q: "How does relationship scoring work?",
+      a: "Scores are calculated from contact priority, follow-up completion, emails sent, and meetings booked. Higher priority contacts with active engagement score highest.",
+    },
+    {
+      q: "Can I export my contacts?",
+      a: "Yes — open any contact and tap \"Save\" to export them to your phone's address book, including all contact details and where you met them.",
+    },
+  ];
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingHorizontal: 20,
+            paddingTop: insets.top + 16,
+            paddingBottom: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          }}
+        >
+          <Pressable onPress={onClose}>
+            <Ionicons name="close" size={24} color={colors.foreground} />
+          </Pressable>
+          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: "600" as const }}>
+            Help & Support
+          </Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <Text
+            style={{
+              color: colors.mutedForeground,
+              fontSize: 12,
+              fontWeight: "600" as const,
+              letterSpacing: 0.8,
+              textTransform: "uppercase",
+              marginBottom: 16,
+            }}
+          >
+            Frequently Asked Questions
+          </Text>
+          {faqs.map((item, i) => (
+            <View
+              key={i}
+              style={{
+                marginBottom: 20,
+                backgroundColor: colors.card,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: colors.border,
+                padding: 16,
+              }}
+            >
+              <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "600" as const, marginBottom: 8 }}>
+                {item.q}
+              </Text>
+              <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 19 }}>
+                {item.a}
+              </Text>
+            </View>
+          ))}
+
+          <View
+            style={{
+              marginTop: 8,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              paddingTop: 24,
+              gap: 12,
+            }}
+          >
+            <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" as const, marginBottom: 4 }}>
+              Still need help?
+            </Text>
+            <Pressable
+              onPress={() => Linking.openURL("mailto:support@connectiq.app")}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                backgroundColor: colors.secondary,
+                borderRadius: 12,
+                padding: 14,
+              }}
+            >
+              <Feather name="mail" size={18} color={colors.primary} />
+              <Text style={{ color: colors.foreground, fontSize: 14 }}>Email support@connectiq.app</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
-  const { profile, contacts, events } = useApp();
+  const { profile, contacts, events, clearAllData } = useApp();
   const insets = useSafeAreaInsets();
   const [showEdit, setShowEdit] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 84 + 24 : insets.bottom + 56 + 24;
@@ -191,6 +559,41 @@ export default function ProfileScreen() {
     email: profile.email,
     phone: profile.phone,
   };
+
+  function handleSignOut() {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out? Your data will remain saved on this device.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: () => {
+            router.replace("/(tabs)");
+          },
+        },
+      ],
+    );
+  }
+
+  function handleClearData() {
+    Alert.alert(
+      "Clear All Data",
+      "This will permanently delete all contacts, events, and notes. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear Everything",
+          style: "destructive",
+          onPress: async () => {
+            await clearAllData();
+            setShowPrivacy(false);
+          },
+        },
+      ],
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -454,24 +857,31 @@ export default function ProfileScreen() {
           <SettingRow
             icon={<Feather name="bell" size={16} color={colors.accent} />}
             label="Notifications"
+            onPress={() => setShowNotifications(true)}
           />
           <SettingRow
             icon={<Feather name="shield" size={16} color={colors.accent} />}
             label="Privacy & Data"
+            onPress={() => setShowPrivacy(true)}
           />
           <SettingRow
             icon={<Feather name="help-circle" size={16} color={colors.accent} />}
             label="Help & Support"
+            onPress={() => setShowHelp(true)}
           />
           <SettingRow
             icon={<Feather name="log-out" size={16} color="#FF4757" />}
             label="Sign Out"
             danger
+            onPress={handleSignOut}
           />
         </View>
       </ScrollView>
 
       <EditProfileModal visible={showEdit} onClose={() => setShowEdit(false)} />
+      <NotificationsModal visible={showNotifications} onClose={() => setShowNotifications(false)} />
+      <PrivacyModal visible={showPrivacy} onClose={() => setShowPrivacy(false)} onClearData={handleClearData} />
+      <HelpModal visible={showHelp} onClose={() => setShowHelp(false)} />
     </View>
   );
 }

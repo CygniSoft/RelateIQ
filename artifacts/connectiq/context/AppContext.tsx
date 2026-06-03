@@ -115,6 +115,7 @@ interface AppContextType {
   deleteEvent: (id: string) => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
   addTimelineEvent: (contactId: string, event: Omit<TimelineEvent, "id">) => void;
+  clearAllData: () => Promise<void>;
   isLoaded: boolean;
 }
 
@@ -441,6 +442,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [profile]
   );
 
+  const clearAllData = useCallback(async () => {
+    await AsyncStorage.multiRemove([
+      STORAGE_KEYS.CONTACTS,
+      STORAGE_KEYS.EVENTS,
+      STORAGE_KEYS.PROFILE,
+    ]);
+    setContacts(SAMPLE_CONTACTS);
+    setEvents(SAMPLE_EVENTS);
+    setProfile(DEFAULT_PROFILE);
+  }, []);
+
   const addTimelineEvent = useCallback(
     (contactId: string, event: Omit<TimelineEvent, "id">) => {
       const updated = contacts.map((c) =>
@@ -478,6 +490,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         deleteEvent,
         updateProfile,
         addTimelineEvent,
+        clearAllData,
         isLoaded,
       }}
     >
