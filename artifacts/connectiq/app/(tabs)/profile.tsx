@@ -657,11 +657,17 @@ export default function ProfileScreen() {
               letterSpacing: -0.3,
             }}
           >
-            {profile.name}
+            {profile.name || "Your Name"}
           </Text>
-          <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginTop: 3 }}>
-            {profile.jobTitle} · {profile.company}
-          </Text>
+          {[profile.jobTitle, profile.company].filter(Boolean).length > 0 ? (
+            <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginTop: 3 }}>
+              {[profile.jobTitle, profile.company].filter(Boolean).join(" · ")}
+            </Text>
+          ) : (
+            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginTop: 3 }}>
+              Tap the avatar to set up your profile
+            </Text>
+          )}
 
           {/* Inline stats */}
           <View
@@ -673,6 +679,7 @@ export default function ProfileScreen() {
               overflow: "hidden",
               borderWidth: 1,
               borderColor: "rgba(255,255,255,0.1)",
+              alignSelf: "stretch",
             }}
           >
             {[

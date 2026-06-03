@@ -64,10 +64,12 @@ function ScoreBadge({ score }: { score: number }) {
 
 function Avatar({ contact, size = 48 }: { contact: Contact; size?: number }) {
   const colors = useColors();
-  const initials = `${contact.firstName[0] ?? ""}${contact.lastName[0] ?? ""}`;
-  const hue =
-    ((contact.firstName.charCodeAt(0) + contact.lastName.charCodeAt(0)) * 37) %
-    360;
+  const initials =
+    `${contact.firstName?.[0] ?? ""}${contact.lastName?.[0] ?? ""}`.toUpperCase();
+  const seed =
+    (contact.firstName?.charCodeAt(0) ?? 0) +
+    (contact.lastName?.charCodeAt(0) ?? 0);
+  const hue = (seed * 37) % 360 || 220;
 
   return (
     <LinearGradient
@@ -82,15 +84,19 @@ function Avatar({ contact, size = 48 }: { contact: Contact; size?: number }) {
         justifyContent: "center",
       }}
     >
-      <Text
-        style={{
-          color: "#fff",
-          fontSize: size * 0.35,
-          fontWeight: "700" as const,
-        }}
-      >
-        {initials}
-      </Text>
+      {initials ? (
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: size * 0.35,
+            fontWeight: "700" as const,
+          }}
+        >
+          {initials}
+        </Text>
+      ) : (
+        <Ionicons name="person" size={size * 0.45} color="#fff" />
+      )}
     </LinearGradient>
   );
 }
