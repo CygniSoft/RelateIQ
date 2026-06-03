@@ -121,211 +121,27 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | null>(null);
 
+const DATA_VERSION = "2";
+
 const STORAGE_KEYS = {
   CONTACTS: "@connectiq/contacts",
   EVENTS: "@connectiq/events",
   PROFILE: "@connectiq/profile",
+  VERSION: "@connectiq/dataVersion",
 };
 
 const DEFAULT_PROFILE: UserProfile = {
-  name: "Alex Morgan",
-  company: "Apex Ventures",
-  jobTitle: "Business Development Director",
-  email: "alex.morgan@apexventures.com",
-  phone: "+1 (416) 555-0192",
-  linkedin: "linkedin.com/in/alexmorgan",
-  website: "apexventures.com",
-  defaultSignature:
-    "Best regards,\nAlex Morgan\nBusiness Development Director\nApex Ventures",
+  name: "",
+  company: "",
+  jobTitle: "",
+  email: "",
+  phone: "",
+  linkedin: "",
+  website: "",
+  defaultSignature: "",
   defaultIntroMessage:
     "It was great meeting you! I'd love to explore how we can work together.",
 };
-
-const SAMPLE_CONTACTS: Contact[] = [
-  {
-    id: "1",
-    firstName: "Raj",
-    lastName: "Singh",
-    company: "ABC Manufacturing",
-    jobTitle: "VP Operations",
-    email: "raj.singh@abcmfg.com",
-    phone: "+1 (416) 555-0101",
-    eventId: "1",
-    eventName: "Indo-Canadian Chamber",
-    meetingNotes:
-      "Exploring staffing support for warehouse and production roles.",
-    aiSummary:
-      "Met Raj at the Indo-Canadian Chamber event. He's VP Operations exploring staffing support for 200+ warehouse roles. High potential — send manufacturing staffing profile this week.",
-    introEmailDraft:
-      "Hi Raj,\n\nIt was great meeting you at the Indo-Canadian Chamber event. I enjoyed learning about ABC Manufacturing's expansion plans.\n\nAs mentioned, I'm Alex from Apex Ventures, where we specialize in connecting top-tier operations talent with growing manufacturers.\n\nI'd love to send you our manufacturing staffing profile. When would be a good time to connect?\n\nBest regards,\nAlex Morgan",
-    followUpAction: "Send company profile",
-    followUpDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    category: "Potential client",
-    priority: "High",
-    relationshipScore: 78,
-    tags: ["Manufacturing", "Staffing lead", "Hot lead"],
-    emailSent: true,
-    replyReceived: false,
-    meetingBooked: false,
-    dealValue: 45000,
-    timeline: [
-      {
-        id: "t1",
-        type: "scanned",
-        title: "Card scanned",
-        description: "Met at Indo-Canadian Chamber event",
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "t2",
-        type: "email_sent",
-        title: "Intro email sent",
-        description: "Personalized intro email delivered",
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-    dateAdded: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "2",
-    firstName: "Sarah",
-    lastName: "Chen",
-    company: "TechNova Solutions",
-    jobTitle: "CEO",
-    email: "sarah.chen@technova.io",
-    phone: "+1 (647) 555-0234",
-    eventId: "2",
-    eventName: "Toronto Tech Summit",
-    meetingNotes: "Discussed AI integration for their logistics platform.",
-    aiSummary:
-      "Sarah is CEO of TechNova, a 50-person SaaS company building AI logistics tools. Looking for strategic partnerships. High-value connection — schedule a demo this week.",
-    introEmailDraft:
-      "Hi Sarah,\n\nThank you for the great conversation at Toronto Tech Summit!\n\nI'd love to explore how Apex Ventures can support TechNova's growth...",
-    followUpAction: "Schedule meeting",
-    followUpDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    category: "Partner",
-    priority: "High",
-    relationshipScore: 91,
-    tags: ["Technology partner", "AI", "Logistics"],
-    emailSent: true,
-    replyReceived: true,
-    meetingBooked: true,
-    dealValue: 120000,
-    timeline: [
-      {
-        id: "t3",
-        type: "scanned",
-        title: "Card scanned",
-        description: "Met at Toronto Tech Summit",
-        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "t4",
-        type: "email_sent",
-        title: "Intro email sent",
-        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "t5",
-        type: "meeting",
-        title: "Meeting booked",
-        description: "Product demo scheduled for next Tuesday",
-        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-    dateAdded: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "3",
-    firstName: "Marcus",
-    lastName: "Williams",
-    company: "Blue Horizon Capital",
-    jobTitle: "Managing Partner",
-    email: "m.williams@bluehorizon.vc",
-    phone: "+1 (416) 555-0356",
-    eventId: "1",
-    eventName: "Indo-Canadian Chamber",
-    meetingNotes: "Early-stage investor focused on B2B SaaS.",
-    aiSummary:
-      "Marcus manages a $50M fund investing in B2B SaaS at Series A. Mentioned interest in workforce tech. Follow up with deck in 2 weeks.",
-    followUpAction: "Send proposal",
-    followUpDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-    category: "Investor",
-    priority: "High",
-    relationshipScore: 65,
-    tags: ["Investor", "VC", "Series A"],
-    emailSent: true,
-    replyReceived: false,
-    meetingBooked: false,
-    dealValue: 500000,
-    timeline: [
-      {
-        id: "t6",
-        type: "scanned",
-        title: "Card scanned",
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-    dateAdded: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "4",
-    firstName: "Priya",
-    lastName: "Patel",
-    company: "Greenfield Logistics",
-    jobTitle: "Head of Procurement",
-    email: "priya.patel@greenfield.ca",
-    phone: "+1 (905) 555-0478",
-    eventId: "2",
-    eventName: "Toronto Tech Summit",
-    followUpAction: "Call later",
-    category: "Potential client",
-    priority: "Medium",
-    relationshipScore: 42,
-    tags: ["Logistics", "Procurement"],
-    emailSent: false,
-    meetingBooked: false,
-    timeline: [
-      {
-        id: "t7",
-        type: "scanned",
-        title: "Card scanned",
-        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-    dateAdded: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-const SAMPLE_EVENTS: Event[] = [
-  {
-    id: "1",
-    name: "Indo-Canadian Chamber",
-    location: "Toronto Convention Centre",
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    type: "Chamber event",
-    cost: 850,
-    notes: "Annual networking gala — 200+ attendees",
-    contactIds: ["1", "3"],
-    meetingsBooked: 3,
-    proposalsSent: 2,
-    dealsWon: 0,
-    revenueGenerated: 0,
-  },
-  {
-    id: "2",
-    name: "Toronto Tech Summit",
-    location: "MaRS Discovery District",
-    date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    type: "Conference",
-    cost: 1200,
-    contactIds: ["2", "4"],
-    meetingsBooked: 7,
-    proposalsSent: 3,
-    dealsWon: 1,
-    revenueGenerated: 18000,
-  },
-];
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -336,17 +152,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
+        const version = await AsyncStorage.getItem(STORAGE_KEYS.VERSION);
+        if (version !== DATA_VERSION) {
+          // One-time wipe of legacy sample/demo data.
+          await AsyncStorage.multiRemove([
+            STORAGE_KEYS.CONTACTS,
+            STORAGE_KEYS.EVENTS,
+            STORAGE_KEYS.PROFILE,
+          ]);
+          await AsyncStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
+          setContacts([]);
+          setEvents([]);
+          setProfile(DEFAULT_PROFILE);
+          return;
+        }
         const [c, e, p] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.CONTACTS),
           AsyncStorage.getItem(STORAGE_KEYS.EVENTS),
           AsyncStorage.getItem(STORAGE_KEYS.PROFILE),
         ]);
-        setContacts(c ? JSON.parse(c) : SAMPLE_CONTACTS);
-        setEvents(e ? JSON.parse(e) : SAMPLE_EVENTS);
+        setContacts(c ? JSON.parse(c) : []);
+        setEvents(e ? JSON.parse(e) : []);
         setProfile(p ? JSON.parse(p) : DEFAULT_PROFILE);
       } catch {
-        setContacts(SAMPLE_CONTACTS);
-        setEvents(SAMPLE_EVENTS);
+        setContacts([]);
+        setEvents([]);
       } finally {
         setIsLoaded(true);
       }
@@ -448,8 +278,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       STORAGE_KEYS.EVENTS,
       STORAGE_KEYS.PROFILE,
     ]);
-    setContacts(SAMPLE_CONTACTS);
-    setEvents(SAMPLE_EVENTS);
+    await AsyncStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
+    setContacts([]);
+    setEvents([]);
     setProfile(DEFAULT_PROFILE);
   }, []);
 
