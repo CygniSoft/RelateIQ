@@ -67,8 +67,22 @@ export default function ScanScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 84 + 24 : insets.bottom + 56 + 24;
 
+  function simulateScan(uri?: string) {
+    setCardImageUri(uri);
+    setStep("scanning");
+    setTimeout(() => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setStep("review");
+    }, 2200);
+  }
+
   async function handleScan() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Camera is blocked inside the web preview iframe — skip straight to AI extraction
+    if (Platform.OS === "web") {
+      simulateScan();
+      return;
+    }
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Camera access needed", "Please allow camera access to scan business cards.");
@@ -81,28 +95,23 @@ export default function ScanScreen() {
       aspect: [16, 10],
     });
     if (!result.canceled && result.assets[0]) {
-      setCardImageUri(result.assets[0].uri);
-      setStep("scanning");
-      setTimeout(() => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setStep("review");
-      }, 2200);
+      simulateScan(result.assets[0].uri);
     }
   }
 
   async function handlePickFromLibrary() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // File picker is restricted inside the web preview iframe — skip straight to AI extraction
+    if (Platform.OS === "web") {
+      simulateScan();
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
       quality: 0.9,
     });
     if (!result.canceled && result.assets[0]) {
-      setCardImageUri(result.assets[0].uri);
-      setStep("scanning");
-      setTimeout(() => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setStep("review");
-      }, 2200);
+      simulateScan(result.assets[0].uri);
     }
   }
 
@@ -212,11 +221,33 @@ export default function ScanScreen() {
                 fontSize: 13,
                 textAlign: "center",
                 marginTop: 24,
-                marginBottom: 36,
+                marginBottom: Platform.OS === "web" ? 8 : 36,
               }}
             >
               Position the business card within the frame
             </Text>
+
+            {Platform.OS === "web" && (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  backgroundColor: "rgba(79,142,255,0.1)",
+                  borderRadius: 10,
+                  paddingHorizontal: 12,
+                  paddingVertical: 7,
+                  marginBottom: 28,
+                  borderWidth: 1,
+                  borderColor: "rgba(79,142,255,0.25)",
+                }}
+              >
+                <Feather name="info" size={13} color={colors.primary} />
+                <Text style={{ color: colors.primary, fontSize: 12 }}>
+                  Camera uses AI demo mode in web preview
+                </Text>
+              </View>
+            )}
 
             {/* Main scan button */}
             <Pressable onPress={handleScan}>
