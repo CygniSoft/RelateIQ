@@ -75,11 +75,20 @@ export function GlassIcon({
             : {}),
         }}
       >
-        <BlurView
-          intensity={intensity}
-          tint="light"
-          style={StyleSheet.absoluteFill}
-        />
+        {Platform.OS === "android" ? (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "rgba(255,255,255,0.12)" },
+            ]}
+          />
+        ) : (
+          <BlurView
+            intensity={intensity}
+            tint="light"
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <LinearGradient
           colors={[tint + "66", tint + "1F", "rgba(255,255,255,0.05)"]}
           start={{ x: 0.1, y: 0 }}
@@ -93,7 +102,15 @@ export function GlassIcon({
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+            ...(Platform.OS === "android" ? { elevation: 2 } : {}),
+          }}
+        >
           {children}
         </View>
       </View>
