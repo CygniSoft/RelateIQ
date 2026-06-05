@@ -99,6 +99,7 @@ export interface UserProfile {
   phone: string;
   linkedin?: string;
   website?: string;
+  calendarInviteUrl?: string;
   defaultSignature: string;
   defaultIntroMessage: string;
 }
@@ -139,6 +140,7 @@ const DEFAULT_PROFILE: UserProfile = {
   phone: "",
   linkedin: "",
   website: "",
+  calendarInviteUrl: "",
   defaultSignature: "",
   defaultIntroMessage:
     "It was great meeting you! I'd love to explore how we can work together.",

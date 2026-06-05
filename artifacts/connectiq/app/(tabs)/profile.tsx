@@ -134,6 +134,7 @@ function EditProfileModal({
     { label: "Phone", key: "phone" },
     { label: "LinkedIn", key: "linkedin" },
     { label: "Website", key: "website" },
+    { label: "Calendar Invite URL", key: "calendarInviteUrl" },
   ];
 
   return (
