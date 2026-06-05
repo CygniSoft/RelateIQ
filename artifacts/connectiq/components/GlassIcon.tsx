@@ -78,7 +78,6 @@ export function GlassIcon({
         <BlurView
           intensity={intensity}
           tint="light"
-          experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined}
           style={StyleSheet.absoluteFill}
         />
         <LinearGradient
