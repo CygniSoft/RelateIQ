@@ -51,12 +51,13 @@ function generateIntroEmail(data: ExtractedCard, eventName: string, userProfile:
 export default function ScanScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { addContact, profile } = useApp();
+  const { addContact, profile, events } = useApp();
 
   const [step, setStep] = useState<ScanStep>("idle");
   const [cardImageUri, setCardImageUri] = useState<string | undefined>();
   const [extracted, setExtracted] = useState({ ...EMPTY_EXTRACTED });
   const [eventName, setEventName] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
   const [notes, setNotes] = useState("");
   const [category, setCategory] = useState<ContactCategory>("Potential client");
   const [priority, setPriority] = useState<Priority>("Medium");
@@ -158,6 +159,7 @@ export default function ScanScreen() {
     addContact({
       ...extracted,
       cardImageUri,
+      eventId: selectedEventId,
       eventName,
       meetingNotes: notes,
       aiSummary,
@@ -190,6 +192,7 @@ export default function ScanScreen() {
       setStep("idle");
       setExtracted({ ...EMPTY_EXTRACTED });
       setEventName("");
+      setSelectedEventId(undefined);
       setNotes("");
       setCardImageUri(undefined);
       setEmailDraft("");
@@ -518,13 +521,77 @@ export default function ScanScreen() {
               </Text>
 
               <View style={{ marginBottom: 16 }}>
-                <Text style={labelStyle(colors)}>Event Name</Text>
+                <Text style={labelStyle(colors)}>Event</Text>
+                {events.length > 0 && (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginTop: 4,
+                      marginBottom: 10,
+                    }}
+                  >
+                    {events.map((ev) => {
+                      const active = selectedEventId === ev.id;
+                      return (
+                        <Pressable
+                          key={ev.id}
+                          onPress={() => {
+                            if (active) {
+                              setSelectedEventId(undefined);
+                              setEventName("");
+                            } else {
+                              setSelectedEventId(ev.id);
+                              setEventName(ev.name);
+                            }
+                          }}
+                          style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 7,
+                            borderRadius: 20,
+                            borderWidth: 1,
+                            borderColor: active ? colors.primary : colors.border,
+                            backgroundColor: active
+                              ? colors.primary + "22"
+                              : colors.card,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: active
+                                ? colors.primary
+                                : colors.mutedForeground,
+                              fontSize: 13,
+                              fontWeight: active ? ("600" as const) : ("400" as const),
+                            }}
+                          >
+                            {ev.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
                 <TextInput
-                  value={eventName}
-                  onChangeText={setEventName}
-                  placeholder="e.g. Toronto Business Expo"
+                  value={selectedEventId ? "" : eventName}
+                  onChangeText={(text) => {
+                    setSelectedEventId(undefined);
+                    setEventName(text);
+                  }}
+                  editable={!selectedEventId}
+                  placeholder={
+                    selectedEventId
+                      ? "Using selected event above"
+                      : events.length > 0
+                      ? "Or type a new event name"
+                      : "e.g. Toronto Business Expo"
+                  }
                   placeholderTextColor={colors.mutedForeground}
-                  style={inputStyle(colors)}
+                  style={[
+                    inputStyle(colors),
+                    selectedEventId ? { opacity: 0.5 } : null,
+                  ]}
                 />
               </View>
 
