@@ -13,8 +13,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ContactCard } from "@/components/ContactCard";
+import { InsightCard } from "@/components/InsightCard";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { getEventInsight, getEventMetrics } from "@/lib/eventIntelligence";
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,6 +44,9 @@ export default function EventDetailScreen() {
     event.cost > 0
       ? ((event.revenueGenerated - event.cost) / event.cost) * 100
       : 0;
+
+  const metrics = getEventMetrics(event, eventContacts.length);
+  const insight = getEventInsight(event, contacts, events);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 24 : insets.bottom + 24;
@@ -157,65 +162,103 @@ export default function EventDetailScreen() {
           </View>
         </LinearGradient>
 
-        {/* Stats grid */}
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 10,
-            paddingHorizontal: 20,
-            marginTop: -8,
-            marginBottom: 24,
-          }}
-        >
-          {[
-            {
-              label: "Contacts",
-              value: eventContacts.length,
-              color: "#4F8EFF",
-            },
-            {
-              label: "Meetings Booked",
-              value: event.meetingsBooked,
-              color: "#7B5EFF",
-            },
-            {
-              label: "Proposals Sent",
-              value: event.proposalsSent,
-              color: "#F59E0B",
-            },
-            {
-              label: "Deals Won",
-              value: event.dealsWon,
-              color: "#10B981",
-            },
-          ].map((stat) => (
-            <View
-              key={stat.label}
-              style={{
-                width: "47%",
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: colors.radius,
-                padding: 16,
-              }}
-            >
-              <Text
+        {/* Event Intelligence panel */}
+        <View style={{ paddingHorizontal: 20, marginTop: 4, marginBottom: 24 }}>
+          <Text
+            style={{
+              color: colors.foreground,
+              fontSize: 16,
+              fontWeight: "600" as const,
+              marginBottom: 12,
+            }}
+          >
+            Event Intelligence
+          </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 10,
+            }}
+          >
+            {[
+              {
+                label: "Cost",
+                value: `$${metrics.cost.toLocaleString()}`,
+                color: "#FF8A65",
+              },
+              {
+                label: "Contacts",
+                value: metrics.contacts,
+                color: "#4F8EFF",
+              },
+              {
+                label: "Meetings",
+                value: metrics.meetings,
+                color: "#7B5EFF",
+              },
+              {
+                label: "Proposals",
+                value: metrics.proposals,
+                color: "#F59E0B",
+              },
+              {
+                label: "Deals Won",
+                value: metrics.deals,
+                color: "#10B981",
+              },
+              {
+                label: "Revenue",
+                value: `$${metrics.revenue.toLocaleString()}`,
+                color: "#06B6D4",
+              },
+            ].map((stat) => (
+              <View
+                key={stat.label}
                 style={{
-                  color: stat.color,
-                  fontSize: 28,
-                  fontWeight: "800" as const,
-                  letterSpacing: -1,
+                  width: "47%",
+                  backgroundColor: colors.card,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: colors.radius,
+                  padding: 16,
                 }}
               >
-                {stat.value}
-              </Text>
-              <Text style={{ color: colors.mutedForeground, fontSize: 12, marginTop: 2 }}>
-                {stat.label}
-              </Text>
+                <Text
+                  style={{
+                    color: stat.color,
+                    fontSize: 24,
+                    fontWeight: "800" as const,
+                    letterSpacing: -1,
+                  }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {stat.value}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  {stat.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {insight && (
+            <View style={{ marginTop: 10 }}>
+              <InsightCard
+                icon={insight.icon}
+                tint={insight.tint}
+                title={insight.title}
+                detail={insight.detail}
+              />
             </View>
-          ))}
+          )}
         </View>
 
         {/* Update revenue */}

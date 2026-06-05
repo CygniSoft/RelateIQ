@@ -16,9 +16,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { EventCard } from "@/components/EventCard";
 import { GlassIcon } from "@/components/GlassIcon";
+import { InsightCard } from "@/components/InsightCard";
 import { StatCard } from "@/components/StatCard";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { getPortfolioInsights } from "@/lib/eventIntelligence";
 
 function AddEventModal({
   visible,
@@ -199,6 +201,11 @@ export default function EventsScreen() {
     return { totalCost, totalRevenue, roi, totalContacts, totalMeetings };
   }, [events, contacts]);
 
+  const insights = useMemo(
+    () => getPortfolioInsights(events, contacts),
+    [events, contacts]
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
@@ -223,7 +230,7 @@ export default function EventsScreen() {
                 letterSpacing: -0.5,
               }}
             >
-              Events & ROI
+              Event Intelligence
             </Text>
             <Pressable
               onPress={() => {
@@ -302,6 +309,46 @@ export default function EventsScreen() {
             />
           </View>
         </View>
+
+        {/* AI Insights */}
+        {insights.length > 0 && (
+          <Animated.View
+            entering={FadeIn.duration(500)}
+            style={{ paddingHorizontal: 20, marginBottom: 8 }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
+              <Feather name="zap" size={16} color={colors.primary} />
+              <Text
+                style={{
+                  color: colors.foreground,
+                  fontSize: 18,
+                  fontWeight: "700" as const,
+                  letterSpacing: -0.3,
+                }}
+              >
+                AI Insights
+              </Text>
+            </View>
+            <View style={{ gap: 10 }}>
+              {insights.map((insight) => (
+                <InsightCard
+                  key={insight.id}
+                  icon={insight.icon}
+                  tint={insight.tint}
+                  title={insight.title}
+                  detail={insight.detail}
+                />
+              ))}
+            </View>
+          </Animated.View>
+        )}
 
         {/* Events list */}
         <View style={{ paddingTop: 8 }}>
