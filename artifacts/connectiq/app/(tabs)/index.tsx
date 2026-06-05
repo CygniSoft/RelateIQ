@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ContactCard } from "@/components/ContactCard";
 import { FollowUpCard } from "@/components/FollowUpCard";
-import { Icon3D } from "@/components/Icon3D";
+import { GlassIcon } from "@/components/GlassIcon";
 import { StatCard } from "@/components/StatCard";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -263,9 +263,9 @@ export default function HomeScreen() {
                   ${stats.totalRevenue.toLocaleString()}
                 </Text>
               </View>
-              <Icon3D type="roi" size={52} animated delay={300}>
+              <GlassIcon tint="#10B981" size={52}>
                 <Feather name="trending-up" size={24} color="#fff" />
-              </Icon3D>
+              </GlassIcon>
             </LinearGradient>
           </Animated.View>
         )}

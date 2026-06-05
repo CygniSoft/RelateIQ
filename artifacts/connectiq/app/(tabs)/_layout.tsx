@@ -7,7 +7,29 @@ import React from "react";
 import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GlassIcon } from "@/components/GlassIcon";
 import { useColors } from "@/hooks/useColors";
+
+function TabBarIcon({
+  focused,
+  color,
+  tint,
+  render,
+}: {
+  focused: boolean;
+  color: string;
+  tint: string;
+  render: (size: number, color: string) => React.ReactNode;
+}) {
+  if (focused) {
+    return (
+      <GlassIcon tint={tint} size={32} radius={10}>
+        {render(18, "#fff")}
+      </GlassIcon>
+    );
+  }
+  return <>{render(22, color)}</>;
+}
 
 function NativeTabLayout() {
   return (
@@ -82,8 +104,13 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            <Feather name="home" size={22} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              focused={focused}
+              color={color}
+              tint={colors.primary}
+              render={(s, c) => <Feather name="home" size={s} color={c} />}
+            />
           ),
         }}
       />
@@ -91,8 +118,13 @@ function ClassicTabLayout() {
         name="scan"
         options={{
           title: "Scan",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="scan-outline" size={22} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              focused={focused}
+              color={color}
+              tint={colors.primary}
+              render={(s, c) => <Ionicons name="scan-outline" size={s} color={c} />}
+            />
           ),
         }}
       />
@@ -100,8 +132,13 @@ function ClassicTabLayout() {
         name="contacts"
         options={{
           title: "Contacts",
-          tabBarIcon: ({ color }) => (
-            <Feather name="users" size={22} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              focused={focused}
+              color={color}
+              tint={colors.primary}
+              render={(s, c) => <Feather name="users" size={s} color={c} />}
+            />
           ),
         }}
       />
@@ -109,8 +146,13 @@ function ClassicTabLayout() {
         name="events"
         options={{
           title: "Events",
-          tabBarIcon: ({ color }) => (
-            <Feather name="calendar" size={22} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              focused={focused}
+              color={color}
+              tint={colors.primary}
+              render={(s, c) => <Feather name="calendar" size={s} color={c} />}
+            />
           ),
         }}
       />
@@ -118,8 +160,13 @@ function ClassicTabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <Feather name="user" size={22} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              focused={focused}
+              color={color}
+              tint={colors.primary}
+              render={(s, c) => <Feather name="user" size={s} color={c} />}
+            />
           ),
         }}
       />

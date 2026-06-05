@@ -15,6 +15,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { EventCard } from "@/components/EventCard";
+import { GlassIcon } from "@/components/GlassIcon";
 import { StatCard } from "@/components/StatCard";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -229,16 +230,10 @@ export default function EventsScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowAddModal(true);
               }}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: colors.primary,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
             >
-              <Feather name="plus" size={20} color="#fff" />
+              <GlassIcon tint={colors.primary} size={36}>
+                <Feather name="plus" size={20} color="#fff" />
+              </GlassIcon>
             </Pressable>
           </View>
 
@@ -318,7 +313,9 @@ export default function EventsScreen() {
                 gap: 12,
               }}
             >
-              <Feather name="calendar" size={40} color={colors.mutedForeground} />
+              <GlassIcon tint={colors.primary} size={80}>
+                <Feather name="calendar" size={36} color="#fff" />
+              </GlassIcon>
               <Text
                 style={{
                   color: colors.mutedForeground,

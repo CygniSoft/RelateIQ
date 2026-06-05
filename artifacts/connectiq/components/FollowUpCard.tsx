@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
+import { GlassIcon } from "@/components/GlassIcon";
 import { Contact } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -55,18 +56,9 @@ export function FollowUpCard({ contact, onComplete }: FollowUpCardProps) {
         marginBottom: 8,
       }}
     >
-      <View
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: colors.primary + "22",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Feather name="clock" size={18} color={colors.primary} />
-      </View>
+      <GlassIcon tint={colors.primary} size={40}>
+        <Feather name="clock" size={18} color="#fff" />
+      </GlassIcon>
       <View style={{ flex: 1 }}>
         <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "600" as const }}>
           {contact.firstName} {contact.lastName}
@@ -85,18 +77,10 @@ export function FollowUpCard({ contact, onComplete }: FollowUpCardProps) {
           onComplete();
         }}
         hitSlop={8}
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: 14,
-          backgroundColor: "#10B98122",
-          borderWidth: 1,
-          borderColor: "#10B98155",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
       >
-        <Feather name="check" size={14} color="#10B981" />
+        <GlassIcon tint="#10B981" size={28}>
+          <Feather name="check" size={14} color="#fff" />
+        </GlassIcon>
       </Pressable>
     </Pressable>
   );

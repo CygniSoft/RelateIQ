@@ -9,6 +9,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
+import { GlassIcon } from "@/components/GlassIcon";
 import { useColors } from "@/hooks/useColors";
 
 interface StatCardProps {
@@ -70,7 +71,9 @@ export function StatCard({
           },
         ]}
       >
-        <View style={styles.iconWrap}>{icon}</View>
+        <GlassIcon tint={gradColors[0]} size={36} style={styles.iconWrap}>
+          {icon}
+        </GlassIcon>
         <Text style={styles.value}>{value}</Text>
         <Text style={styles.label}>{label}</Text>
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}

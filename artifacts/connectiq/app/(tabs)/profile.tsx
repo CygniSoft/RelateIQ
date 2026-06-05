@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/ContactCard";
+import { GlassIcon } from "@/components/GlassIcon";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import {
@@ -55,18 +56,14 @@ function SettingRow({
         gap: 14,
       }}
     >
-      <View
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          backgroundColor: danger ? "#FF475722" : colors.secondary,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {icon}
-      </View>
+      <GlassIcon tint={danger ? "#FF4757" : colors.primary} size={36}>
+        {React.isValidElement(icon)
+          ? React.cloneElement(
+              icon as React.ReactElement<{ color?: string }>,
+              { color: "#fff" }
+            )
+          : icon}
+      </GlassIcon>
       <Text
         style={{
           flex: 1,
@@ -355,19 +352,9 @@ function PrivacyModal({
                 marginBottom: 24,
               }}
             >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  backgroundColor: colors.secondary,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Feather name={item.icon} size={18} color={colors.accent} />
-              </View>
+              <GlassIcon tint={colors.accent} size={40} style={{ flexShrink: 0 }}>
+                <Feather name={item.icon} size={18} color="#fff" />
+              </GlassIcon>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" as const, marginBottom: 4 }}>
                   {item.title}

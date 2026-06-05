@@ -21,6 +21,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GlassIcon } from "@/components/GlassIcon";
 import { ScanFrame } from "@/components/ScanFrame";
 import { useApp, ContactCategory, FollowUpAction, Priority } from "@/context/AppContext";
 import { sendEmail } from "@/lib/emailApi";
@@ -800,18 +801,9 @@ export default function ScanScreen() {
                 marginBottom: 8,
               }}
             >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: colors.primary + "22",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons name="sparkles" size={18} color={colors.primary} />
-              </View>
+              <GlassIcon tint={colors.primary} size={36}>
+                <Ionicons name="sparkles" size={18} color="#fff" />
+              </GlassIcon>
               <Text
                 style={{
                   color: colors.foreground,

@@ -18,6 +18,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/ContactCard";
+import { GlassIcon } from "@/components/GlassIcon";
 import { useApp, TimelineEvent } from "@/context/AppContext";
 import { sendEmail } from "@/lib/emailApi";
 import { useColors } from "@/hooks/useColors";
@@ -51,20 +52,9 @@ function TimelineItem({
   return (
     <View style={{ flexDirection: "row", gap: 12 }}>
       <View style={{ alignItems: "center", width: 36 }}>
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: color + "22",
-            alignItems: "center",
-            justifyContent: "center",
-            borderWidth: 1,
-            borderColor: color + "55",
-          }}
-        >
-          <Feather name={name} size={15} color={color} />
-        </View>
+        <GlassIcon tint={color} size={36}>
+          <Feather name={name} size={15} color="#fff" />
+        </GlassIcon>
         {!isLast && (
           <View
             style={{

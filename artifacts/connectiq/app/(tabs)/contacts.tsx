@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ContactCard } from "@/components/ContactCard";
+import { GlassIcon } from "@/components/GlassIcon";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -198,7 +199,9 @@ export default function ContactsScreen() {
               gap: 12,
             }}
           >
-            <Feather name="users" size={40} color={colors.mutedForeground} />
+            <GlassIcon tint={colors.primary} size={80}>
+              <Feather name="users" size={36} color="#fff" />
+            </GlassIcon>
             <Text
               style={{
                 color: colors.mutedForeground,
