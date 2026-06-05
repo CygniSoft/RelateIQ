@@ -75,7 +75,7 @@ function SettingRow({
       {value && (
         <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{value}</Text>
       )}
-      {!danger && (
+      {onPress && !danger && (
         <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
       )}
     </Pressable>
