@@ -115,6 +115,7 @@ interface AppContextType {
   deleteEvent: (id: string) => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
   addTimelineEvent: (contactId: string, event: Omit<TimelineEvent, "id">) => void;
+  signOut: () => Promise<void>;
   clearAllData: () => Promise<void>;
   isLoaded: boolean;
 }
@@ -272,6 +273,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [profile]
   );
 
+  const signOut = useCallback(async () => {
+    await AsyncStorage.removeItem(STORAGE_KEYS.PROFILE);
+    setProfile(DEFAULT_PROFILE);
+  }, []);
+
   const clearAllData = useCallback(async () => {
     await AsyncStorage.multiRemove([
       STORAGE_KEYS.CONTACTS,
@@ -321,6 +327,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         deleteEvent,
         updateProfile,
         addTimelineEvent,
+        signOut,
         clearAllData,
         isLoaded,
       }}

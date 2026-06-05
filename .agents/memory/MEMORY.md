@@ -1,0 +1,1 @@
+- [OpenAI vision via Replit AI Integrations](openai-vision-integration.md) — api-server calls OpenAI (incl. card-scan vision) via Replit proxy, no user key; raise express.json body limit for image payloads.

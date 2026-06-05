@@ -24,26 +24,27 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScanFrame } from "@/components/ScanFrame";
 import { useApp, ContactCategory, FollowUpAction, Priority } from "@/context/AppContext";
 import { sendEmail } from "@/lib/emailApi";
+import { scanCard, type ExtractedCard } from "@/lib/scanApi";
 import { useColors } from "@/hooks/useColors";
 
 type ScanStep = "idle" | "scanning" | "review" | "context" | "email" | "done";
 
-const MOCK_EXTRACTED = {
-  firstName: "Jordan",
-  lastName: "Blake",
-  company: "NovaTech Industries",
-  jobTitle: "Director of Partnerships",
-  email: "jordan.blake@novatech.com",
-  phone: "+1 (416) 555-0789",
-  website: "novatech.com",
-  linkedin: "linkedin.com/in/jordanblake",
+const EMPTY_EXTRACTED: ExtractedCard = {
+  firstName: "",
+  lastName: "",
+  company: "",
+  jobTitle: "",
+  email: "",
+  phone: "",
+  website: "",
+  linkedin: "",
 };
 
-function generateAISummary(data: typeof MOCK_EXTRACTED, eventName: string, notes: string) {
+function generateAISummary(data: ExtractedCard, eventName: string, notes: string) {
   return `Met ${data.firstName} ${data.lastName} at ${eventName || "a networking event"}. ${data.firstName} is ${data.jobTitle} at ${data.company}. ${notes ? `Discussion: ${notes}` : "Exploring potential partnership opportunities."} Recommended next step: send company profile and schedule intro call.`;
 }
 
-function generateIntroEmail(data: typeof MOCK_EXTRACTED, eventName: string, userProfile: { name: string; company: string; jobTitle: string }) {
+function generateIntroEmail(data: ExtractedCard, eventName: string, userProfile: { name: string; company: string; jobTitle: string }) {
   return `Hi ${data.firstName},\n\nIt was great meeting you at ${eventName || "the event"}!\n\nI enjoyed our conversation and learning more about ${data.company}.\n\nAs mentioned, I'm ${userProfile.name} from ${userProfile.company}, where I work as ${userProfile.jobTitle}. I'd love to explore how we might work together.\n\nWould you be open to a quick 20-minute call this week?\n\nBest regards,\n${userProfile.name}`;
 }
 
@@ -54,7 +55,7 @@ export default function ScanScreen() {
 
   const [step, setStep] = useState<ScanStep>("idle");
   const [cardImageUri, setCardImageUri] = useState<string | undefined>();
-  const [extracted, setExtracted] = useState({ ...MOCK_EXTRACTED });
+  const [extracted, setExtracted] = useState({ ...EMPTY_EXTRACTED });
   const [eventName, setEventName] = useState("");
   const [notes, setNotes] = useState("");
   const [category, setCategory] = useState<ContactCategory>("Potential client");
@@ -67,20 +68,51 @@ export default function ScanScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 84 + 24 : insets.bottom + 56 + 24;
 
-  function simulateScan(uri?: string) {
-    setCardImageUri(uri);
+  function showError(message: string) {
+    if (Platform.OS === "web") {
+      window.alert(message);
+    } else {
+      Alert.alert("Couldn't read card", message);
+    }
+  }
+
+  async function extractFromAsset(asset: ImagePicker.ImagePickerAsset) {
+    setCardImageUri(asset.uri);
     setStep("scanning");
-    setTimeout(() => {
+
+    const image =
+      asset.base64 != null && asset.base64 !== ""
+        ? asset.base64
+        : asset.uri.startsWith("data:")
+        ? asset.uri
+        : undefined;
+
+    if (!image) {
+      setStep("idle");
+      showError("Could not read the image. Please try a different photo.");
+      return;
+    }
+
+    const result = await scanCard(image);
+
+    if (result.success && result.data) {
+      setExtracted(result.data);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setStep("review");
-    }, 2200);
+    } else {
+      setStep("idle");
+      showError(
+        (result.error ?? "Something went wrong.") +
+          "\n\nYou can try again or enter the details manually.",
+      );
+    }
   }
 
   async function handleScan() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Camera is blocked inside the web preview iframe — skip straight to AI extraction
+    // Camera is blocked inside the web preview iframe — use the library picker there instead
     if (Platform.OS === "web") {
-      simulateScan();
+      handlePickFromLibrary();
       return;
     }
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -90,28 +122,23 @@ export default function ScanScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: "images",
-      quality: 0.9,
-      allowsEditing: true,
-      aspect: [16, 10],
+      quality: 0.8,
+      base64: true,
     });
     if (!result.canceled && result.assets[0]) {
-      simulateScan(result.assets[0].uri);
+      await extractFromAsset(result.assets[0]);
     }
   }
 
   async function handlePickFromLibrary() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // File picker is restricted inside the web preview iframe — skip straight to AI extraction
-    if (Platform.OS === "web") {
-      simulateScan();
-      return;
-    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
-      quality: 0.9,
+      quality: 0.8,
+      base64: true,
     });
     if (!result.canceled && result.assets[0]) {
-      simulateScan(result.assets[0].uri);
+      await extractFromAsset(result.assets[0]);
     }
   }
 
@@ -161,7 +188,7 @@ export default function ScanScreen() {
     setStep("done");
     setTimeout(() => {
       setStep("idle");
-      setExtracted({ ...MOCK_EXTRACTED });
+      setExtracted({ ...EMPTY_EXTRACTED });
       setEventName("");
       setNotes("");
       setCardImageUri(undefined);
@@ -244,7 +271,7 @@ export default function ScanScreen() {
               >
                 <Feather name="info" size={13} color={colors.primary} />
                 <Text style={{ color: colors.primary, fontSize: 12 }}>
-                  Camera uses AI demo mode in web preview
+                  Pick a card image to scan in web preview
                 </Text>
               </View>
             )}
@@ -389,7 +416,7 @@ export default function ScanScreen() {
                   { label: "Phone", key: "phone" },
                   { label: "Website", key: "website" },
                   { label: "LinkedIn", key: "linkedin" },
-                ] as Array<{ label: string; key: keyof typeof MOCK_EXTRACTED }>
+                ] as Array<{ label: string; key: keyof ExtractedCard }>
               ).map((field) => (
                 <View key={field.key} style={{ marginBottom: 14 }}>
                   <Text

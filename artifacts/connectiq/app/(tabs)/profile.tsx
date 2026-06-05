@@ -538,7 +538,7 @@ function HelpModal({
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { profile, contacts, events, clearAllData } = useApp();
+  const { profile, contacts, events, signOut, clearAllData } = useApp();
   const insets = useSafeAreaInsets();
   const [showEdit, setShowEdit] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -560,23 +560,32 @@ export default function ProfileScreen() {
     phone: profile.phone,
   };
 
+  async function doSignOut() {
+    await signOut();
+    router.replace("/(tabs)");
+  }
+
   function handleSignOut() {
     if (Platform.OS === "web") {
-      if (window.confirm("Sign out? Your data will remain saved on this device.")) {
-        router.replace("/(tabs)");
+      if (
+        window.confirm(
+          "Sign out? Your contacts and events stay saved on this device, but your profile will be cleared.",
+        )
+      ) {
+        void doSignOut();
       }
       return;
     }
     Alert.alert(
       "Sign Out",
-      "Are you sure you want to sign out? Your data will remain saved on this device.",
+      "Are you sure you want to sign out? Your contacts and events stay saved on this device, but your profile will be cleared.",
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Sign Out",
           style: "destructive",
           onPress: () => {
-            router.replace("/(tabs)");
+            void doSignOut();
           },
         },
       ],
