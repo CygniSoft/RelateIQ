@@ -1,1 +1,2 @@
-- [OpenAI vision via Replit AI Integrations](openai-vision-integration.md) — api-server calls OpenAI (incl. card-scan vision) via Replit proxy, no user key; raise express.json body limit for image payloads.
+- [Replit connectors-sdk proxy paths](replit-connectors-proxy.md) — .proxy() forwards onto the provider API *root*; google-calendar needs the `/calendar/v3` prefix or you get a Google 404 HTML page.
+- [OpenAI vision integration](openai-vision-integration.md) — business-card scanning notes.

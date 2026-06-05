@@ -1,7 +1,7 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Linking,
@@ -19,6 +19,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ContactCard";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import {
+  getIntegrationStatus,
+  syncContactsToHubSpot,
+  syncFollowUpsToCalendar,
+  type IntegrationStatus,
+} from "@/lib/integrationsApi";
 
 const PLAN_COLORS: [string, string] = ["#7B5EFF", "#4F8EFF"];
 
@@ -544,6 +550,111 @@ export default function ProfileScreen() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [integrations, setIntegrations] = useState<IntegrationStatus | null>(null);
+  const [syncing, setSyncing] = useState<"hubspot" | "calendar" | null>(null);
+
+  const refreshIntegrations = useCallback(async () => {
+    const status = await getIntegrationStatus();
+    setIntegrations(status);
+  }, []);
+
+  useEffect(() => {
+    void refreshIntegrations();
+  }, [refreshIntegrations]);
+
+  function notify(title: string, message: string) {
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  }
+
+  async function handleSyncCalendar() {
+    if (syncing) return;
+    if (!integrations?.googleCalendar) {
+      notify(
+        "Google Calendar not connected",
+        "Connect Google Calendar from Replit to sync your follow-up reminders.",
+      );
+      return;
+    }
+    const followUps = contacts
+      .filter(
+        (c) =>
+          c.followUpDate &&
+          c.followUpAction &&
+          c.followUpAction !== "No follow-up needed",
+      )
+      .map((c) => ({
+        contactId: c.id,
+        name: `${c.firstName} ${c.lastName}`.trim() || c.company || "Contact",
+        action: c.followUpAction,
+        date: c.followUpDate as string,
+        notes: c.meetingNotes,
+      }));
+
+    if (followUps.length === 0) {
+      notify(
+        "Nothing to sync",
+        "Add a follow-up date to a contact and it will show up in your Google Calendar.",
+      );
+      return;
+    }
+
+    setSyncing("calendar");
+    const result = await syncFollowUpsToCalendar(followUps);
+    setSyncing(null);
+
+    if (result.success) {
+      notify(
+        "Google Calendar",
+        `Added ${result.synced} follow-up${result.synced === 1 ? "" : "s"} to your calendar.` +
+          (result.skipped ? ` ${result.skipped} already there.` : ""),
+      );
+    } else {
+      notify("Calendar sync failed", result.error ?? "Please try again.");
+    }
+  }
+
+  async function handleSyncHubSpot() {
+    if (syncing) return;
+    if (!integrations?.hubspot) {
+      notify(
+        "HubSpot not connected",
+        "Connect HubSpot from Replit to push your contacts into your CRM.",
+      );
+      return;
+    }
+    const payload = contacts.map((c) => ({
+      firstName: c.firstName,
+      lastName: c.lastName,
+      company: c.company,
+      jobTitle: c.jobTitle,
+      email: c.email,
+      phone: c.phone,
+      website: c.website,
+    }));
+
+    if (payload.length === 0) {
+      notify("Nothing to sync", "Scan a few cards first, then push them to HubSpot.");
+      return;
+    }
+
+    setSyncing("hubspot");
+    const result = await syncContactsToHubSpot(payload);
+    setSyncing(null);
+
+    if (result.success) {
+      notify(
+        "HubSpot",
+        `Synced ${result.synced} contact${result.synced === 1 ? "" : "s"} to HubSpot.` +
+          (result.skipped ? ` ${result.skipped} skipped (no email).` : ""),
+      );
+    } else {
+      notify("HubSpot sync failed", result.error ?? "Please try again.");
+    }
+  }
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 84 + 24 : insets.bottom + 56 + 24;
@@ -836,22 +947,39 @@ export default function ProfileScreen() {
           <SettingRow
             icon={<Feather name="mail" size={16} color="#EA4335" />}
             label="Gmail"
-            value="Connected"
+            value={integrations?.gmail ? "Connected" : "Not connected"}
+            onPress={() =>
+              notify(
+                "Gmail",
+                integrations?.gmail
+                  ? "Connected. Your AI intro emails are sent through Gmail."
+                  : "Gmail is not configured for this app yet.",
+              )
+            }
           />
           <SettingRow
             icon={<Feather name="calendar" size={16} color="#4285F4" />}
             label="Google Calendar"
-            value="Connect"
+            value={
+              syncing === "calendar"
+                ? "Syncing…"
+                : integrations?.googleCalendar
+                ? "Sync follow-ups"
+                : "Not connected"
+            }
+            onPress={handleSyncCalendar}
           />
           <SettingRow
             icon={<Feather name="bar-chart-2" size={16} color="#FF7A59" />}
             label="HubSpot CRM"
-            value="Connect"
-          />
-          <SettingRow
-            icon={<Ionicons name="logo-linkedin" size={16} color="#0A66C2" />}
-            label="LinkedIn"
-            value="Connect"
+            value={
+              syncing === "hubspot"
+                ? "Syncing…"
+                : integrations?.hubspot
+                ? "Sync contacts"
+                : "Not connected"
+            }
+            onPress={handleSyncHubSpot}
           />
         </View>
 
