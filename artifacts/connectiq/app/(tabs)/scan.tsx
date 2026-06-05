@@ -45,8 +45,20 @@ function generateAISummary(data: ExtractedCard, eventName: string, notes: string
   return `Met ${data.firstName} ${data.lastName} at ${eventName || "a networking event"}. ${data.firstName} is ${data.jobTitle} at ${data.company}. ${notes ? `Discussion: ${notes}` : "Exploring potential partnership opportunities."} Recommended next step: send company profile and schedule intro call.`;
 }
 
-function generateIntroEmail(data: ExtractedCard, eventName: string, userProfile: { name: string; company: string; jobTitle: string }) {
-  return `Hi ${data.firstName},\n\nIt was great meeting you at ${eventName || "the event"}!\n\nI enjoyed our conversation and learning more about ${data.company}.\n\nAs mentioned, I'm ${userProfile.name} from ${userProfile.company}, where I work as ${userProfile.jobTitle}. I'd love to explore how we might work together.\n\nWould you be open to a quick 20-minute call this week?\n\nBest regards,\n${userProfile.name}`;
+function generateIntroEmail(
+  data: ExtractedCard,
+  eventName: string,
+  userProfile: {
+    name: string;
+    company: string;
+    jobTitle: string;
+    calendarInviteUrl?: string;
+  }
+) {
+  const calendarLink = userProfile.calendarInviteUrl?.trim()
+    ? `\n\nYou can grab a time that works for you here: ${userProfile.calendarInviteUrl.trim()}`
+    : "";
+  return `Hi ${data.firstName},\n\nIt was great meeting you at ${eventName || "the event"}!\n\nI enjoyed our conversation and learning more about ${data.company}.\n\nAs mentioned, I'm ${userProfile.name} from ${userProfile.company}, where I work as ${userProfile.jobTitle}. I'd love to explore how we might work together.\n\nWould you be open to a quick 20-minute call this week?${calendarLink}\n\nBest regards,\n${userProfile.name}`;
 }
 
 export default function ScanScreen() {
