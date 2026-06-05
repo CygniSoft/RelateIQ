@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ConnectIQ",
+    "name": "RelateIQ+",
     "slug": "connectiq",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -34,14 +34,14 @@
       [
         "expo-contacts",
         {
-          "contactsPermission": "Allow ConnectIQ to save contacts to your phone."
+          "contactsPermission": "Allow RelateIQ+ to save contacts to your phone."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow ConnectIQ to access your photos to scan business cards.",
-          "cameraPermission": "Allow ConnectIQ to use your camera to scan business cards."
+          "photosPermission": "Allow RelateIQ+ to access your photos to scan business cards.",
+          "cameraPermission": "Allow RelateIQ+ to use your camera to scan business cards."
         }
       ]
     ],

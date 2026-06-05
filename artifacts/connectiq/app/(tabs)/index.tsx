@@ -152,7 +152,7 @@ const HOW_STEPS: Array<{
     icon: <Feather name="mail" size={20} color="#fff" />,
     tint: "#3B82F6",
     title: "Send a smart intro",
-    body: "ConnectIQ drafts a personalized follow-up email you can send in one tap.",
+    body: "RelateIQ+ drafts a personalized follow-up email you can send in one tap.",
   },
   {
     icon: <Feather name="trending-up" size={20} color="#fff" />,
@@ -194,7 +194,7 @@ function HowItWorks() {
           paddingHorizontal: 4,
         }}
       >
-        How ConnectIQ works
+        How RelateIQ+ works
       </Text>
       <Text
         style={{

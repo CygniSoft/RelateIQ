@@ -284,7 +284,7 @@ function NotificationsModal({
         </View>
         <ScrollView contentContainerStyle={{ padding: 20 }}>
           <Text style={{ color: colors.mutedForeground, fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
-            Choose which notifications ConnectIQ sends you. Changes take effect immediately.
+            Choose which notifications RelateIQ+ sends you. Changes take effect immediately.
           </Text>
           {rows.map((row, i) => (
             <View
@@ -336,12 +336,12 @@ function PrivacyModal({
     {
       icon: "database" as const,
       title: "Local Storage Only",
-      body: "All your contacts, events, and notes are stored on your device. ConnectIQ never uploads your personal data to external servers.",
+      body: "All your contacts, events, and notes are stored on your device. RelateIQ+ never uploads your personal data to external servers.",
     },
     {
       icon: "mail" as const,
       title: "Email via Gmail",
-      body: "Emails are sent using your own Gmail account through your App Password. ConnectIQ does not store or log email content.",
+      body: "Emails are sent using your own Gmail account through your App Password. RelateIQ+ does not store or log email content.",
     },
     {
       icon: "eye-off" as const,
@@ -451,15 +451,15 @@ function HelpModal({
   const faqs = [
     {
       q: "How do I scan a business card?",
-      a: "Tap the Scan tab, then press \"Scan Business Card\". You can use your camera or pick a photo from your gallery. ConnectIQ will extract the contact's details automatically.",
+      a: "Tap the Scan tab, then press \"Scan Business Card\". You can use your camera or pick a photo from your gallery. RelateIQ+ will extract the contact's details automatically.",
     },
     {
       q: "How does AI intro email work?",
-      a: "After scanning a card and adding meeting context, ConnectIQ generates a personalised intro email based on the contact's role and your conversation notes. You can edit it before sending.",
+      a: "After scanning a card and adding meeting context, RelateIQ+ generates a personalised intro email based on the contact's role and your conversation notes. You can edit it before sending.",
     },
     {
       q: "How do I set up Gmail sending?",
-      a: "Go to your Google Account → Security → 2-Step Verification → App Passwords. Generate a password for ConnectIQ, then ask your admin to add it to the app secrets (GMAIL_USER and GMAIL_APP_PASSWORD).",
+      a: "Go to your Google Account → Security → 2-Step Verification → App Passwords. Generate a password for RelateIQ+, then ask your admin to add it to the app secrets (GMAIL_USER and GMAIL_APP_PASSWORD).",
     },
     {
       q: "Where is my data stored?",

@@ -137,7 +137,7 @@ export default function ContactDetailScreen() {
     if (status !== "granted") {
       Alert.alert(
         "Permission denied",
-        "ConnectIQ needs access to your contacts to save this person.",
+        "RelateIQ+ needs access to your contacts to save this person.",
       );
       return;
     }
