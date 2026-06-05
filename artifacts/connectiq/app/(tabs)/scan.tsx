@@ -522,7 +522,7 @@ export default function ScanScreen() {
                       fontWeight: "700" as const,
                     }}
                   >
-                    Add Context
+                    Add Contact
                   </Text>
                 </LinearGradient>
               </Pressable>
