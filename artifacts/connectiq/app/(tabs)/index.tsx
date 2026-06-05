@@ -130,6 +130,129 @@ function GreetingHeader({ name }: { name: string }) {
   );
 }
 
+const HOW_STEPS: Array<{
+  icon: React.ReactNode;
+  tint: string;
+  title: string;
+  body: string;
+}> = [
+  {
+    icon: <Ionicons name="scan" size={22} color="#fff" />,
+    tint: "#4F8EFF",
+    title: "Scan a business card",
+    body: "Point your camera at any card — AI instantly captures their name, role, and company.",
+  },
+  {
+    icon: <Feather name="map-pin" size={20} color="#fff" />,
+    tint: "#7B5EFF",
+    title: "Add meeting context",
+    body: "Note where you met, the event, and any potential deal value.",
+  },
+  {
+    icon: <Feather name="mail" size={20} color="#fff" />,
+    tint: "#3B82F6",
+    title: "Send a smart intro",
+    body: "ConnectIQ drafts a personalized follow-up email you can send in one tap.",
+  },
+  {
+    icon: <Feather name="trending-up" size={20} color="#fff" />,
+    tint: "#10B981",
+    title: "Track & follow up",
+    body: "Relationship scores and reminders keep every connection warm.",
+  },
+];
+
+function HowItWorks() {
+  const colors = useColors();
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(16);
+
+  useEffect(() => {
+    opacity.value = withDelay(200, withTiming(1, { duration: 500 }));
+    translateY.value = withDelay(
+      200,
+      withSpring(0, { damping: 18, stiffness: 90 })
+    );
+  }, [opacity, translateY]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[animStyle, { paddingHorizontal: 16, marginBottom: 24 }]}
+    >
+      <Text
+        style={{
+          color: colors.foreground,
+          fontSize: 18,
+          fontWeight: "700" as const,
+          letterSpacing: -0.3,
+          marginBottom: 4,
+          paddingHorizontal: 4,
+        }}
+      >
+        How ConnectIQ works
+      </Text>
+      <Text
+        style={{
+          color: colors.mutedForeground,
+          fontSize: 13,
+          lineHeight: 18,
+          marginBottom: 16,
+          paddingHorizontal: 4,
+        }}
+      >
+        Turn every business card into a warm connection in four steps.
+      </Text>
+      <View
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: colors.radius,
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: 18,
+          gap: 20,
+        }}
+      >
+        {HOW_STEPS.map((step, i) => (
+          <View
+            key={step.title}
+            style={{ flexDirection: "row", alignItems: "center", gap: 14 }}
+          >
+            <GlassIcon tint={step.tint} size={44}>
+              {step.icon}
+            </GlassIcon>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  color: colors.foreground,
+                  fontSize: 15,
+                  fontWeight: "600" as const,
+                  marginBottom: 2,
+                }}
+              >
+                {`${i + 1}. ${step.title}`}
+              </Text>
+              <Text
+                style={{
+                  color: colors.mutedForeground,
+                  fontSize: 13,
+                  lineHeight: 18,
+                }}
+              >
+                {step.body}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </Animated.View>
+  );
+}
+
 export default function HomeScreen() {
   const colors = useColors();
   const { contacts, events, profile, updateContact } = useApp();
@@ -274,6 +397,9 @@ export default function HomeScreen() {
         <View style={{ alignItems: "center", marginBottom: 28 }}>
           <ScanFAB />
         </View>
+
+        {/* Getting started guide (new users) */}
+        {contacts.length === 0 && <HowItWorks />}
 
         {/* Follow-ups */}
         {followUps.length > 0 && (
