@@ -22,7 +22,6 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import {
   getIntegrationStatus,
-  syncContactsToHubSpot,
   syncFollowUpsToCalendar,
   type IntegrationStatus,
 } from "@/lib/integrationsApi";
@@ -538,7 +537,7 @@ export default function ProfileScreen() {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [integrations, setIntegrations] = useState<IntegrationStatus | null>(null);
-  const [syncing, setSyncing] = useState<"hubspot" | "calendar" | null>(null);
+  const [syncing, setSyncing] = useState<"calendar" | null>(null);
 
   const refreshIntegrations = useCallback(async () => {
     const status = await getIntegrationStatus();
@@ -601,45 +600,6 @@ export default function ProfileScreen() {
       );
     } else {
       notify("Calendar sync failed", result.error ?? "Please try again.");
-    }
-  }
-
-  async function handleSyncHubSpot() {
-    if (syncing) return;
-    if (!integrations?.hubspot) {
-      notify(
-        "HubSpot not connected",
-        "Connect HubSpot from Replit to push your contacts into your CRM.",
-      );
-      return;
-    }
-    const payload = contacts.map((c) => ({
-      firstName: c.firstName,
-      lastName: c.lastName,
-      company: c.company,
-      jobTitle: c.jobTitle,
-      email: c.email,
-      phone: c.phone,
-      website: c.website,
-    }));
-
-    if (payload.length === 0) {
-      notify("Nothing to sync", "Scan a few cards first, then push them to HubSpot.");
-      return;
-    }
-
-    setSyncing("hubspot");
-    const result = await syncContactsToHubSpot(payload);
-    setSyncing(null);
-
-    if (result.success) {
-      notify(
-        "HubSpot",
-        `Synced ${result.synced} contact${result.synced === 1 ? "" : "s"} to HubSpot.` +
-          (result.skipped ? ` ${result.skipped} skipped (no email).` : ""),
-      );
-    } else {
-      notify("HubSpot sync failed", result.error ?? "Please try again.");
     }
   }
 
@@ -955,18 +915,6 @@ export default function ProfileScreen() {
                 : "Not connected"
             }
             onPress={handleSyncCalendar}
-          />
-          <SettingRow
-            icon={<Feather name="bar-chart-2" size={16} color="#FF7A59" />}
-            label="HubSpot CRM"
-            value={
-              syncing === "hubspot"
-                ? "Syncing…"
-                : integrations?.hubspot
-                ? "Sync contacts"
-                : "Not connected"
-            }
-            onPress={handleSyncHubSpot}
           />
         </View>
 

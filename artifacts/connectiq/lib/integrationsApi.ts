@@ -3,17 +3,6 @@ const API_BASE = `https://${process.env["EXPO_PUBLIC_DOMAIN"]}/api`;
 export interface IntegrationStatus {
   gmail: boolean;
   googleCalendar: boolean;
-  hubspot: boolean;
-}
-
-export interface SyncContact {
-  firstName?: string;
-  lastName?: string;
-  company?: string;
-  jobTitle?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
 }
 
 export interface SyncFollowUp {
@@ -68,10 +57,6 @@ async function postSync(path: string, payload: unknown): Promise<SyncResult> {
       error: err instanceof Error ? err.message : "Network error",
     };
   }
-}
-
-export function syncContactsToHubSpot(contacts: SyncContact[]): Promise<SyncResult> {
-  return postSync("/integrations/hubspot/sync", { contacts });
 }
 
 export function syncFollowUpsToCalendar(

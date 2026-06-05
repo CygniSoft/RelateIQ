@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-// Replit integration: Google Calendar + HubSpot via @replit/connectors-sdk proxy.
+// Replit integration: Google Calendar via @replit/connectors-sdk proxy.
 // The SDK injects OAuth tokens and refreshes them automatically.
 import { ReplitConnectors } from "@replit/connectors-sdk";
 
@@ -25,16 +25,6 @@ async function isConnectorConnected(name: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-interface SyncContact {
-  firstName?: string;
-  lastName?: string;
-  company?: string;
-  jobTitle?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
 }
 
 interface SyncFollowUp {
@@ -63,86 +53,17 @@ function nextDay(yyyyMmDd: string): string {
 // GET /api/integrations/status
 router.get("/integrations/status", async (req, res): Promise<void> => {
   try {
-    const [googleCalendar, hubspot] = await Promise.all([
-      isConnectorConnected("google-calendar"),
-      isConnectorConnected("hubspot"),
-    ]);
+    const googleCalendar = await isConnectorConnected("google-calendar");
     const gmail =
       typeof process.env["GMAIL_USER"] === "string" &&
       process.env["GMAIL_USER"] !== "" &&
       typeof process.env["GMAIL_APP_PASSWORD"] === "string" &&
       process.env["GMAIL_APP_PASSWORD"] !== "";
 
-    res.json({ gmail, googleCalendar, hubspot });
+    res.json({ gmail, googleCalendar });
   } catch (err) {
     req.log.error({ err }, "Failed to read integration status");
     res.status(500).json({ error: "Failed to read integration status" });
-  }
-});
-
-// POST /api/integrations/hubspot/sync  { contacts: SyncContact[] }
-router.post("/integrations/hubspot/sync", async (req, res): Promise<void> => {
-  const contacts: unknown = req.body?.contacts;
-  if (!Array.isArray(contacts) || contacts.length === 0) {
-    res.status(400).json({ error: "No contacts to sync" });
-    return;
-  }
-  if (contacts.length > MAX_BATCH) {
-    res.status(400).json({ error: `Too many contacts (max ${MAX_BATCH} per sync)` });
-    return;
-  }
-
-  const inputs = (contacts as SyncContact[])
-    .filter((c) => typeof c.email === "string" && c.email.trim() !== "")
-    .map((c) => ({
-      idProperty: "email",
-      id: (c.email ?? "").trim(),
-      properties: {
-        email: (c.email ?? "").trim(),
-        firstname: c.firstName ?? "",
-        lastname: c.lastName ?? "",
-        company: c.company ?? "",
-        jobtitle: c.jobTitle ?? "",
-        phone: c.phone ?? "",
-        website: c.website ?? "",
-      },
-    }));
-
-  const skipped = contacts.length - inputs.length;
-
-  if (inputs.length === 0) {
-    res.json({ synced: 0, skipped, message: "No contacts had an email address." });
-    return;
-  }
-
-  try {
-    const response = await connectors.proxy(
-      "hubspot",
-      "/crm/v3/objects/contacts/batch/upsert",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputs }),
-      },
-    );
-
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      req.log.error(
-        { status: response.status, detail },
-        "HubSpot upsert failed",
-      );
-      res.status(502).json({ error: "HubSpot rejected the sync. Is it connected?" });
-      return;
-    }
-
-    const data = (await response.json()) as { results?: unknown[] };
-    const synced = Array.isArray(data.results) ? data.results.length : inputs.length;
-    req.log.info({ synced, skipped }, "Synced contacts to HubSpot");
-    res.json({ synced, skipped });
-  } catch (err) {
-    req.log.error({ err }, "Failed to sync contacts to HubSpot");
-    res.status(500).json({ error: "Failed to sync to HubSpot" });
   }
 });
 
