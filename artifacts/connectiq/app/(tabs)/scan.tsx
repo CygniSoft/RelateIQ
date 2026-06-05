@@ -66,6 +66,9 @@ export default function ScanScreen() {
   const [emailDraft, setEmailDraft] = useState("");
   const [aiSummary, setAiSummary] = useState("");
   const [dealValue, setDealValue] = useState("");
+  const [reviewErrors, setReviewErrors] = useState<
+    Partial<Record<keyof ExtractedCard, string>>
+  >({});
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 84 + 24 : insets.bottom + 56 + 24;
@@ -107,6 +110,7 @@ export default function ScanScreen() {
 
     if (result.success && result.data) {
       setExtracted(result.data);
+      setReviewErrors({});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setStep("review");
     } else {
@@ -153,6 +157,16 @@ export default function ScanScreen() {
   }
 
   function handleProceedToContext() {
+    const nextErrors: Partial<Record<keyof ExtractedCard, string>> = {};
+    if (!extracted.firstName.trim())
+      nextErrors.firstName = "First name is required";
+    if (!extracted.email.trim()) nextErrors.email = "Email is required";
+    if (Object.keys(nextErrors).length > 0) {
+      setReviewErrors(nextErrors);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+    setReviewErrors({});
     setStep("context");
   }
 
@@ -211,6 +225,7 @@ export default function ScanScreen() {
   }
 
   function handleManualEntry() {
+    setReviewErrors({});
     setStep("review");
   }
 
@@ -420,15 +435,19 @@ export default function ScanScreen() {
 
               {(
                 [
-                  { label: "First Name", key: "firstName" },
+                  { label: "First Name", key: "firstName", required: true },
                   { label: "Last Name", key: "lastName" },
                   { label: "Company", key: "company" },
                   { label: "Job Title", key: "jobTitle" },
-                  { label: "Email", key: "email" },
+                  { label: "Email", key: "email", required: true },
                   { label: "Phone", key: "phone" },
                   { label: "Website", key: "website" },
                   { label: "LinkedIn", key: "linkedin" },
-                ] as Array<{ label: string; key: keyof ExtractedCard }>
+                ] as Array<{
+                  label: string;
+                  key: keyof ExtractedCard;
+                  required?: boolean;
+                }>
               ).map((field) => (
                 <View key={field.key} style={{ marginBottom: 14 }}>
                   <Text
@@ -442,16 +461,28 @@ export default function ScanScreen() {
                     }}
                   >
                     {field.label}
+                    {field.required ? " *" : ""}
                   </Text>
                   <TextInput
                     value={extracted[field.key]}
-                    onChangeText={(v) =>
-                      setExtracted((prev) => ({ ...prev, [field.key]: v }))
-                    }
+                    onChangeText={(v) => {
+                      setExtracted((prev) => ({ ...prev, [field.key]: v }));
+                      if (reviewErrors[field.key]) {
+                        setReviewErrors((prev) => {
+                          const next = { ...prev };
+                          delete next[field.key];
+                          return next;
+                        });
+                      }
+                    }}
+                    keyboardType={field.key === "email" ? "email-address" : "default"}
+                    autoCapitalize={field.key === "email" ? "none" : "sentences"}
                     style={{
                       backgroundColor: colors.secondary,
                       borderWidth: 1,
-                      borderColor: colors.border,
+                      borderColor: reviewErrors[field.key]
+                        ? "#FF4757"
+                        : colors.border,
                       borderRadius: 12,
                       paddingHorizontal: 14,
                       paddingVertical: 12,
@@ -460,6 +491,13 @@ export default function ScanScreen() {
                     }}
                     placeholderTextColor={colors.mutedForeground}
                   />
+                  {reviewErrors[field.key] ? (
+                    <Text
+                      style={{ color: "#FF4757", fontSize: 12, marginTop: 6 }}
+                    >
+                      {reviewErrors[field.key]}
+                    </Text>
+                  ) : null}
                 </View>
               ))}
 

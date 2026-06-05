@@ -93,17 +93,44 @@ function EditProfileModal({
   const insets = useSafeAreaInsets();
   const { profile, updateProfile } = useApp();
   const [form, setForm] = useState({ ...profile });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!visible) setErrors({});
+  }, [visible]);
+
+  function clearError(key: string) {
+    setErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }
 
   function save() {
+    const nextErrors: Record<string, string> = {};
+    if (!form.name.trim()) nextErrors.name = "Full name is required";
+    if (!form.email.trim()) nextErrors.email = "Email is required";
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+    setErrors({});
     updateProfile(form);
     onClose();
   }
 
-  const fields: Array<{ label: string; key: keyof typeof form; multiline?: boolean }> = [
-    { label: "Full Name", key: "name" },
+  const fields: Array<{
+    label: string;
+    key: keyof typeof form;
+    multiline?: boolean;
+    required?: boolean;
+  }> = [
+    { label: "Full Name", key: "name", required: true },
     { label: "Company", key: "company" },
     { label: "Job Title", key: "jobTitle" },
-    { label: "Email", key: "email" },
+    { label: "Email", key: "email", required: true },
     { label: "Phone", key: "phone" },
     { label: "LinkedIn", key: "linkedin" },
     { label: "Website", key: "website" },
@@ -153,14 +180,18 @@ function EditProfileModal({
                 }}
               >
                 {f.label}
+                {f.required ? " *" : ""}
               </Text>
               <TextInput
                 value={(form[f.key] as string) || ""}
-                onChangeText={(v) => setForm((p) => ({ ...p, [f.key]: v }))}
+                onChangeText={(v) => {
+                  setForm((p) => ({ ...p, [f.key]: v }));
+                  clearError(f.key);
+                }}
                 style={{
                   backgroundColor: colors.secondary,
                   borderWidth: 1,
-                  borderColor: colors.border,
+                  borderColor: errors[f.key] ? "#FF4757" : colors.border,
                   borderRadius: 12,
                   paddingHorizontal: 14,
                   paddingVertical: 12,
@@ -169,6 +200,11 @@ function EditProfileModal({
                 }}
                 placeholderTextColor={colors.mutedForeground}
               />
+              {errors[f.key] ? (
+                <Text style={{ color: "#FF4757", fontSize: 12, marginTop: 6 }}>
+                  {errors[f.key]}
+                </Text>
+              ) : null}
             </View>
           ))}
         </ScrollView>

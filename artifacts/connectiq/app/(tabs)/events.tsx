@@ -1,7 +1,7 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Platform,
@@ -37,6 +37,11 @@ function AddEventModal({
   const [location, setLocation] = useState("");
   const [type, setType] = useState("Conference");
   const [cost, setCost] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!visible) setErrors({});
+  }, [visible]);
 
   const EVENT_TYPES = [
     "Conference",
@@ -46,8 +51,23 @@ function AddEventModal({
     "Business meeting",
   ];
 
+  function clearError(id: string) {
+    setErrors((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }
+
   function handleAdd() {
-    if (!name.trim()) return;
+    const nextErrors: Record<string, string> = {};
+    if (!name.trim()) nextErrors.name = "Event name is required";
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
     onAdd({
       name: name.trim(),
       location: location.trim() || "TBD",
@@ -58,6 +78,7 @@ function AddEventModal({
     setName("");
     setLocation("");
     setCost("");
+    setErrors({});
     onClose();
   }
 
@@ -101,9 +122,9 @@ function AddEventModal({
           keyboardShouldPersistTaps="handled"
         >
           {[
-            { label: "Event Name *", value: name, onChange: setName, placeholder: "Toronto Business Expo" },
-            { label: "Location", value: location, onChange: setLocation, placeholder: "Convention Centre" },
-            { label: "Cost ($)", value: cost, onChange: setCost, placeholder: "1200", numeric: true },
+            { id: "name", label: "Event Name *", value: name, onChange: setName, placeholder: "Toronto Business Expo" },
+            { id: "location", label: "Location", value: location, onChange: setLocation, placeholder: "Convention Centre" },
+            { id: "cost", label: "Cost ($)", value: cost, onChange: setCost, placeholder: "1200", numeric: true },
           ].map((f) => (
             <View key={f.label} style={{ marginBottom: 16 }}>
               <Text
@@ -120,14 +141,17 @@ function AddEventModal({
               </Text>
               <TextInput
                 value={f.value}
-                onChangeText={f.onChange}
+                onChangeText={(v) => {
+                  f.onChange(v);
+                  clearError(f.id);
+                }}
                 placeholder={f.placeholder}
                 placeholderTextColor={colors.mutedForeground}
                 keyboardType={f.numeric ? "numeric" : "default"}
                 style={{
                   backgroundColor: colors.secondary,
                   borderWidth: 1,
-                  borderColor: colors.border,
+                  borderColor: errors[f.id] ? "#FF4757" : colors.border,
                   borderRadius: 12,
                   paddingHorizontal: 14,
                   paddingVertical: 12,
@@ -135,6 +159,11 @@ function AddEventModal({
                   fontSize: 15,
                 }}
               />
+              {errors[f.id] ? (
+                <Text style={{ color: "#FF4757", fontSize: 12, marginTop: 6 }}>
+                  {errors[f.id]}
+                </Text>
+              ) : null}
             </View>
           ))}
 
