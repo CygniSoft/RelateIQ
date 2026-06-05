@@ -1,3 +1,4 @@
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -50,6 +51,9 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    ...Feather.font,
+    ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
   });
 
   useEffect(() => {
