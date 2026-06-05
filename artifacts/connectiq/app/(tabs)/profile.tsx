@@ -889,16 +889,6 @@ export default function ProfileScreen() {
             label="Edit Profile"
             onPress={() => setShowEdit(true)}
           />
-          <SettingRow
-            icon={<Feather name="mail" size={16} color={colors.primary} />}
-            label="Email"
-            value={profile.email}
-          />
-          <SettingRow
-            icon={<Feather name="phone" size={16} color={colors.primary} />}
-            label="Phone"
-            value={profile.phone}
-          />
         </View>
 
         {/* Integrations */}
