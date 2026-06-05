@@ -77,6 +77,14 @@ export default function ScanScreen() {
     }
   }
 
+  function showInfo(title: string, message: string) {
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  }
+
   async function extractFromAsset(asset: ImagePicker.ImagePickerAsset) {
     setCardImageUri(asset.uri);
     setStep("scanning");
@@ -609,7 +617,33 @@ export default function ScanScreen() {
               </View>
 
               <View style={{ marginBottom: 16 }}>
-                <Text style={labelStyle(colors)}>Deal Value (in $K)</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 6,
+                  }}
+                >
+                  <Text style={[labelStyle(colors), { marginBottom: 0 }]}>
+                    Deal Value (in $K)
+                  </Text>
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() =>
+                      showInfo(
+                        "Deal Value",
+                        "The estimated revenue this contact could be worth if it turns into a deal. Enter it in thousands — e.g. 50 means $50,000. It feeds your Events ROI and helps you prioritize who to follow up with. Leave it blank if you're not sure.",
+                      )
+                    }
+                  >
+                    <Feather
+                      name="help-circle"
+                      size={14}
+                      color={colors.mutedForeground}
+                    />
+                  </Pressable>
+                </View>
                 <TextInput
                   value={dealValue}
                   onChangeText={setDealValue}
@@ -618,6 +652,15 @@ export default function ScanScreen() {
                   keyboardType="numeric"
                   style={inputStyle(colors)}
                 />
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    fontSize: 12,
+                    marginTop: 6,
+                  }}
+                >
+                  Estimated value if this becomes a deal (in $K).
+                </Text>
               </View>
 
               <View style={{ marginBottom: 16 }}>
