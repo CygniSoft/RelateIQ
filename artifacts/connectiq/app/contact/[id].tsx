@@ -136,6 +136,8 @@ export default function ContactDetailScreen() {
   }
 
   async function handleSaveToContacts() {
+    if (!contact) return;
+
     if (Platform.OS === "web") {
       Alert.alert("Not supported", "Saving to phone contacts requires the mobile app.");
       return;
@@ -151,7 +153,9 @@ export default function ContactDetailScreen() {
     }
 
     try {
+      const fullName = `${contact.firstName} ${contact.lastName}`.trim();
       const newContact: Contacts.Contact = {
+        name: fullName || contact.company || "New contact",
         contactType: Contacts.ContactTypes.Person,
         firstName: contact.firstName,
         lastName: contact.lastName,
@@ -163,8 +167,8 @@ export default function ContactDetailScreen() {
         phoneNumbers: contact.phone
           ? [{ number: contact.phone, label: "work", isPrimary: true }]
           : undefined,
-        urlAddresses: contact.linkedIn
-          ? [{ url: contact.linkedIn, label: "LinkedIn" }]
+        urlAddresses: contact.linkedin
+          ? [{ url: contact.linkedin, label: "LinkedIn" }]
           : undefined,
         note: [
           contact.eventName ? `Met at ${contact.eventName}` : "",
@@ -185,7 +189,8 @@ export default function ContactDetailScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Saved!", `${contact.firstName} ${contact.lastName} added to your phone contacts.`);
     } catch (err) {
-      Alert.alert("Error", "Could not save contact. Please try again.");
+      const detail = err instanceof Error ? err.message : "Please try again.";
+      Alert.alert("Couldn't save contact", detail);
     }
   }
 

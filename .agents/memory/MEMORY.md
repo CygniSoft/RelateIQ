@@ -1,2 +1,3 @@
 - [Replit connectors-sdk proxy paths](replit-connectors-proxy.md) — .proxy() forwards onto the provider API *root*; google-calendar needs the `/calendar/v3` prefix or you get a Google 404 HTML page.
 - [OpenAI vision integration](openai-vision-integration.md) — business-card scanning notes.
+- [expo-contacts addContactAsync requires name](expo-contacts-save.md) — saving to the device address book throws without a top-level `name`; firstName/lastName alone fails.
