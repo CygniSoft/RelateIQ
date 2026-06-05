@@ -509,7 +509,7 @@ function HelpModal({
               Still need help?
             </Text>
             <Pressable
-              onPress={() => Linking.openURL("mailto:support@connectiq.app")}
+              onPress={() => Linking.openURL("mailto:hr@cygnisoft.com")}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
@@ -520,7 +520,7 @@ function HelpModal({
               }}
             >
               <Feather name="mail" size={18} color={colors.primary} />
-              <Text style={{ color: colors.foreground, fontSize: 14 }}>Email support@connectiq.app</Text>
+              <Text style={{ color: colors.foreground, fontSize: 14 }}>Email hr@cygnisoft.com</Text>
             </Pressable>
           </View>
         </ScrollView>
