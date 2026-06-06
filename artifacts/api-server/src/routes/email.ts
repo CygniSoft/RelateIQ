@@ -1,13 +1,21 @@
 import { Router, type IRouter } from "express";
+import { getAuth } from "@clerk/express";
 import { Resend } from "resend";
 
 const router: IRouter = Router();
 
 const DEFAULT_FROM = "RelateIQ+ <onboarding@resend.dev>";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function hasControlChars(value: string): boolean {
+  // Reject CR/LF and other control characters to prevent header injection.
+  // eslint-disable-next-line no-control-regex
+  return /[\r\n\u0000-\u001f\u007f]/.test(value);
+}
 
 function buildFrom(baseFrom: string, fromName?: unknown): string {
-  if (typeof fromName !== "string" || fromName.trim() === "") return baseFrom;
-  const name = fromName.trim().replace(/["\\<>]/g, "");
+  if (typeof fromName !== "string") return baseFrom;
+  const name = fromName.replace(/[\r\n"\\<>]/g, "").trim();
   if (name === "") return baseFrom;
   const match = baseFrom.match(/<([^>]+)>/);
   const address = match ? match[1] : baseFrom.trim();
@@ -15,21 +23,36 @@ function buildFrom(baseFrom: string, fromName?: unknown): string {
 }
 
 router.post("/send-email", async (req, res): Promise<void> => {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
   const { to, subject, body, fromName, replyTo } = (req.body ?? {}) as Record<
     string,
     unknown
   >;
 
-  if (typeof to !== "string" || !to.includes("@")) {
+  if (typeof to !== "string" || !EMAIL_RE.test(to)) {
     res.status(400).json({ error: "Invalid or missing 'to' email address" });
     return;
   }
-  if (typeof subject !== "string" || subject.trim() === "") {
-    res.status(400).json({ error: "Missing 'subject'" });
+  if (
+    typeof subject !== "string" ||
+    subject.trim() === "" ||
+    subject.length > 998 ||
+    hasControlChars(subject)
+  ) {
+    res.status(400).json({ error: "Invalid or missing 'subject'" });
     return;
   }
   if (typeof body !== "string" || body.trim() === "") {
     res.status(400).json({ error: "Missing 'body'" });
+    return;
+  }
+  if (replyTo !== undefined && (typeof replyTo !== "string" || !EMAIL_RE.test(replyTo))) {
+    res.status(400).json({ error: "Invalid 'replyTo' email address" });
     return;
   }
 
@@ -59,8 +82,7 @@ router.post("/send-email", async (req, res): Promise<void> => {
       subject,
       text: body,
       // Replies go straight back to the person who sent the introduction.
-      replyTo:
-        typeof replyTo === "string" && replyTo.includes("@") ? replyTo : undefined,
+      replyTo: typeof replyTo === "string" ? replyTo : undefined,
     });
 
     if (error) {

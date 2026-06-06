@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/expo";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Contacts from "expo-contacts";
 import * as Haptics from "expo-haptics";
@@ -93,6 +94,7 @@ export default function ContactDetailScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { contacts, updateContact, deleteContact, addTimelineEvent, profile } = useApp();
+  const { getToken } = useAuth();
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [savedToPhone, setSavedToPhone] = useState(false);
   const [noteText, setNoteText] = useState("");
@@ -189,12 +191,14 @@ export default function ContactDetailScreen() {
       contact.introEmailDraft ||
       `Hi ${contact.firstName},\n\nGreat connecting with you!\n\nLooking forward to staying in touch.\n\nBest regards,`;
 
+    const token = (await getToken()) ?? undefined;
     const result = await sendEmail({
       to: contact.email,
       subject: `Following up${contact.eventName ? ` — met at ${contact.eventName}` : ""}`,
       body: emailBody,
       fromName: profile.name,
       replyTo: profile.email || undefined,
+      token,
     });
 
     if (result.success) {

@@ -6,6 +6,7 @@ export interface SendEmailParams {
   body: string;
   fromName?: string;
   replyTo?: string;
+  token?: string;
 }
 
 export interface SendEmailResult {
@@ -14,11 +15,15 @@ export interface SendEmailResult {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
+  const { token, ...payload } = params;
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
     const res = await fetch(`${API_BASE}/send-email`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
+      headers,
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {

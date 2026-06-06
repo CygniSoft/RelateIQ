@@ -2,4 +2,5 @@
 - [OpenAI vision integration](openai-vision-integration.md) — business-card scanning notes.
 - [expo-contacts addContactAsync requires name](expo-contacts-save.md) — saving to the device address book throws without a top-level `name`; firstName/lastName alone fails.
 - [ConnectIQ local-first data & analytics](connectiq-local-first.md) — all data in device AsyncStorage; compute insights on-device, not server; plus pre-existing typecheck errors to grep out.
+- [ConnectIQ intro-email sending](connectiq-email-sending.md) — Resend from verified app domain (EMAIL_FROM) w/ sender name + replyTo=user; Clerk-authed endpoint; test sender only delivers to account owner until a domain is verified.
 - [ConnectIQ Clerk auth (Expo)](connectiq-clerk-auth.md) — Stack.Protected (not useEffect) for flash-free gating; EXPO_PUBLIC_CLERK_* wired in BOTH package.json dev script and scripts/build.js.
