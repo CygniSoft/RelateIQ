@@ -5,6 +5,7 @@ export interface SendEmailParams {
   subject: string;
   body: string;
   fromName?: string;
+  replyTo?: string;
 }
 
 export interface SendEmailResult {

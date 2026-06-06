@@ -194,6 +194,7 @@ export default function ContactDetailScreen() {
       subject: `Following up${contact.eventName ? ` — met at ${contact.eventName}` : ""}`,
       body: emailBody,
       fromName: profile.name,
+      replyTo: profile.email || undefined,
     });
 
     if (result.success) {
@@ -207,7 +208,7 @@ export default function ContactDetailScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowEmailModal(false);
     } else {
-      Alert.alert("Send failed", result.error ?? "Could not send email. Check your Gmail credentials.");
+      Alert.alert("Send failed", result.error ?? "Could not send email. Please try again.");
     }
   }
 
