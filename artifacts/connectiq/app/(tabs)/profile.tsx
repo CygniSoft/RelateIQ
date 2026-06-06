@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { useClerk } from "@clerk/expo";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -568,6 +569,7 @@ function HelpModal({
 export default function ProfileScreen() {
   const colors = useColors();
   const { profile, contacts, events, signOut, clearAllData } = useApp();
+  const { signOut: clerkSignOut } = useClerk();
   const insets = useSafeAreaInsets();
   const [showEdit, setShowEdit] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -657,7 +659,7 @@ export default function ProfileScreen() {
 
   async function doSignOut() {
     await signOut();
-    router.replace("/(tabs)");
+    await clerkSignOut();
   }
 
   function handleSignOut() {
