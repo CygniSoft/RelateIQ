@@ -29,5 +29,13 @@ NOT from each user's own mailbox.
   without a `userId`. The Expo client must send `Authorization: Bearer <getToken()>`
   (wired in `contact/[id].tsx` → `lib/emailApi.ts`). Without the guard it was an open
   mail relay (ESP abuse/cost risk).
+- **There are TWO client send call-sites** for `sendEmail` (`lib/emailApi.ts`): the
+  contact detail screen (`contact/[id].tsx`) AND the scan-save flow
+  (`(tabs)/scan.tsx`, fire-and-forget after saving a contact). Both must fetch
+  `useAuth().getToken()` and pass `token`. **Why:** when auth was first added only the
+  contact screen was updated; sends from the scan flow silently 401'd (no
+  `Authorization` header reached the server) — the user's actual path was scan-save.
+  `emailApi.sendEmail` only attaches the header when a truthy `token` is passed, so a
+  missing token fails silently with 401. Audit all call-sites when changing auth.
 - Inputs are hardened against header injection: `to`/`replyTo` validated as emails,
   `subject` rejects CR/LF/control chars, `buildFrom` strips CR/LF and quote/angle chars.

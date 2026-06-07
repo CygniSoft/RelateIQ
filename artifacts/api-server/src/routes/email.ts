@@ -23,22 +23,8 @@ function buildFrom(baseFrom: string, fromName?: unknown): string {
 }
 
 router.post("/send-email", async (req, res): Promise<void> => {
-  const auth = getAuth(req);
-  const authHeader = req.headers.authorization;
-  req.log.info(
-    {
-      hasAuthHeader: typeof authHeader === "string",
-      authScheme:
-        typeof authHeader === "string" ? authHeader.split(" ")[0] : null,
-      tokenLen:
-        typeof authHeader === "string"
-          ? authHeader.replace(/^Bearer\s+/i, "").length
-          : 0,
-      userId: auth.userId,
-    },
-    "send-email auth diagnostic",
-  );
-  if (!auth.userId) {
+  const { userId } = getAuth(req);
+  if (!userId) {
     res.status(401).json({ error: "Authentication required" });
     return;
   }

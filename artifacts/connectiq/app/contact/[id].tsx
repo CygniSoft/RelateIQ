@@ -194,15 +194,9 @@ export default function ContactDetailScreen() {
     let token: string | undefined;
     try {
       token = (await getToken()) ?? undefined;
-    } catch (err) {
-      console.warn("[send-email] getToken threw:", err);
+    } catch {
+      // ignore — handled as auth failure below
     }
-    console.warn(
-      "[send-email] token present:",
-      !!token,
-      "len:",
-      token?.length ?? 0,
-    );
     const result = await sendEmail({
       to: contact.email,
       subject: `Following up${contact.eventName ? ` — met at ${contact.eventName}` : ""}`,
