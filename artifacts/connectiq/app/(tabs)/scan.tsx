@@ -21,6 +21,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAuth } from "@clerk/expo";
+
 import { GlassIcon } from "@/components/GlassIcon";
 import { ScanFrame } from "@/components/ScanFrame";
 import { useApp, ContactCategory, FollowUpAction, Priority } from "@/context/AppContext";
@@ -65,6 +67,7 @@ export default function ScanScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { addContact, profile, events } = useApp();
+  const { getToken } = useAuth();
 
   const [step, setStep] = useState<ScanStep>("idle");
   const [cardImageUri, setCardImageUri] = useState<string | undefined>();
@@ -212,12 +215,22 @@ export default function ScanScreen() {
     });
 
     // Fire real email — don't block on result, contact is already saved
-    sendEmail({
-      to: extracted.email,
-      subject: `Great meeting you${eventName ? ` at ${eventName}` : ""}`,
-      body: emailDraft,
-      fromName: profile.name,
-    }).catch(() => {
+    void (async () => {
+      let token: string | undefined;
+      try {
+        token = (await getToken()) ?? undefined;
+      } catch {
+        // ignore — handled as auth failure below
+      }
+      await sendEmail({
+        to: extracted.email,
+        subject: `Great meeting you${eventName ? ` at ${eventName}` : ""}`,
+        body: emailDraft,
+        fromName: profile.name,
+        replyTo: profile.email || undefined,
+        token,
+      });
+    })().catch(() => {
       // Silent — email failure doesn't block the save
     });
 
