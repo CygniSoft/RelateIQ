@@ -5,24 +5,31 @@ description: How introduction emails are sent (provider, sender identity, auth, 
 
 # Intro-email sending
 
-Introduction emails are sent via **Resend** (transactional ESP) from the api-server,
-NOT from each user's own mailbox.
+Introduction emails are sent via **Gmail SMTP** (nodemailer) from the api-server,
+from a single shared operator Gmail account — NOT from each user's own mailbox.
 
-- **Sender identity:** `from` = the sending user's name as display name + a verified
-  app-domain address from env `EMAIL_FROM` (e.g. `RelateIQ+ <intros@relateiq.app>`).
-  `replyTo` = the sending user's own email, so replies reach the real person.
-- **Why this design:** chosen over per-user OAuth mailbox sending because it works for
-  ALL users (incl. email/password signups), is scalable, and looks professional. The
-  Replit `google-calendar` connector is app-level (one account via `listConnections`),
-  so connectors cannot send "as each end user" in a multi-user app.
-- **No ESP integration exists** in Replit (no Resend/SendGrid/Postmark/Mailgun). The
-  key is a plain secret: `RESEND_API_KEY`. The from address is the env `EMAIL_FROM`.
+- **Sender identity:** `from` = the sending user's name as display name + the
+  `GMAIL_USER` address (Gmail forces the authenticated account as the envelope sender;
+  you cannot spoof a different from-address). `replyTo` = the sending user's own email,
+  so replies reach the real person.
+- **Secrets:** `GMAIL_USER` + `GMAIL_APP_PASSWORD` (a Google App Password, requires
+  2-Step Verification enabled — not the normal account password).
+- **Why Gmail over Resend:** the user explicitly chose convenience over branding.
+  Resend's shared `onboarding@resend.dev` only delivers to the Resend account owner; to
+  email arbitrary recipients Resend requires verifying a domain via DNS. Gmail SMTP
+  delivers to **anyone with zero DNS/verification setup** — the tradeoff is the from
+  address is the Gmail account, not a branded `@relateiq.app` domain. Switched away from
+  Resend on this basis (the `resend` npm dep was removed, `nodemailer` re-added).
+- **Why app-level sending at all:** chosen over per-user OAuth mailbox sending because
+  it works for ALL users (incl. email/password signups) and is simple. The Replit
+  `google-calendar` connector is app-level (one account), so connectors cannot send
+  "as each end user" in a multi-user app.
 
-## Domain constraint (important)
-- Default `EMAIL_FROM` is `RelateIQ+ <onboarding@resend.dev>` (Resend's shared sender).
-  In Resend test mode this **only delivers to the account owner's own email**. To send
-  intros to arbitrary contacts, the user must verify their own domain in Resend (DNS)
-  and set `EMAIL_FROM` to an address on that domain.
+## Limits / constraints
+- Gmail daily send caps: ~500/day free, ~2000/day Workspace. Fine for a small app,
+  not for bulk.
+- To switch back to a branded app-domain sender later, you'd re-add an ESP (Resend etc.)
+  and do the domain DNS verification — the step the user is currently avoiding.
 
 ## Security
 - `POST /api/send-email` is **Clerk-authed**: handler calls `getAuth(req)` and 401s
