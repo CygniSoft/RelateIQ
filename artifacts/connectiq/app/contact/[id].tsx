@@ -191,7 +191,18 @@ export default function ContactDetailScreen() {
       contact.introEmailDraft ||
       `Hi ${contact.firstName},\n\nGreat connecting with you!\n\nLooking forward to staying in touch.\n\nBest regards,`;
 
-    const token = (await getToken()) ?? undefined;
+    let token: string | undefined;
+    try {
+      token = (await getToken()) ?? undefined;
+    } catch (err) {
+      console.warn("[send-email] getToken threw:", err);
+    }
+    console.warn(
+      "[send-email] token present:",
+      !!token,
+      "len:",
+      token?.length ?? 0,
+    );
     const result = await sendEmail({
       to: contact.email,
       subject: `Following up${contact.eventName ? ` — met at ${contact.eventName}` : ""}`,
