@@ -11,6 +11,21 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 
+### Email sending (introduction emails)
+
+Intro emails are sent server-side via **Resend**. These are operator-level secrets set
+**once in Replit Secrets / Deployment env — never in the app UI** (a single shared key
+must not be exposed to end-user devices):
+
+- `RESEND_API_KEY` — Resend API key (get one at resend.com → API Keys).
+- `EMAIL_FROM` — verified sender, e.g. `RelateIQ+ <intros@yourdomain.com>`. Defaults to
+  `RelateIQ+ <onboarding@resend.dev>`, which only delivers to the Resend account owner.
+
+To send to any recipient, verify your domain in Resend (paste the DNS records into your
+domain provider), then set `EMAIL_FROM` to an address on that domain. The send endpoint
+(`POST /api/send-email`) is Clerk-authed; the sender's name is shown and `replyTo` is the
+sending user's own email so replies route back to them.
+
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9

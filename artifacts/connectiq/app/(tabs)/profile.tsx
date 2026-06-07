@@ -459,8 +459,8 @@ function HelpModal({
       a: "After scanning a card and adding meeting context, RelateIQ+ generates a personalised intro email based on the contact's role and your conversation notes. You can edit it before sending.",
     },
     {
-      q: "How do I set up email sending?",
-      a: "Introduction emails are sent from your app's own verified domain, with your name shown as the sender and replies routed back to your personal email — so they look professional but stay personal. To set it up:\n\n1. Create a free account at resend.com and add your API key to the app secrets as RESEND_API_KEY.\n2. In Resend, add your domain and verify it by pasting the DNS records they give you into your domain provider.\n3. Set the EMAIL_FROM secret to an address on that domain, e.g. \"RelateIQ+ <intros@yourdomain.com>\".\n\nUntil a domain is verified, test emails only deliver to your own Resend account email.",
+      q: "How are introduction emails sent?",
+      a: "Introduction emails are sent from RelateIQ+'s verified domain, with your name shown as the sender and replies routed straight back to your own email — so they look professional but stay personal. Delivery is configured centrally by your app administrator, so there's nothing for you to set up. Just write your intro, tap Send, and any replies land in your inbox.",
     },
     {
       q: "Where is my data stored?",
