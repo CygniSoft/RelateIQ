@@ -459,12 +459,12 @@ function HelpModal({
       a: "After scanning a card and adding meeting context, RelateIQ+ generates a personalised intro email based on the contact's role and your conversation notes. You can edit it before sending.",
     },
     {
-      q: "How do I set up Gmail sending?",
-      a: "Go to your Google Account → Security → 2-Step Verification → App Passwords. Generate a password for RelateIQ+, then ask your admin to add it to the app secrets (GMAIL_USER and GMAIL_APP_PASSWORD).",
+      q: "How do I set up email sending?",
+      a: "Introduction emails are sent from your app's own verified domain, with your name shown as the sender and replies routed back to your personal email — so they look professional but stay personal. To set it up:\n\n1. Create a free account at resend.com and add your API key to the app secrets as RESEND_API_KEY.\n2. In Resend, add your domain and verify it by pasting the DNS records they give you into your domain provider.\n3. Set the EMAIL_FROM secret to an address on that domain, e.g. \"RelateIQ+ <intros@yourdomain.com>\".\n\nUntil a domain is verified, test emails only deliver to your own Resend account email.",
     },
     {
       q: "Where is my data stored?",
-      a: "Everything is stored locally on your device using AsyncStorage. Nothing is sent to external servers except the emails you choose to send through Gmail.",
+      a: "Everything is stored locally on your device using AsyncStorage. Nothing is sent to external servers except the introduction emails you choose to send.",
     },
     {
       q: "How does relationship scoring work?",
