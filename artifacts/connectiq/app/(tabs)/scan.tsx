@@ -2,7 +2,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -24,8 +24,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
 
 import { GlassIcon } from "@/components/GlassIcon";
+import { Paywall } from "@/components/Paywall";
 import { ScanFrame } from "@/components/ScanFrame";
 import { useApp, ContactCategory, FollowUpAction, Priority } from "@/context/AppContext";
+import { useSubscription } from "@/context/SubscriptionContext";
 import { sendEmail } from "@/lib/emailApi";
 import { scanCard, type ExtractedCard } from "@/lib/scanApi";
 import { useColors } from "@/hooks/useColors";
@@ -68,7 +70,9 @@ export default function ScanScreen() {
   const insets = useSafeAreaInsets();
   const { addContact, profile, events } = useApp();
   const { getToken } = useAuth();
+  const { isPro } = useSubscription();
 
+  const [showPaywall, setShowPaywall] = useState(false);
   const [step, setStep] = useState<ScanStep>("idle");
   const [cardImageUri, setCardImageUri] = useState<string | undefined>();
   const [extracted, setExtracted] = useState({ ...EMPTY_EXTRACTED });
@@ -137,7 +141,23 @@ export default function ScanScreen() {
     }
   }
 
+  function requirePro(): boolean {
+    if (isPro) return true;
+    setShowPaywall(true);
+    return false;
+  }
+
+  // If the subscription lapses while the user is mid-flow, eject them back to
+  // idle and surface the paywall so the premium path can't be completed.
+  useEffect(() => {
+    if (!isPro && step !== "idle" && step !== "done") {
+      setStep("idle");
+      setShowPaywall(true);
+    }
+  }, [isPro, step]);
+
   async function handleScan() {
+    if (!requirePro()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     // Camera is blocked inside the web preview iframe — use the library picker there instead
     if (Platform.OS === "web") {
@@ -160,6 +180,7 @@ export default function ScanScreen() {
   }
 
   async function handlePickFromLibrary() {
+    if (!requirePro()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
@@ -186,6 +207,7 @@ export default function ScanScreen() {
   }
 
   function handleGenerateEmail() {
+    if (!requirePro()) return;
     const summary = generateAISummary(extracted, eventName, notes);
     const email = generateIntroEmail(extracted, eventName, profile);
     setAiSummary(summary);
@@ -194,6 +216,7 @@ export default function ScanScreen() {
   }
 
   async function handleSaveContact() {
+    if (!requirePro()) return;
     addContact({
       ...extracted,
       cardImageUri,
@@ -250,6 +273,7 @@ export default function ScanScreen() {
   }
 
   function handleManualEntry() {
+    if (!requirePro()) return;
     setReviewErrors({});
     setStep("review");
   }
@@ -1001,6 +1025,8 @@ export default function ScanScreen() {
           </Text>
         </Animated.View>
       )}
+
+      <Paywall visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>
   );
 }

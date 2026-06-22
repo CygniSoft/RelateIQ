@@ -50,6 +50,9 @@ async function buildAll() {
       "oracledb",
       "mongodb-client-encryption",
       "nodemailer",
+      // Ships SQL migration files it reads from disk via __dirname at runtime;
+      // bundling would break that path resolution.
+      "stripe-replit-sync",
       "handlebars",
       "knex",
       "typeorm",

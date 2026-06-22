@@ -20,6 +20,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider } from "@/context/AppContext";
+import { SubscriptionProvider } from "@/context/SubscriptionContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -104,11 +105,13 @@ export default function RootLayout() {
           <ClerkLoaded>
             <QueryClientProvider client={queryClient}>
               <AppProvider>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                  <KeyboardProvider>
-                    <RootLayoutNav />
-                  </KeyboardProvider>
-                </GestureHandlerRootView>
+                <SubscriptionProvider>
+                  <GestureHandlerRootView style={{ flex: 1 }}>
+                    <KeyboardProvider>
+                      <RootLayoutNav />
+                    </KeyboardProvider>
+                  </GestureHandlerRootView>
+                </SubscriptionProvider>
               </AppProvider>
             </QueryClientProvider>
           </ClerkLoaded>

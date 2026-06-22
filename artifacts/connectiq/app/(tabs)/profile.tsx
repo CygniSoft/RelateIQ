@@ -1,9 +1,12 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { useClerk } from "@clerk/expo";
+import { useAuth, useClerk } from "@clerk/expo";
 import { LinearGradient } from "expo-linear-gradient";
+import * as ExpoLinking from "expo-linking";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Linking,
   Modal,
@@ -19,8 +22,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/ContactCard";
 import { GlassIcon } from "@/components/GlassIcon";
+import { Paywall } from "@/components/Paywall";
 import { useApp } from "@/context/AppContext";
+import { useSubscription } from "@/context/SubscriptionContext";
 import { useColors } from "@/hooks/useColors";
+import { createPortalSession } from "@/lib/billingApi";
 import {
   getIntegrationStatus,
   syncFollowUpsToCalendar,
@@ -28,6 +34,14 @@ import {
 } from "@/lib/integrationsApi";
 
 const PLAN_COLORS: [string, string] = ["#7B5EFF", "#4F8EFF"];
+
+function formatPeriodEnd(epochSeconds: number): string {
+  return new Date(epochSeconds * 1000).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 function SettingRow({
   icon,
@@ -570,13 +584,40 @@ export default function ProfileScreen() {
   const colors = useColors();
   const { profile, contacts, events, signOut, clearAllData } = useApp();
   const { signOut: clerkSignOut } = useClerk();
+  const { getToken } = useAuth();
+  const { subscription, isPro, refresh: refreshSubscription } = useSubscription();
   const insets = useSafeAreaInsets();
   const [showEdit, setShowEdit] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [integrations, setIntegrations] = useState<IntegrationStatus | null>(null);
   const [syncing, setSyncing] = useState<"calendar" | null>(null);
+
+  async function handleManageSubscription() {
+    if (portalLoading) return;
+    setPortalLoading(true);
+    try {
+      const token = (await getToken()) ?? undefined;
+      const returnUrl = ExpoLinking.createURL("/profile");
+      const portalUrl = await createPortalSession(returnUrl, token);
+      if (Platform.OS === "web") {
+        window.location.href = portalUrl;
+        return;
+      }
+      await WebBrowser.openAuthSessionAsync(portalUrl, returnUrl);
+      await refreshSubscription();
+    } catch (err) {
+      notify(
+        "Couldn't open billing",
+        err instanceof Error ? err.message : "Please try again.",
+      );
+    } finally {
+      setPortalLoading(false);
+    }
+  }
 
   const refreshIntegrations = useCallback(async () => {
     const status = await getIntegrationStatus();
@@ -828,21 +869,32 @@ export default function ProfileScreen() {
         {/* Subscription */}
         <View style={{ margin: 16, marginBottom: 8 }}>
           <LinearGradient
-            colors={PLAN_COLORS}
+            colors={isPro ? PLAN_COLORS : ["#1A1D2B", "#12141F"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={{ borderRadius: colors.radius, padding: 16 }}
+            style={{
+              borderRadius: colors.radius,
+              padding: 16,
+              borderWidth: isPro ? 0 : 1,
+              borderColor: colors.border,
+            }}
           >
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: "600" as const }}>
                   CURRENT PLAN
                 </Text>
                 <Text style={{ color: "#fff", fontSize: 20, fontWeight: "700" as const }}>
-                  Professional
+                  {isPro ? "RelateIQ+ Pro" : "Free"}
                 </Text>
                 <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 2 }}>
-                  Unlimited scans · AI features · ROI tracking
+                  {isPro
+                    ? subscription?.cancelAtPeriodEnd && subscription.currentPeriodEnd
+                      ? `Cancels on ${formatPeriodEnd(subscription.currentPeriodEnd)}`
+                      : subscription?.currentPeriodEnd
+                        ? `Renews ${formatPeriodEnd(subscription.currentPeriodEnd)}`
+                        : "Unlimited scans · AI features · ROI tracking"
+                    : "Scanning & AI emails are limited"}
                 </Text>
               </View>
               <View
@@ -854,10 +906,31 @@ export default function ProfileScreen() {
                 }}
               >
                 <Text style={{ color: "#fff", fontSize: 12, fontWeight: "600" as const }}>
-                  Active
+                  {isPro ? (subscription?.cancelAtPeriodEnd ? "Canceling" : "Active") : "Free"}
                 </Text>
               </View>
             </View>
+
+            <Pressable
+              onPress={isPro ? handleManageSubscription : () => setShowPaywall(true)}
+              disabled={portalLoading}
+              style={{
+                marginTop: 16,
+                backgroundColor: "rgba(255,255,255,0.16)",
+                borderRadius: 12,
+                paddingVertical: 12,
+                alignItems: "center",
+                opacity: portalLoading ? 0.6 : 1,
+              }}
+            >
+              {portalLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" as const }}>
+                  {isPro ? "Manage Subscription" : "Upgrade to Pro"}
+                </Text>
+              )}
+            </Pressable>
           </LinearGradient>
         </View>
 
@@ -1002,6 +1075,7 @@ export default function ProfileScreen() {
       <NotificationsModal visible={showNotifications} onClose={() => setShowNotifications(false)} />
       <PrivacyModal visible={showPrivacy} onClose={() => setShowPrivacy(false)} onClearData={handleClearData} />
       <HelpModal visible={showHelp} onClose={() => setShowHelp(false)} />
+      <Paywall visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>
   );
 }

@@ -58,15 +58,51 @@ _Populate as you build — non-obvious choices a reader couldn't infer from the 
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+ConnectIQ (RelateIQ+) is a premium dark-mode networking CRM (Expo). Core flow: scan a
+business card → AI extracts contact details → AI drafts an intro email → save & send.
+All contact data is local-first (device AsyncStorage).
+
+### Subscription (Stripe)
+
+Scanning business cards and AI intro-email generation require an active **Pro**
+subscription ("RelateIQ+ Pro", monthly/annual). Viewing existing contacts/data stays
+free. Billing is server-driven via Stripe + `stripe-replit-sync`:
+
+- Server billing routes (Clerk-authed): `GET /api/billing/products`,
+  `GET /api/billing/subscription`, `POST /api/billing/checkout`, `POST /api/billing/portal`.
+- Stripe webhook is registered at `/api/stripe/webhook` with `express.raw` **before**
+  `express.json()`; `initStripe()` runs migrations → sync → managed webhook → backfill.
+- NEVER create stripe-schema tables; only read `stripe.products/prices/subscriptions`.
+- Client: `lib/billingApi.ts`, `context/SubscriptionContext.tsx` (provides `isPro`),
+  `components/Paywall.tsx` (Stripe Checkout via `WebBrowser.openAuthSessionAsync`, deep-link
+  return). Gating lives in `app/(tabs)/scan.tsx`; subscription card + Manage Subscription
+  (Stripe portal) in `app/(tabs)/profile.tsx`.
+- Seed plans with `pnpm --filter @workspace/scripts run seed-stripe-products`.
+
+### Concurrent-session enforcement
+
+To detect account sharing, the client sends a heartbeat (`POST /api/sessions/heartbeat`,
+keyed on the Clerk `sessionId`) on mount, every 45s, and on app foreground. The server
+enforces `MAX_CONCURRENT_SESSIONS` (env, default 1) and revokes the **oldest** session;
+when the heartbeat returns `revoked:true` the client calls Clerk `signOut()`. Wiring lives
+in `context/SubscriptionContext.tsx` (client) and `routes/sessions.ts` + `lib/sessionStore.ts`
+(server).
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Payments: use **Stripe** (chosen by the user).
+- Account-sharing policy: sign the **oldest** session out when the concurrent-session
+  limit is exceeded.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Stripe webhook route MUST be registered with `express.raw` before `express.json()`.
+- `stripe-replit-sync` reads bundled SQL migrations from disk via `__dirname`; it must stay
+  in esbuild's `external[]` or migrations are silently skipped (`relation "stripe.accounts"
+  does not exist`).
+- Stripe connection settings expose `secret`/`publishable` (NOT `secret_key`).
+- Pre-existing typecheck errors in `hooks/useColors.ts` and `app/contact/[id].tsx` are
+  unrelated to billing/session work — ignore them.
 
 ## Pointers
 
