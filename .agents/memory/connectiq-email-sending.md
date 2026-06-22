@@ -5,21 +5,24 @@ description: How introduction emails are sent (provider, sender identity, auth, 
 
 # Intro-email sending
 
-Introduction emails are sent via **Gmail SMTP** (nodemailer) from the api-server,
-from a single shared operator Gmail account — NOT from each user's own mailbox.
+Introduction emails are sent via **provider-agnostic SMTP** (nodemailer) from the
+api-server, from a single shared operator account — NOT from each user's own mailbox.
 
+- **Config resolution** (`resolveSmtpTransport()` in `routes/email.ts`): prefers generic
+  `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` (+ optional `SMTP_PORT` default 587, `SMTP_SECURE`
+  default `port===465`, `SMTP_FROM` default = SMTP_USER); falls back to Gmail
+  (`GMAIL_USER`/`GMAIL_APP_PASSWORD`, nodemailer `service:"gmail"`) only when the SMTP_*
+  vars are absent. Returns null (→ 500) when nothing configured.
 - **Sender identity:** `from` = the sending user's name as display name + the
-  `GMAIL_USER` address (Gmail forces the authenticated account as the envelope sender;
-  you cannot spoof a different from-address). `replyTo` = the sending user's own email,
-  so replies reach the real person.
-- **Secrets:** `GMAIL_USER` + `GMAIL_APP_PASSWORD` (a Google App Password, requires
-  2-Step Verification enabled — not the normal account password).
-- **Why Gmail over Resend:** the user explicitly chose convenience over branding.
-  Resend's shared `onboarding@resend.dev` only delivers to the Resend account owner; to
-  email arbitrary recipients Resend requires verifying a domain via DNS. Gmail SMTP
-  delivers to **anyone with zero DNS/verification setup** — the tradeoff is the from
-  address is the Gmail account, not a branded `@relateiq.app` domain. Switched away from
-  Resend on this basis (the `resend` npm dep was removed, `nodemailer` re-added).
+  authenticated account address (or `SMTP_FROM` if the provider allows a verified custom
+  sender). Most providers force the authenticated account as the envelope sender; you
+  can't freely spoof a from-address. `replyTo` = the sending user's own email.
+- **Why SMTP (not Resend):** the user chose convenience over branding. Resend's shared
+  `onboarding@resend.dev` only delivers to the Resend account owner; emailing arbitrary
+  recipients needs DNS domain verification. Plain SMTP (Gmail/Outlook/Yahoo/SendGrid/…)
+  delivers to **anyone with zero DNS setup** — tradeoff is the from address is the
+  sending account, not a branded `@relateiq.app` domain. `resend` npm dep removed,
+  `nodemailer` is the only email dep.
 - **Why app-level sending at all:** chosen over per-user OAuth mailbox sending because
   it works for ALL users (incl. email/password signups) and is simple. The Replit
   `google-calendar` connector is app-level (one account), so connectors cannot send

@@ -19,6 +19,53 @@ function buildFrom(address: string, fromName?: unknown): string {
   return `${name} <${address}>`;
 }
 
+type SmtpAuth = { user: string; pass: string };
+
+interface ResolvedTransport {
+  options:
+    | { host: string; port: number; secure: boolean; auth: SmtpAuth }
+    | { service: "gmail"; auth: SmtpAuth };
+  fromAddress: string;
+}
+
+/**
+ * Resolve SMTP credentials from env, provider-agnostic.
+ *
+ * Preferred: generic SMTP via SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS
+ * (works with any provider — Outlook, Yahoo, iCloud, SendGrid, Mailgun, a work
+ * mailbox, etc.). SMTP_SECURE ("true"/"false") and SMTP_FROM (custom verified
+ * sender address) are optional; port defaults to 587, secure defaults to
+ * port === 465, and the from-address defaults to SMTP_USER.
+ *
+ * Fallback: legacy Gmail via GMAIL_USER / GMAIL_APP_PASSWORD.
+ *
+ * Returns null when nothing is configured.
+ */
+function resolveSmtpTransport(): ResolvedTransport | null {
+  const host = process.env["SMTP_HOST"];
+  const user = process.env["SMTP_USER"];
+  const pass = process.env["SMTP_PASS"];
+  if (host && user && pass) {
+    const port = Number(process.env["SMTP_PORT"]) || 587;
+    const secureEnv = process.env["SMTP_SECURE"];
+    const secure =
+      secureEnv === undefined ? port === 465 : secureEnv === "true";
+    const fromAddress = process.env["SMTP_FROM"]?.trim() || user;
+    return { options: { host, port, secure, auth: { user, pass } }, fromAddress };
+  }
+
+  const gmailUser = process.env["GMAIL_USER"];
+  const gmailPass = process.env["GMAIL_APP_PASSWORD"];
+  if (gmailUser && gmailPass) {
+    return {
+      options: { service: "gmail", auth: { user: gmailUser, pass: gmailPass } },
+      fromAddress: gmailUser,
+    };
+  }
+
+  return null;
+}
+
 router.post("/send-email", async (req, res): Promise<void> => {
   const { userId } = getAuth(req);
   if (!userId) {
@@ -56,25 +103,24 @@ router.post("/send-email", async (req, res): Promise<void> => {
     return;
   }
 
-  const gmailUser = process.env["GMAIL_USER"];
-  const gmailPass = process.env["GMAIL_APP_PASSWORD"];
-  if (!gmailUser || !gmailPass) {
-    req.log.error("GMAIL_USER or GMAIL_APP_PASSWORD is not configured");
+  const transport = resolveSmtpTransport();
+  if (!transport) {
+    req.log.error(
+      "SMTP is not configured (set SMTP_HOST/SMTP_USER/SMTP_PASS, or GMAIL_USER/GMAIL_APP_PASSWORD)",
+    );
     res.status(500).json({
-      error: "Email sending is not configured (missing Gmail credentials)",
+      error: "Email sending is not configured (missing SMTP credentials)",
     });
     return;
   }
 
-  // Gmail requires the authenticated account as the envelope sender, so the
-  // address is always the configured Gmail account. We show the sending user's
+  // Most SMTP providers (incl. Gmail) require the authenticated account as the
+  // envelope sender, so the address is the configured account (or SMTP_FROM if
+  // the provider allows a custom verified sender). We show the sending user's
   // name as the display name, and route replies to their own email.
-  const from = buildFrom(gmailUser, fromName);
+  const from = buildFrom(transport.fromAddress, fromName);
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: gmailUser, pass: gmailPass },
-  });
+  const transporter = nodemailer.createTransport(transport.options);
 
   try {
     const info = await transporter.sendMail({

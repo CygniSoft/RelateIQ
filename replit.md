@@ -13,20 +13,31 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ### Email sending (introduction emails)
 
-Intro emails are sent server-side via **Gmail SMTP** (nodemailer). These are
+Intro emails are sent server-side via **SMTP** (nodemailer), provider-agnostic. These are
 operator-level secrets set **once in Replit Secrets / Deployment env — never in the app
-UI** (a single shared account must not be exposed to end-user devices):
+UI** (a single shared sending account must not be exposed to end-user devices).
 
-- `GMAIL_USER` — the Gmail address to send from, e.g. `you@gmail.com`.
+**Preferred — generic SMTP (works with any provider: Outlook, Yahoo, iCloud, SendGrid,
+Mailgun, a work mailbox, etc.):**
+
+- `SMTP_HOST` — SMTP server host, e.g. `smtp-mail.outlook.com`, `smtp.sendgrid.net`.
+- `SMTP_USER` — SMTP username (often the full email address; for SendGrid it's `apikey`).
+- `SMTP_PASS` — SMTP password / app password / API key.
+- `SMTP_PORT` — optional, defaults to `587`.
+- `SMTP_SECURE` — optional `"true"`/`"false"`; defaults to `true` only when port is `465`.
+- `SMTP_FROM` — optional custom verified sender address; defaults to `SMTP_USER`.
+
+**Fallback — Gmail (used only if the `SMTP_*` vars above are not set):**
+
+- `GMAIL_USER` — the Gmail address to send from.
 - `GMAIL_APP_PASSWORD` — a Gmail **App Password** (Google Account → Security →
   2-Step Verification → App passwords). Not your normal Gmail password.
 
-This delivers to **any** recipient with no domain/DNS verification step. Emails are sent
-from the `GMAIL_USER` address (Gmail forces the authenticated account as the sender), the
-sending user's name is shown as the display name, and `replyTo` is the sending user's own
-email so replies route back to them. The send endpoint (`POST /api/send-email`) is
-Clerk-authed. Note Gmail's daily send limits (~500/day for free accounts, 2000 for
-Workspace).
+Most consumer/SMTP providers deliver to **any** recipient with no domain/DNS step. The
+authenticated account is the envelope sender (unless `SMTP_FROM` is a provider-verified
+custom address); the sending user's name is shown as the display name, and `replyTo` is
+the sending user's own email so replies route back to them. The send endpoint
+(`POST /api/send-email`) is Clerk-authed. Mind each provider's daily send limits.
 
 ## Stack
 
