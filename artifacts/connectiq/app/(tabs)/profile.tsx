@@ -599,12 +599,27 @@ export default function ProfileScreen() {
   async function handleManageSubscription() {
     if (portalLoading) return;
     setPortalLoading(true);
+
+    // App is framed in the Replit preview and the Stripe portal can't load in an
+    // iframe. Pre-open a blank tab SYNCHRONOUSLY (before any await) so the browser
+    // treats it as user-initiated and doesn't block it, then redirect it.
+    const popup =
+      Platform.OS === "web"
+        ? window.open("", "_blank", "noopener,noreferrer")
+        : null;
+
     try {
       const token = (await getToken()) ?? undefined;
       const returnUrl = ExpoLinking.createURL("/profile");
       const portalUrl = await createPortalSession(returnUrl, token);
       if (Platform.OS === "web") {
-        window.location.href = portalUrl;
+        if (popup) {
+          popup.location.href = portalUrl;
+        } else {
+          window.open(portalUrl, "_blank", "noopener,noreferrer");
+        }
+        await new Promise((r) => setTimeout(r, 1500));
+        await refreshSubscription();
         return;
       }
       await WebBrowser.openAuthSessionAsync(portalUrl, returnUrl);

@@ -90,13 +90,31 @@ export function Paywall({
   async function handleSubscribe() {
     if (!selectedPriceId || checkingOut) return;
     setCheckingOut(true);
+
+    // The app runs inside an iframe in the Replit preview, and Stripe Checkout
+    // refuses to load when framed. We must open a new tab — but the popup has to
+    // be opened SYNCHRONOUSLY inside the click handler (before any await), or
+    // browsers treat it as non-user-initiated and block it. Pre-open a blank tab
+    // now and point it at the checkout URL once we have it.
+    const popup =
+      Platform.OS === "web"
+        ? window.open("", "_blank", "noopener,noreferrer")
+        : null;
+
     try {
       const token = (await getToken()) ?? undefined;
       const returnUrl = Linking.createURL("/profile");
       const checkoutUrl = await createCheckout(selectedPriceId, returnUrl, token);
 
       if (Platform.OS === "web") {
-        window.location.href = checkoutUrl;
+        if (popup) {
+          popup.location.href = checkoutUrl;
+        } else {
+          // Popup was blocked — fall back to navigating the current context.
+          window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+        }
+        await new Promise((r) => setTimeout(r, 1500));
+        await refresh();
         return;
       }
 

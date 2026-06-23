@@ -58,7 +58,19 @@ the ref in a separate effect, and have the timer effect call `ref.current()`.
 
 Paywall and profile use `WebBrowser.openAuthSessionAsync(url, ExpoLinking.createURL("/profile"))`
 for Stripe Checkout/portal, then `await refresh()` after return (with a ~1.5s delay after
-checkout to let the Stripe webhook land). On web, fall back to `window.location.href`.
+checkout to let the Stripe webhook land).
+
+## On web, open Stripe in a NEW TAB — never navigate the iframe
+
+The Expo app renders inside an iframe in the Replit preview/canvas. Stripe Checkout and the
+Stripe customer portal both refuse to load when framed (frame-ancestors / X-Frame-Options),
+so `window.location.href = url` on web silently fails — the "payment page" never appears.
+**How to apply:** for `Platform.OS === "web"`, pre-open the tab SYNCHRONOUSLY inside the
+click handler — `const w = window.open("", "_blank", "noopener,noreferrer")` BEFORE any
+`await` — then set `w.location.href = url` once the URL returns. A `window.open` issued
+*after* awaits loses user-gesture context and is popup-blocked. Fall back to a direct
+`window.open(url)` when `w` is null. Refresh on return (1.5s best-effort + the
+visibilitychange→AppState 'active' path). Native keeps `WebBrowser.openAuthSessionAsync`.
 In `profile.tsx`, alias expo-linking as `ExpoLinking` — react-native already imports `Linking`
 (used for mailto), and a duplicate `Linking` binding is a hard Metro/Babel build error, not a
 typecheck-only one.
