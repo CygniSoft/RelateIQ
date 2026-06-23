@@ -2,7 +2,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -52,24 +52,33 @@ export function Paywall({
   const [loading, setLoading] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
 
-  const loadPlans = useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = (await getToken()) ?? undefined;
-      const result = await fetchPlans(token);
-      setPlans(result);
-      const firstPrice = result[0]?.prices[0]?.id ?? null;
-      setSelectedPriceId((prev) => prev ?? firstPrice);
-    } catch {
-      // Surface nothing destructive; the empty state covers it.
-    } finally {
-      setLoading(false);
-    }
-  }, [getToken]);
-
+  // Load plans only when the paywall opens. We intentionally key this effect on
+  // `visible` alone — `getToken` is not referentially stable across renders, so
+  // depending on a callback that closes over it would re-run every render and
+  // flood the products endpoint.
   useEffect(() => {
-    if (visible) void loadPlans();
-  }, [visible, loadPlans]);
+    if (!visible) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const token = (await getToken()) ?? undefined;
+        const result = await fetchPlans(token);
+        if (cancelled) return;
+        setPlans(result);
+        const firstPrice = result[0]?.prices[0]?.id ?? null;
+        setSelectedPriceId((prev) => prev ?? firstPrice);
+      } catch {
+        // Surface nothing destructive; the empty state covers it.
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const allPrices: PlanPrice[] = plans.flatMap((p) => p.prices);
 

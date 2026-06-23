@@ -38,6 +38,22 @@ don't rely solely on the entry gate. Note: `/api/scan-card` is currently unauthe
 enforcement is client-side only — if hard server enforcement is ever required, add Clerk auth
 + a subscription entitlement check to that endpoint.
 
+## Never put a getToken-closing useCallback in an effect's dependency array
+
+Clerk Expo's `useAuth().getToken` (and `useClerk().signOut`) are NOT referentially
+stable across renders. Any `useCallback` that closes over them changes identity every
+render. Putting that callback in a `useEffect` dependency array creates an infinite
+loop: effect runs → fetch → setState → re-render → new callback identity → effect runs
+again. This shipped as a bug: the Paywall fetched `/api/billing/products` ~85x/second
+and the spinner never resolved; the SubscriptionContext interval was also being torn
+down and recreated every render.
+
+**How to apply:** key data-load effects on primitive state only (e.g. `[visible]`,
+`[isSignedIn]`) and reference `getToken` inside without listing it as a dep
+(`// eslint-disable-next-line react-hooks/exhaustive-deps`). For long-lived timers/
+listeners that must call the latest callback, store the callback in a `useRef`, update
+the ref in a separate effect, and have the timer effect call `ref.current()`.
+
 ## Checkout/portal return via deep link
 
 Paywall and profile use `WebBrowser.openAuthSessionAsync(url, ExpoLinking.createURL("/profile"))`

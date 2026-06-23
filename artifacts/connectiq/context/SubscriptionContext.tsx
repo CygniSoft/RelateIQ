@@ -71,6 +71,17 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   }, [isSignedIn, getToken, signOut]);
 
+  // Keep refs to the latest callbacks so the timer/listener effect below can run
+  // off `isSignedIn` alone. `getToken`/`signOut` are not referentially stable,
+  // so depending on `beat`/`refresh` directly would tear down and recreate the
+  // interval every render and flood the API.
+  const beatRef = useRef(beat);
+  const refreshRef = useRef(refresh);
+  useEffect(() => {
+    beatRef.current = beat;
+    refreshRef.current = refresh;
+  }, [beat, refresh]);
+
   useEffect(() => {
     revokedRef.current = false;
     if (!isSignedIn) {
@@ -78,17 +89,17 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       return;
     }
 
-    void refresh();
-    void beat();
+    void refreshRef.current();
+    void beatRef.current();
 
     const interval = setInterval(() => {
-      void beat();
+      void beatRef.current();
     }, HEARTBEAT_INTERVAL_MS);
 
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        void beat();
-        void refresh();
+        void beatRef.current();
+        void refreshRef.current();
       }
     });
 
@@ -96,7 +107,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       clearInterval(interval);
       sub.remove();
     };
-  }, [isSignedIn, beat, refresh]);
+  }, [isSignedIn]);
 
   const value: SubscriptionContextValue = {
     subscription,
