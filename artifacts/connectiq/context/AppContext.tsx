@@ -119,17 +119,25 @@ interface AppContextType {
   signOut: () => Promise<void>;
   clearAllData: () => Promise<void>;
   isLoaded: boolean;
+  freeScansUsed: number;
+  consumeFreeScan: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
 const DATA_VERSION = "2";
 
+// Non-subscribers can complete this many full scans (extraction + AI email +
+// save) before the paywall becomes mandatory. Tracked locally, consistent with
+// the app's local-first model.
+export const FREE_SCAN_LIMIT = 3;
+
 const STORAGE_KEYS = {
   CONTACTS: "@connectiq/contacts",
   EVENTS: "@connectiq/events",
   PROFILE: "@connectiq/profile",
   VERSION: "@connectiq/dataVersion",
+  FREE_SCANS: "@connectiq/freeScansUsed",
 };
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -151,6 +159,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [freeScansUsed, setFreeScansUsed] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -169,14 +178,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setProfile(DEFAULT_PROFILE);
           return;
         }
-        const [c, e, p] = await Promise.all([
+        const [c, e, p, fs] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.CONTACTS),
           AsyncStorage.getItem(STORAGE_KEYS.EVENTS),
           AsyncStorage.getItem(STORAGE_KEYS.PROFILE),
+          AsyncStorage.getItem(STORAGE_KEYS.FREE_SCANS),
         ]);
         setContacts(c ? JSON.parse(c) : []);
         setEvents(e ? JSON.parse(e) : []);
         setProfile(p ? JSON.parse(p) : DEFAULT_PROFILE);
+        setFreeScansUsed(fs ? Number(fs) || 0 : 0);
       } catch {
         setContacts([]);
         setEvents([]);
@@ -275,6 +286,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [profile]
   );
 
+  const consumeFreeScan = useCallback(() => {
+    setFreeScansUsed((prev) => {
+      const next = prev + 1;
+      void AsyncStorage.setItem(STORAGE_KEYS.FREE_SCANS, String(next));
+      return next;
+    });
+  }, []);
+
   const signOut = useCallback(async () => {
     await AsyncStorage.removeItem(STORAGE_KEYS.PROFILE);
     setProfile(DEFAULT_PROFILE);
@@ -332,6 +351,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         signOut,
         clearAllData,
         isLoaded,
+        freeScansUsed,
+        consumeFreeScan,
       }}
     >
       {children}

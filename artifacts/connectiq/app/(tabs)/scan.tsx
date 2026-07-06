@@ -26,7 +26,13 @@ import { useAuth } from "@clerk/expo";
 import { GlassIcon } from "@/components/GlassIcon";
 import { Paywall } from "@/components/Paywall";
 import { ScanFrame } from "@/components/ScanFrame";
-import { useApp, ContactCategory, FollowUpAction, Priority } from "@/context/AppContext";
+import {
+  useApp,
+  ContactCategory,
+  FollowUpAction,
+  Priority,
+  FREE_SCAN_LIMIT,
+} from "@/context/AppContext";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { sendEmail } from "@/lib/emailApi";
 import { scanCard, type ExtractedCard } from "@/lib/scanApi";
@@ -68,9 +74,12 @@ function generateIntroEmail(
 export default function ScanScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { addContact, profile, events } = useApp();
+  const { addContact, profile, events, freeScansUsed, consumeFreeScan } = useApp();
   const { getToken } = useAuth();
   const { isPro } = useSubscription();
+
+  const freeScansLeft = Math.max(0, FREE_SCAN_LIMIT - freeScansUsed);
+  const canScan = isPro || freeScansLeft > 0;
 
   const [showPaywall, setShowPaywall] = useState(false);
   const [step, setStep] = useState<ScanStep>("idle");
@@ -128,6 +137,8 @@ export default function ScanScreen() {
     const result = await scanCard(image);
 
     if (result.success && result.data) {
+      // A successful extraction consumes one free scan for non-subscribers.
+      if (!isPro) consumeFreeScan();
       setExtracted(result.data);
       setReviewErrors({});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -141,23 +152,18 @@ export default function ScanScreen() {
     }
   }
 
-  function requirePro(): boolean {
-    if (isPro) return true;
+  // Gate scan entry points: Pro users are unlimited; free users may start a scan
+  // while they still have free scans left. Downstream steps (review, AI email,
+  // save) are NOT re-gated — once a scan is started, the whole flow is allowed to
+  // finish, and the credit is consumed on a successful extraction / manual entry.
+  function requireScan(): boolean {
+    if (canScan) return true;
     setShowPaywall(true);
     return false;
   }
 
-  // If the subscription lapses while the user is mid-flow, eject them back to
-  // idle and surface the paywall so the premium path can't be completed.
-  useEffect(() => {
-    if (!isPro && step !== "idle" && step !== "done") {
-      setStep("idle");
-      setShowPaywall(true);
-    }
-  }, [isPro, step]);
-
   async function handleScan() {
-    if (!requirePro()) return;
+    if (!requireScan()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     // Camera is blocked inside the web preview iframe — use the library picker there instead
     if (Platform.OS === "web") {
@@ -180,7 +186,7 @@ export default function ScanScreen() {
   }
 
   async function handlePickFromLibrary() {
-    if (!requirePro()) return;
+    if (!requireScan()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
@@ -207,7 +213,6 @@ export default function ScanScreen() {
   }
 
   function handleGenerateEmail() {
-    if (!requirePro()) return;
     const summary = generateAISummary(extracted, eventName, notes);
     const email = generateIntroEmail(extracted, eventName, profile);
     setAiSummary(summary);
@@ -216,7 +221,6 @@ export default function ScanScreen() {
   }
 
   async function handleSaveContact() {
-    if (!requirePro()) return;
     addContact({
       ...extracted,
       cardImageUri,
@@ -273,7 +277,9 @@ export default function ScanScreen() {
   }
 
   function handleManualEntry() {
-    if (!requirePro()) return;
+    if (!requireScan()) return;
+    // Manual entry is a full contact creation, so it consumes a free scan too.
+    if (!isPro) consumeFreeScan();
     setReviewErrors({});
     setStep("review");
   }
@@ -306,6 +312,43 @@ export default function ScanScreen() {
             <Text style={{ color: colors.mutedForeground, fontSize: 14, marginTop: 4 }}>
               Capture a business card to save the contact
             </Text>
+
+            {!isPro && (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  alignSelf: "flex-start",
+                  gap: 6,
+                  marginTop: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 7,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor:
+                    freeScansLeft > 0 ? "rgba(123,94,255,0.3)" : "rgba(255,71,87,0.3)",
+                  backgroundColor:
+                    freeScansLeft > 0 ? "rgba(123,94,255,0.12)" : "rgba(255,71,87,0.12)",
+                }}
+              >
+                <Feather
+                  name={freeScansLeft > 0 ? "zap" : "lock"}
+                  size={13}
+                  color={freeScansLeft > 0 ? "#7B5EFF" : "#FF4757"}
+                />
+                <Text
+                  style={{
+                    color: freeScansLeft > 0 ? "#B7A6FF" : "#FF8A94",
+                    fontSize: 12,
+                    fontWeight: "600" as const,
+                  }}
+                >
+                  {freeScansLeft > 0
+                    ? `${freeScansLeft} of ${FREE_SCAN_LIMIT} free scans left`
+                    : "Free scans used — upgrade to Pro"}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View

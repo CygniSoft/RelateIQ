@@ -64,9 +64,15 @@ All contact data is local-first (device AsyncStorage).
 
 ### Subscription (Stripe)
 
-Scanning business cards and AI intro-email generation require an active **Pro**
-subscription ("RelateIQ+ Pro", monthly/annual). Viewing existing contacts/data stays
-free. Billing is server-driven via Stripe + `stripe-replit-sync`:
+Non-subscribers get a small number of **free scans** (see `FREE_SCAN_LIMIT` in
+`context/AppContext.tsx`, currently 3) — each covers a full scan → AI intro-email → save
+flow. After the free scans are used, scanning + AI intro-email generation require an active
+**Pro** subscription ("RelateIQ+ Pro", monthly/annual). Viewing existing contacts/data
+always stays free. Free-scan usage is tracked locally in AsyncStorage
+(`@connectiq/freeScansUsed`), consistent with the local-first model; gating lives in
+`app/(tabs)/scan.tsx` (`requireScan()` at entry points + `consumeFreeScan()` on a
+successful extraction / manual entry). Billing is server-driven via Stripe +
+`stripe-replit-sync`:
 
 - Server billing routes (Clerk-authed): `GET /api/billing/products`,
   `GET /api/billing/subscription`, `POST /api/billing/checkout`, `POST /api/billing/portal`.
