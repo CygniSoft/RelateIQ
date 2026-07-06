@@ -5,6 +5,7 @@ import { Text, View } from "react-native";
 import { GlassIcon } from "@/components/GlassIcon";
 import type { InsightIcon } from "@/lib/eventIntelligence";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 interface InsightCardProps {
   icon: InsightIcon;
@@ -19,13 +20,14 @@ export function InsightCard({ icon, tint, title, detail }: InsightCardProps) {
     <View
       style={{
         flexDirection: "row",
-        gap: 12,
+        gap: theme.spacing[12],
         alignItems: "flex-start",
         backgroundColor: colors.card,
         borderWidth: 1,
         borderColor: colors.border,
-        borderRadius: colors.radius,
-        padding: 14,
+        borderRadius: theme.radius.lg,
+        padding: theme.spacing[14],
+        ...theme.getShadow("#000", "sm"),
       }}
     >
       <GlassIcon tint={tint} size={40}>
@@ -35,15 +37,14 @@ export function InsightCard({ icon, tint, title, detail }: InsightCardProps) {
         <Text
           style={{
             color: colors.foreground,
-            fontSize: 14,
-            fontWeight: "600" as const,
+            ...theme.typography.bodySemi,
             marginBottom: 3,
           }}
         >
           {title}
         </Text>
         <Text
-          style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 18 }}
+          style={{ color: colors.mutedForeground, ...theme.typography.bodySmall, lineHeight: 18 }}
         >
           {detail}
         </Text>

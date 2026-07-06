@@ -26,6 +26,7 @@ import { useAuth } from "@clerk/expo";
 import { GlassIcon } from "@/components/GlassIcon";
 import { Paywall } from "@/components/Paywall";
 import { ScanFrame } from "@/components/ScanFrame";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import {
   useApp,
   ContactCategory,
@@ -37,6 +38,7 @@ import { useSubscription } from "@/context/SubscriptionContext";
 import { sendEmail } from "@/lib/emailApi";
 import { scanCard, type ExtractedCard } from "@/lib/scanApi";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 type ScanStep = "idle" | "scanning" | "review" | "context" | "email" | "done";
 
@@ -137,7 +139,6 @@ export default function ScanScreen() {
     const result = await scanCard(image);
 
     if (result.success && result.data) {
-      // A successful extraction consumes one free scan for non-subscribers.
       if (!isPro) consumeFreeScan();
       setExtracted(result.data);
       setReviewErrors({});
@@ -152,10 +153,6 @@ export default function ScanScreen() {
     }
   }
 
-  // Gate scan entry points: Pro users are unlimited; free users may start a scan
-  // while they still have free scans left. Downstream steps (review, AI email,
-  // save) are NOT re-gated — once a scan is started, the whole flow is allowed to
-  // finish, and the credit is consumed on a successful extraction / manual entry.
   function requireScan(): boolean {
     if (canScan) return true;
     setShowPaywall(true);
@@ -165,7 +162,6 @@ export default function ScanScreen() {
   async function handleScan() {
     if (!requireScan()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Camera is blocked inside the web preview iframe — use the library picker there instead
     if (Platform.OS === "web") {
       handlePickFromLibrary();
       return;
@@ -241,13 +237,11 @@ export default function ScanScreen() {
       dealValue: dealValue ? parseInt(dealValue) * 1000 : undefined,
     });
 
-    // Fire real email — don't block on result, contact is already saved
     void (async () => {
       let token: string | undefined;
       try {
         token = (await getToken()) ?? undefined;
       } catch {
-        // ignore — handled as auth failure below
       }
       await sendEmail({
         to: extracted.email,
@@ -257,9 +251,7 @@ export default function ScanScreen() {
         replyTo: profile.email || undefined,
         token,
       });
-    })().catch(() => {
-      // Silent — email failure doesn't block the save
-    });
+    })().catch(() => {});
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setStep("done");
@@ -278,7 +270,6 @@ export default function ScanScreen() {
 
   function handleManualEntry() {
     if (!requireScan()) return;
-    // Manual entry is a full contact creation, so it consumes a free scan too.
     if (!isPro) consumeFreeScan();
     setReviewErrors({});
     setStep("review");
@@ -290,66 +281,49 @@ export default function ScanScreen() {
       {step === "idle" && (
         <Animated.View
           entering={FadeIn.duration(300)}
-          style={{ flex: 1, paddingTop: topPad }}
+          style={{ flex: 1 }}
         >
-          <View
-            style={{
-              paddingHorizontal: 20,
-              paddingTop: 24,
-              paddingBottom: 16,
-            }}
-          >
-            <Text
+          <ScreenHeader 
+            title="Scan Card" 
+            subtitle="Capture a business card to save the contact"
+          />
+
+          {!isPro && (
+            <View
               style={{
-                color: colors.foreground,
-                fontSize: 28,
-                fontWeight: "700" as const,
-                letterSpacing: -0.5,
+                flexDirection: "row",
+                alignItems: "center",
+                alignSelf: "flex-start",
+                gap: 6,
+                marginHorizontal: theme.spacing[20],
+                marginBottom: theme.spacing[16],
+                paddingHorizontal: theme.spacing[12],
+                paddingVertical: 7,
+                borderRadius: theme.radius.xl,
+                borderWidth: 1,
+                borderColor:
+                  freeScansLeft > 0 ? "rgba(123,94,255,0.3)" : "rgba(255,71,87,0.3)",
+                backgroundColor:
+                  freeScansLeft > 0 ? "rgba(123,94,255,0.12)" : "rgba(255,71,87,0.12)",
               }}
             >
-              Scan Card
-            </Text>
-            <Text style={{ color: colors.mutedForeground, fontSize: 14, marginTop: 4 }}>
-              Capture a business card to save the contact
-            </Text>
-
-            {!isPro && (
-              <View
+              <Feather
+                name={freeScansLeft > 0 ? "zap" : "lock"}
+                size={13}
+                color={freeScansLeft > 0 ? "#7B5EFF" : "#FF4757"}
+              />
+              <Text
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  alignSelf: "flex-start",
-                  gap: 6,
-                  marginTop: 12,
-                  paddingHorizontal: 12,
-                  paddingVertical: 7,
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor:
-                    freeScansLeft > 0 ? "rgba(123,94,255,0.3)" : "rgba(255,71,87,0.3)",
-                  backgroundColor:
-                    freeScansLeft > 0 ? "rgba(123,94,255,0.12)" : "rgba(255,71,87,0.12)",
+                  color: freeScansLeft > 0 ? "#B7A6FF" : "#FF8A94",
+                  ...theme.typography.captionSemi,
                 }}
               >
-                <Feather
-                  name={freeScansLeft > 0 ? "zap" : "lock"}
-                  size={13}
-                  color={freeScansLeft > 0 ? "#7B5EFF" : "#FF4757"}
-                />
-                <Text
-                  style={{
-                    color: freeScansLeft > 0 ? "#B7A6FF" : "#FF8A94",
-                    fontSize: 12,
-                    fontWeight: "600" as const,
-                  }}
-                >
-                  {freeScansLeft > 0
-                    ? `${freeScansLeft} of ${FREE_SCAN_LIMIT} free scans left`
-                    : "Free scans used — upgrade to Pro"}
-                </Text>
-              </View>
-            )}
-          </View>
+                {freeScansLeft > 0
+                  ? `${freeScansLeft} of ${FREE_SCAN_LIMIT} free scans left`
+                  : "Free scans used — upgrade to Pro"}
+              </Text>
+            </View>
+          )}
 
           <View
             style={{
@@ -364,10 +338,10 @@ export default function ScanScreen() {
             <Text
               style={{
                 color: colors.mutedForeground,
-                fontSize: 13,
+                ...theme.typography.bodySmall,
                 textAlign: "center",
-                marginTop: 24,
-                marginBottom: Platform.OS === "web" ? 8 : 36,
+                marginTop: theme.spacing[24],
+                marginBottom: Platform.OS === "web" ? 8 : theme.spacing[32],
               }}
             >
               Position the business card within the frame
@@ -380,23 +354,23 @@ export default function ScanScreen() {
                   alignItems: "center",
                   gap: 6,
                   backgroundColor: "rgba(79,142,255,0.1)",
-                  borderRadius: 10,
-                  paddingHorizontal: 12,
+                  borderRadius: theme.radius.md,
+                  paddingHorizontal: theme.spacing[12],
                   paddingVertical: 7,
-                  marginBottom: 28,
+                  marginBottom: theme.spacing[28],
                   borderWidth: 1,
                   borderColor: "rgba(79,142,255,0.25)",
                 }}
               >
                 <Feather name="info" size={13} color={colors.primary} />
-                <Text style={{ color: colors.primary, fontSize: 12 }}>
+                <Text style={{ color: colors.primary, ...theme.typography.caption }}>
                   Pick a card image to scan in web preview
                 </Text>
               </View>
             )}
 
             {/* Main scan button */}
-            <Pressable onPress={handleScan}>
+            <Pressable onPress={handleScan} hitSlop={10}>
               <LinearGradient
                 colors={["#7B5EFF", "#4F8EFF"]}
                 start={{ x: 0, y: 0 }}
@@ -404,42 +378,34 @@ export default function ScanScreen() {
                 style={{
                   width: 80,
                   height: 80,
-                  borderRadius: 40,
+                  borderRadius: theme.radius.full,
                   alignItems: "center",
                   justifyContent: "center",
-                  marginBottom: 24,
-                  ...(Platform.OS !== "web"
-                    ? {
-                        shadowColor: "#7B5EFF",
-                        shadowOffset: { width: 0, height: 8 },
-                        shadowOpacity: 0.5,
-                        shadowRadius: 20,
-                        elevation: 8,
-                      }
-                    : {}),
+                  marginBottom: theme.spacing[24],
+                  ...theme.getShadow("#7B5EFF", "lg"),
                 }}
               >
                 <Ionicons name="camera" size={32} color="#fff" />
               </LinearGradient>
             </Pressable>
 
-            <View style={{ flexDirection: "row", gap: 16 }}>
+            <View style={{ flexDirection: "row", gap: theme.spacing[16] }}>
               <Pressable
                 onPress={handlePickFromLibrary}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 6,
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 20,
+                  paddingHorizontal: theme.spacing[16],
+                  paddingVertical: theme.spacing[10],
+                  borderRadius: theme.radius.xl,
                   borderWidth: 1,
                   borderColor: colors.border,
                   backgroundColor: colors.card,
                 }}
               >
                 <Feather name="image" size={15} color={colors.mutedForeground} />
-                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
+                <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>
                   From Library
                 </Text>
               </Pressable>
@@ -449,16 +415,16 @@ export default function ScanScreen() {
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 6,
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 20,
+                  paddingHorizontal: theme.spacing[16],
+                  paddingVertical: theme.spacing[10],
+                  borderRadius: theme.radius.xl,
                   borderWidth: 1,
                   borderColor: colors.border,
                   backgroundColor: colors.card,
                 }}
               >
                 <Feather name="edit-3" size={15} color={colors.mutedForeground} />
-                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
+                <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>
                   Manual Entry
                 </Text>
               </Pressable>
@@ -476,14 +442,14 @@ export default function ScanScreen() {
             flex: 1,
             alignItems: "center",
             justifyContent: "center",
-            gap: 20,
+            gap: theme.spacing[20],
           }}
         >
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.foreground, fontSize: 18, fontWeight: "600" as const }}>
+          <Text style={{ color: colors.foreground, ...theme.typography.h4 }}>
             Extracting details...
           </Text>
-          <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>
+          <Text style={{ color: colors.mutedForeground, ...theme.typography.body }}>
             AI is reading the business card
           </Text>
         </Animated.View>
@@ -498,9 +464,9 @@ export default function ScanScreen() {
           >
             <ScrollView
               contentContainerStyle={{
-                paddingTop: topPad + 16,
+                paddingTop: topPad + theme.spacing[16],
                 paddingBottom: bottomPad,
-                paddingHorizontal: 20,
+                paddingHorizontal: theme.spacing[20],
               }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -508,9 +474,8 @@ export default function ScanScreen() {
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 22,
-                  fontWeight: "700" as const,
-                  marginBottom: 6,
+                  ...theme.typography.h2,
+                  marginBottom: theme.spacing[6],
                 }}
               >
                 Review Details
@@ -518,8 +483,8 @@ export default function ScanScreen() {
               <Text
                 style={{
                   color: colors.mutedForeground,
-                  fontSize: 14,
-                  marginBottom: 24,
+                  ...theme.typography.body,
+                  marginBottom: theme.spacing[24],
                 }}
               >
                 Edit any extracted information
@@ -541,15 +506,12 @@ export default function ScanScreen() {
                   required?: boolean;
                 }>
               ).map((field) => (
-                <View key={field.key} style={{ marginBottom: 14 }}>
+                <View key={field.key} style={{ marginBottom: theme.spacing[14] }}>
                   <Text
                     style={{
                       color: colors.mutedForeground,
-                      fontSize: 12,
-                      fontWeight: "600" as const,
-                      textTransform: "uppercase",
-                      letterSpacing: 0.8,
-                      marginBottom: 6,
+                      ...theme.typography.label,
+                      marginBottom: theme.spacing[6],
                     }}
                   >
                     {field.label}
@@ -575,17 +537,17 @@ export default function ScanScreen() {
                       borderColor: reviewErrors[field.key]
                         ? "#FF4757"
                         : colors.border,
-                      borderRadius: 12,
-                      paddingHorizontal: 14,
-                      paddingVertical: 12,
+                      borderRadius: theme.radius.md,
+                      paddingHorizontal: theme.spacing[14],
+                      paddingVertical: theme.spacing[12],
                       color: colors.foreground,
-                      fontSize: 15,
+                      ...theme.typography.body,
                     }}
                     placeholderTextColor={colors.mutedForeground}
                   />
                   {reviewErrors[field.key] ? (
                     <Text
-                      style={{ color: "#FF4757", fontSize: 12, marginTop: 6 }}
+                      style={{ color: "#FF4757", ...theme.typography.caption, marginTop: 6 }}
                     >
                       {reviewErrors[field.key]}
                     </Text>
@@ -595,23 +557,22 @@ export default function ScanScreen() {
 
               <Pressable
                 onPress={handleProceedToContext}
-                style={{ marginTop: 8 }}
+                style={{ marginTop: theme.spacing[8] }}
               >
                 <LinearGradient
                   colors={["#7B5EFF", "#4F8EFF"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={{
-                    paddingVertical: 16,
-                    borderRadius: 16,
+                    paddingVertical: theme.spacing[16],
+                    borderRadius: theme.radius.lg,
                     alignItems: "center",
                   }}
                 >
                   <Text
                     style={{
                       color: "#fff",
-                      fontSize: 16,
-                      fontWeight: "700" as const,
+                      ...theme.typography.bodyLargeSemi,
                     }}
                   >
                     Add Contact
@@ -632,9 +593,9 @@ export default function ScanScreen() {
           >
             <ScrollView
               contentContainerStyle={{
-                paddingTop: topPad + 16,
+                paddingTop: topPad + theme.spacing[16],
                 paddingBottom: bottomPad,
-                paddingHorizontal: 20,
+                paddingHorizontal: theme.spacing[20],
               }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -642,9 +603,8 @@ export default function ScanScreen() {
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 22,
-                  fontWeight: "700" as const,
-                  marginBottom: 6,
+                  ...theme.typography.h2,
+                  marginBottom: theme.spacing[6],
                 }}
               >
                 Add Context
@@ -652,151 +612,118 @@ export default function ScanScreen() {
               <Text
                 style={{
                   color: colors.mutedForeground,
-                  fontSize: 14,
-                  marginBottom: 24,
+                  ...theme.typography.body,
+                  marginBottom: theme.spacing[24],
                 }}
               >
-                Tell AI what you discussed
+                Where did you meet {extracted.firstName}?
               </Text>
 
-              <View style={{ marginBottom: 16 }}>
-                <Text style={labelStyle(colors)}>Event</Text>
-                {events.length > 0 && (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      flexWrap: "wrap",
-                      gap: 8,
-                      marginTop: 4,
-                      marginBottom: 10,
-                    }}
-                  >
-                    {events.map((ev) => {
-                      const active = selectedEventId === ev.id;
-                      return (
-                        <Pressable
-                          key={ev.id}
-                          onPress={() => {
-                            if (active) {
-                              setSelectedEventId(undefined);
-                              setEventName("");
-                            } else {
-                              setSelectedEventId(ev.id);
-                              setEventName(ev.name);
-                            }
-                          }}
-                          style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 7,
-                            borderRadius: 20,
-                            borderWidth: 1,
-                            borderColor: active ? colors.primary : colors.border,
-                            backgroundColor: active
-                              ? colors.primary + "22"
-                              : colors.card,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: active
-                                ? colors.primary
-                                : colors.mutedForeground,
-                              fontSize: 13,
-                              fontWeight: active ? ("600" as const) : ("400" as const),
-                            }}
-                          >
-                            {ev.name}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                )}
-                <TextInput
-                  value={selectedEventId ? "" : eventName}
-                  onChangeText={(text) => {
-                    setSelectedEventId(undefined);
-                    setEventName(text);
-                  }}
-                  editable={!selectedEventId}
-                  placeholder={
-                    selectedEventId
-                      ? "Using selected event above"
-                      : events.length > 0
-                      ? "Or type a new event name"
-                      : "e.g. Toronto Business Expo"
-                  }
-                  placeholderTextColor={colors.mutedForeground}
-                  style={[
-                    inputStyle(colors),
-                    selectedEventId ? { opacity: 0.5 } : null,
-                  ]}
-                />
-              </View>
-
-              <View style={{ marginBottom: 16 }}>
-                <Text style={labelStyle(colors)}>Meeting Notes</Text>
-                <TextInput
-                  value={notes}
-                  onChangeText={setNotes}
-                  placeholder="What did you discuss?"
-                  placeholderTextColor={colors.mutedForeground}
-                  multiline
-                  numberOfLines={3}
-                  style={[inputStyle(colors), { height: 80, textAlignVertical: "top" }]}
-                />
-              </View>
-
-              <View style={{ marginBottom: 16 }}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 6,
-                    marginBottom: 6,
-                  }}
-                >
-                  <Text style={[labelStyle(colors), { marginBottom: 0 }]}>
-                    Deal Value (in $K)
-                  </Text>
-                  <Pressable
-                    hitSlop={8}
-                    onPress={() =>
-                      showInfo(
-                        "Deal Value",
-                        "The estimated revenue this contact could be worth if it turns into a deal. Enter it in thousands — e.g. 50 means $50,000. It feeds your Events ROI and helps you prioritize who to follow up with. Leave it blank if you're not sure.",
-                      )
-                    }
-                  >
-                    <Feather
-                      name="help-circle"
-                      size={14}
-                      color={colors.mutedForeground}
-                    />
-                  </Pressable>
-                </View>
-                <TextInput
-                  value={dealValue}
-                  onChangeText={setDealValue}
-                  placeholder="e.g. 50"
-                  placeholderTextColor={colors.mutedForeground}
-                  keyboardType="numeric"
-                  style={inputStyle(colors)}
-                />
+              {/* Event selection */}
+              <View style={{ marginBottom: theme.spacing[20] }}>
                 <Text
                   style={{
                     color: colors.mutedForeground,
-                    fontSize: 12,
-                    marginTop: 6,
+                    ...theme.typography.label,
+                    marginBottom: theme.spacing[6],
                   }}
                 >
-                  Estimated value if this becomes a deal (in $K).
+                  Recent Events
                 </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  <Pressable
+                    onPress={() => {
+                      setSelectedEventId(undefined);
+                      setEventName("");
+                    }}
+                    style={{
+                      paddingHorizontal: theme.spacing[16],
+                      paddingVertical: theme.spacing[8],
+                      borderRadius: theme.radius.xl,
+                      backgroundColor: !selectedEventId ? colors.primary : colors.card,
+                      borderWidth: 1,
+                      borderColor: !selectedEventId ? colors.primary : colors.border,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: !selectedEventId ? "#fff" : colors.mutedForeground,
+                        ...theme.typography.bodySmallSemi,
+                      }}
+                    >
+                      None
+                    </Text>
+                  </Pressable>
+                  {events.slice(0, 5).map((e) => (
+                    <Pressable
+                      key={e.id}
+                      onPress={() => {
+                        setSelectedEventId(e.id);
+                        setEventName(e.name);
+                      }}
+                      style={{
+                        paddingHorizontal: theme.spacing[16],
+                        paddingVertical: theme.spacing[8],
+                        borderRadius: theme.radius.xl,
+                        backgroundColor: selectedEventId === e.id ? colors.primary : colors.card,
+                        borderWidth: 1,
+                        borderColor: selectedEventId === e.id ? colors.primary : colors.border,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: selectedEventId === e.id ? "#fff" : colors.mutedForeground,
+                          ...theme.typography.bodySmallSemi,
+                        }}
+                      >
+                        {e.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
 
-              <View style={{ marginBottom: 16 }}>
-                <Text style={labelStyle(colors)}>Category</Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+              {!selectedEventId && (
+                <View style={{ marginBottom: theme.spacing[20] }}>
+                  <Text
+                    style={{
+                      color: colors.mutedForeground,
+                      ...theme.typography.label,
+                      marginBottom: theme.spacing[6],
+                    }}
+                  >
+                    Or enter a location/event name
+                  </Text>
+                  <TextInput
+                    value={eventName}
+                    onChangeText={setEventName}
+                    placeholder="e.g. Coffee shop, Web Summit"
+                    placeholderTextColor={colors.mutedForeground}
+                    style={{
+                      backgroundColor: colors.secondary,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: theme.radius.md,
+                      paddingHorizontal: theme.spacing[14],
+                      paddingVertical: theme.spacing[12],
+                      color: colors.foreground,
+                      ...theme.typography.body,
+                    }}
+                  />
+                </View>
+              )}
+
+              <View style={{ marginBottom: theme.spacing[20] }}>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    ...theme.typography.label,
+                    marginBottom: theme.spacing[6],
+                  }}
+                >
+                  Category
+                </Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                   {(
                     [
                       "Potential client",
@@ -811,26 +738,18 @@ export default function ScanScreen() {
                       key={cat}
                       onPress={() => setCategory(cat)}
                       style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 7,
-                        borderRadius: 20,
+                        paddingHorizontal: theme.spacing[14],
+                        paddingVertical: theme.spacing[8],
+                        borderRadius: theme.radius.xl,
+                        backgroundColor: category === cat ? colors.primary + "22" : colors.card,
                         borderWidth: 1,
-                        borderColor:
-                          category === cat ? colors.primary : colors.border,
-                        backgroundColor:
-                          category === cat
-                            ? colors.primary + "22"
-                            : colors.card,
+                        borderColor: category === cat ? colors.primary : colors.border,
                       }}
                     >
                       <Text
                         style={{
-                          color:
-                            category === cat
-                              ? colors.primary
-                              : colors.mutedForeground,
-                          fontSize: 13,
-                          fontWeight: category === cat ? ("600" as const) : ("400" as const),
+                          color: category === cat ? colors.primary : colors.mutedForeground,
+                          ...theme.typography.bodySmallSemi,
                         }}
                       >
                         {cat}
@@ -840,45 +759,102 @@ export default function ScanScreen() {
                 </View>
               </View>
 
-              <View style={{ marginBottom: 24 }}>
-                <Text style={labelStyle(colors)}>Priority</Text>
-                <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
-                  {(["High", "Medium", "Low"] as Priority[]).map((p) => {
-                    const pColor =
-                      p === "High"
-                        ? "#FF4757"
-                        : p === "Medium"
-                        ? "#F59E0B"
-                        : "#6B7490";
-                    return (
-                      <Pressable
-                        key={p}
-                        onPress={() => setPriority(p)}
+              <View style={{ marginBottom: theme.spacing[20] }}>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    ...theme.typography.label,
+                    marginBottom: theme.spacing[6],
+                  }}
+                >
+                  Priority
+                </Text>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  {(["High", "Medium", "Low"] as Priority[]).map((p) => (
+                    <Pressable
+                      key={p}
+                      onPress={() => setPriority(p)}
+                      style={{
+                        flex: 1,
+                        paddingVertical: theme.spacing[10],
+                        alignItems: "center",
+                        borderRadius: theme.radius.md,
+                        backgroundColor: priority === p ? colors.primary + "22" : colors.card,
+                        borderWidth: 1,
+                        borderColor: priority === p ? colors.primary : colors.border,
+                      }}
+                    >
+                      <Text
                         style={{
-                          flex: 1,
-                          paddingVertical: 10,
-                          borderRadius: 12,
-                          borderWidth: 1,
-                          borderColor:
-                            priority === p ? pColor : colors.border,
-                          backgroundColor:
-                            priority === p ? pColor + "22" : colors.card,
-                          alignItems: "center",
+                          color: priority === p ? colors.primary : colors.mutedForeground,
+                          ...theme.typography.bodySmallSemi,
                         }}
                       >
-                        <Text
-                          style={{
-                            color: priority === p ? pColor : colors.mutedForeground,
-                            fontWeight: "600" as const,
-                            fontSize: 14,
-                          }}
-                        >
-                          {p}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
+                        {p}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </View>
+              </View>
+
+              <View style={{ marginBottom: theme.spacing[20] }}>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    ...theme.typography.label,
+                    marginBottom: theme.spacing[6],
+                  }}
+                >
+                  Meeting Notes (Optional)
+                </Text>
+                <TextInput
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Topics discussed, next steps..."
+                  placeholderTextColor={colors.mutedForeground}
+                  multiline
+                  style={{
+                    backgroundColor: colors.secondary,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: theme.radius.md,
+                    paddingHorizontal: theme.spacing[14],
+                    paddingVertical: theme.spacing[12],
+                    color: colors.foreground,
+                    ...theme.typography.body,
+                    minHeight: 100,
+                    textAlignVertical: "top",
+                  }}
+                />
+              </View>
+
+              <View style={{ marginBottom: theme.spacing[24] }}>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    ...theme.typography.label,
+                    marginBottom: theme.spacing[6],
+                  }}
+                >
+                  Estimated Deal Value (Optional)
+                </Text>
+                <TextInput
+                  value={dealValue}
+                  onChangeText={setDealValue}
+                  placeholder="e.g. 50 (in thousands)"
+                  placeholderTextColor={colors.mutedForeground}
+                  keyboardType="numeric"
+                  style={{
+                    backgroundColor: colors.secondary,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: theme.radius.md,
+                    paddingHorizontal: theme.spacing[14],
+                    paddingVertical: theme.spacing[12],
+                    color: colors.foreground,
+                    ...theme.typography.body,
+                  }}
+                />
               </View>
 
               <Pressable onPress={handleGenerateEmail}>
@@ -887,8 +863,8 @@ export default function ScanScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={{
-                    paddingVertical: 16,
-                    borderRadius: 16,
+                    paddingVertical: theme.spacing[16],
+                    borderRadius: theme.radius.lg,
                     alignItems: "center",
                     flexDirection: "row",
                     justifyContent: "center",
@@ -899,11 +875,10 @@ export default function ScanScreen() {
                   <Text
                     style={{
                       color: "#fff",
-                      fontSize: 16,
-                      fontWeight: "700" as const,
+                      ...theme.typography.bodyLargeSemi,
                     }}
                   >
-                    Generate AI Email
+                    Draft Intro Email
                   </Text>
                 </LinearGradient>
               </Pressable>
@@ -912,122 +887,183 @@ export default function ScanScreen() {
         </Animated.View>
       )}
 
-      {/* Step: Email Preview */}
+      {/* Step: AI Email Draft & Review */}
       {step === "email" && (
         <Animated.View entering={FadeInDown.duration(300)} style={{ flex: 1 }}>
-          <ScrollView
-            contentContainerStyle={{
-              paddingTop: topPad + 16,
-              paddingBottom: bottomPad,
-              paddingHorizontal: 20,
-            }}
-            showsVerticalScrollIndicator={false}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                marginBottom: 8,
+            <ScrollView
+              contentContainerStyle={{
+                paddingTop: topPad + theme.spacing[16],
+                paddingBottom: bottomPad,
+                paddingHorizontal: theme.spacing[20],
               }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
-              <GlassIcon tint={colors.primary} size={36}>
-                <Ionicons name="sparkles" size={18} color="#fff" />
-              </GlassIcon>
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 22,
-                  fontWeight: "700" as const,
+                  ...theme.typography.h2,
+                  marginBottom: theme.spacing[6],
                 }}
               >
-                AI Email Draft
+                Send Intro
               </Text>
-            </View>
-            <Text
-              style={{
-                color: colors.mutedForeground,
-                fontSize: 14,
-                marginBottom: 20,
-              }}
-            >
-              Review before sending to {extracted.firstName}
-            </Text>
+              <Text
+                style={{
+                  color: colors.mutedForeground,
+                  ...theme.typography.body,
+                  marginBottom: theme.spacing[24],
+                }}
+              >
+                Review the AI-generated follow-up email
+              </Text>
 
-            {/* AI Summary */}
-            <View
-              style={{
-                backgroundColor: colors.primary + "14",
-                borderWidth: 1,
-                borderColor: colors.primary + "33",
-                borderRadius: 14,
-                padding: 16,
-                marginBottom: 16,
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                <Feather name="cpu" size={14} color={colors.primary} />
-                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" as const, letterSpacing: 0.5 }}>
-                  AI SUMMARY
+              <View
+                style={{
+                  backgroundColor: colors.primary + "14",
+                  borderWidth: 1,
+                  borderColor: colors.primary + "33",
+                  borderRadius: theme.radius.lg,
+                  padding: theme.spacing[16],
+                  marginBottom: theme.spacing[24],
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <Ionicons name="sparkles" size={14} color={colors.primary} />
+                  <Text style={{ color: colors.primary, ...theme.typography.label }}>
+                    AI MEETING SUMMARY
+                  </Text>
+                </View>
+                <Text style={{ color: colors.foreground, ...theme.typography.bodySmall, lineHeight: 20 }}>
+                  {aiSummary}
                 </Text>
               </View>
-              <Text style={{ color: colors.foreground, fontSize: 13, lineHeight: 20 }}>
-                {aiSummary}
-              </Text>
-            </View>
 
-            {/* Email */}
-            <View
-              style={{
-                backgroundColor: colors.card,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 14,
-                padding: 16,
-                marginBottom: 20,
-              }}
-            >
-              <Text style={{ color: colors.mutedForeground, fontSize: 12, marginBottom: 6 }}>
-                To: {extracted.email}
-              </Text>
-              <Text style={{ color: colors.mutedForeground, fontSize: 12, marginBottom: 12 }}>
-                Subject: Great meeting you{eventName ? ` at ${eventName}` : ""}
-              </Text>
-              <TextInput
-                value={emailDraft}
-                onChangeText={setEmailDraft}
-                multiline
-                style={{
-                  color: colors.foreground,
-                  fontSize: 14,
-                  lineHeight: 22,
-                  minHeight: 180,
-                  textAlignVertical: "top",
-                }}
-              />
-            </View>
-
-            <Pressable onPress={handleSaveContact}>
-              <LinearGradient
-                colors={["#10B981", "#059669"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{
-                  paddingVertical: 16,
-                  borderRadius: 16,
-                  alignItems: "center",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  gap: 8,
-                }}
-              >
-                <Feather name="send" size={18} color="#fff" />
-                <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" as const }}>
-                  Send & Save Contact
+              <View style={{ marginBottom: theme.spacing[24] }}>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    ...theme.typography.label,
+                    marginBottom: theme.spacing[6],
+                  }}
+                >
+                  Email Draft
                 </Text>
-              </LinearGradient>
-            </Pressable>
-          </ScrollView>
+                <TextInput
+                  value={emailDraft}
+                  onChangeText={setEmailDraft}
+                  multiline
+                  style={{
+                    backgroundColor: colors.secondary,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: theme.radius.md,
+                    paddingHorizontal: theme.spacing[14],
+                    paddingVertical: theme.spacing[12],
+                    color: colors.foreground,
+                    ...theme.typography.body,
+                    minHeight: 200,
+                    textAlignVertical: "top",
+                  }}
+                />
+                <Text style={{ color: colors.mutedForeground, ...theme.typography.caption, marginTop: 8 }}>
+                  Emails are sent via RelateIQ+ verified servers. Your reply-to address will be set to your email.
+                </Text>
+              </View>
+
+              <View style={{ marginBottom: theme.spacing[24] }}>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    ...theme.typography.label,
+                    marginBottom: theme.spacing[6],
+                  }}
+                >
+                  Next Follow-up Action
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  {(
+                    [
+                      "Send intro email",
+                      "Schedule meeting",
+                      "Send proposal",
+                      "Make introduction",
+                      "Call later",
+                    ] as FollowUpAction[]
+                  ).map((action) => (
+                    <Pressable
+                      key={action}
+                      onPress={() => setFollowUp(action)}
+                      style={{
+                        paddingHorizontal: theme.spacing[14],
+                        paddingVertical: theme.spacing[8],
+                        borderRadius: theme.radius.xl,
+                        backgroundColor: followUp === action ? colors.primary + "22" : colors.card,
+                        borderWidth: 1,
+                        borderColor: followUp === action ? colors.primary : colors.border,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: followUp === action ? colors.primary : colors.mutedForeground,
+                          ...theme.typography.bodySmallSemi,
+                        }}
+                      >
+                        {action}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={{ flexDirection: "row", gap: theme.spacing[12] }}>
+                <Pressable
+                  onPress={() => setStep("context")}
+                  style={{
+                    flex: 1,
+                    paddingVertical: theme.spacing[16],
+                    borderRadius: theme.radius.lg,
+                    alignItems: "center",
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: colors.card,
+                  }}
+                >
+                  <Text style={{ color: colors.foreground, ...theme.typography.bodyLargeSemi }}>
+                    Back
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleSaveContact}
+                  style={{ flex: 2 }}
+                >
+                  <LinearGradient
+                    colors={["#7B5EFF", "#4F8EFF"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      paddingVertical: theme.spacing[16],
+                      borderRadius: theme.radius.lg,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#fff",
+                        ...theme.typography.bodyLargeSemi,
+                      }}
+                    >
+                      Save & Send Email
+                    </Text>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </Animated.View>
       )}
 
@@ -1039,61 +1075,23 @@ export default function ScanScreen() {
             flex: 1,
             alignItems: "center",
             justifyContent: "center",
-            gap: 16,
+            gap: theme.spacing[16],
           }}
         >
-          <LinearGradient
-            colors={["#10B981", "#059669"]}
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 40,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Feather name="check" size={36} color="#fff" />
-          </LinearGradient>
-          <Text
-            style={{
-              color: colors.foreground,
-              fontSize: 22,
-              fontWeight: "700" as const,
-            }}
-          >
+          <GlassIcon tint="#10B981" size={80}>
+            <Feather name="check" size={40} color="#fff" />
+          </GlassIcon>
+          <Text style={{ color: colors.foreground, ...theme.typography.h2 }}>
             Contact Saved!
           </Text>
-          <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>
-            Intro email sent to {extracted.firstName}
+          <Text style={{ color: colors.mutedForeground, ...theme.typography.body }}>
+            Intro email has been sent
           </Text>
         </Animated.View>
       )}
 
+      {/* Paywall */}
       <Paywall visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>
   );
-}
-
-function labelStyle(colors: ReturnType<typeof useColors>) {
-  return {
-    color: colors.mutedForeground,
-    fontSize: 12,
-    fontWeight: "600" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: 0.8,
-    marginBottom: 6,
-  };
-}
-
-function inputStyle(colors: ReturnType<typeof useColors>) {
-  return {
-    backgroundColor: colors.secondary,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: colors.foreground,
-    fontSize: 15,
-  };
 }

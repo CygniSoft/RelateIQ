@@ -23,9 +23,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ContactCard";
 import { GlassIcon } from "@/components/GlassIcon";
 import { Paywall } from "@/components/Paywall";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { useApp } from "@/context/AppContext";
 import { useSubscription } from "@/context/SubscriptionContext";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 import { createPortalSession } from "@/lib/billingApi";
 import {
   getIntegrationStatus,
@@ -60,15 +62,18 @@ function SettingRow({
   return (
     <Pressable
       onPress={onPress}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        gap: 14,
-      }}
+      style={({ pressed }) => [
+        {
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: theme.spacing[16],
+          paddingVertical: theme.spacing[14],
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          gap: theme.spacing[14],
+        },
+        pressed && onPress && { backgroundColor: colors.secondary },
+      ]}
     >
       <GlassIcon tint={danger ? "#FF4757" : colors.primary} size={36}>
         {React.isValidElement(icon)
@@ -82,13 +87,13 @@ function SettingRow({
         style={{
           flex: 1,
           color: danger ? "#FF4757" : colors.foreground,
-          fontSize: 15,
+          ...theme.typography.body,
         }}
       >
         {label}
       </Text>
       {value && (
-        <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{value}</Text>
+        <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>{value}</Text>
       )}
       {onPress && !danger && (
         <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
@@ -160,39 +165,36 @@ function EditProfileModal({
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingHorizontal: 20,
-            paddingTop: insets.top + 16,
-            paddingBottom: 16,
+            paddingHorizontal: theme.spacing[20],
+            paddingTop: insets.top + theme.spacing[16],
+            paddingBottom: theme.spacing[16],
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
           }}
         >
-          <Pressable onPress={onClose}>
+          <Pressable onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={24} color={colors.foreground} />
           </Pressable>
-          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: "600" as const }}>
+          <Text style={{ color: colors.foreground, ...theme.typography.h4 }}>
             Edit Profile
           </Text>
-          <Pressable onPress={save}>
-            <Text style={{ color: colors.primary, fontSize: 17, fontWeight: "600" as const }}>
+          <Pressable onPress={save} hitSlop={10}>
+            <Text style={{ color: colors.primary, ...theme.typography.bodyLargeSemi }}>
               Save
             </Text>
           </Pressable>
         </View>
         <ScrollView
-          contentContainerStyle={{ padding: 20 }}
+          contentContainerStyle={{ padding: theme.spacing[20] }}
           keyboardShouldPersistTaps="handled"
         >
           {fields.map((f) => (
-            <View key={f.key} style={{ marginBottom: 16 }}>
+            <View key={f.key} style={{ marginBottom: theme.spacing[16] }}>
               <Text
                 style={{
                   color: colors.mutedForeground,
-                  fontSize: 12,
-                  fontWeight: "600" as const,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.8,
-                  marginBottom: 6,
+                  ...theme.typography.label,
+                  marginBottom: theme.spacing[6],
                 }}
               >
                 {f.label}
@@ -208,16 +210,16 @@ function EditProfileModal({
                   backgroundColor: colors.secondary,
                   borderWidth: 1,
                   borderColor: errors[f.key] ? "#FF4757" : colors.border,
-                  borderRadius: 12,
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
+                  borderRadius: theme.radius.md,
+                  paddingHorizontal: theme.spacing[14],
+                  paddingVertical: theme.spacing[12],
                   color: colors.foreground,
-                  fontSize: 15,
+                  ...theme.typography.body,
                 }}
                 placeholderTextColor={colors.mutedForeground}
               />
               {errors[f.key] ? (
-                <Text style={{ color: "#FF4757", fontSize: 12, marginTop: 6 }}>
+                <Text style={{ color: "#FF4757", ...theme.typography.caption, marginTop: 6 }}>
                   {errors[f.key]}
                 </Text>
               ) : null}
@@ -276,23 +278,23 @@ function NotificationsModal({
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingHorizontal: 20,
-            paddingTop: insets.top + 16,
-            paddingBottom: 16,
+            paddingHorizontal: theme.spacing[20],
+            paddingTop: insets.top + theme.spacing[16],
+            paddingBottom: theme.spacing[16],
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
           }}
         >
-          <Pressable onPress={onClose}>
+          <Pressable onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={24} color={colors.foreground} />
           </Pressable>
-          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: "600" as const }}>
+          <Text style={{ color: colors.foreground, ...theme.typography.h4 }}>
             Notifications
           </Text>
           <View style={{ width: 24 }} />
         </View>
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          <Text style={{ color: colors.mutedForeground, fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
+        <ScrollView contentContainerStyle={{ padding: theme.spacing[20] }}>
+          <Text style={{ color: colors.mutedForeground, ...theme.typography.body, marginBottom: theme.spacing[20], lineHeight: 20 }}>
             Choose which notifications RelateIQ+ sends you. Changes take effect immediately.
           </Text>
           {rows.map((row, i) => (
@@ -301,17 +303,17 @@ function NotificationsModal({
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingVertical: 14,
+                paddingVertical: theme.spacing[14],
                 borderBottomWidth: i < rows.length - 1 ? 1 : 0,
                 borderBottomColor: colors.border,
-                gap: 14,
+                gap: theme.spacing[14],
               }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "500" as const }}>
+                <Text style={{ color: colors.foreground, ...theme.typography.bodySemi }}>
                   {row.label}
                 </Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 2 }}>
+                <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall, marginTop: 2 }}>
                   {row.sub}
                 </Text>
               </View>
@@ -372,39 +374,39 @@ function PrivacyModal({
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingHorizontal: 20,
-            paddingTop: insets.top + 16,
-            paddingBottom: 16,
+            paddingHorizontal: theme.spacing[20],
+            paddingTop: insets.top + theme.spacing[16],
+            paddingBottom: theme.spacing[16],
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
           }}
         >
-          <Pressable onPress={onClose}>
+          <Pressable onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={24} color={colors.foreground} />
           </Pressable>
-          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: "600" as const }}>
+          <Text style={{ color: colors.foreground, ...theme.typography.h4 }}>
             Privacy & Data
           </Text>
           <View style={{ width: 24 }} />
         </View>
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
+        <ScrollView contentContainerStyle={{ padding: theme.spacing[20] }}>
           {items.map((item) => (
             <View
               key={item.title}
               style={{
                 flexDirection: "row",
-                gap: 14,
-                marginBottom: 24,
+                gap: theme.spacing[14],
+                marginBottom: theme.spacing[24],
               }}
             >
               <GlassIcon tint={colors.accent} size={40} style={{ flexShrink: 0 }}>
                 <Feather name={item.icon} size={18} color="#fff" />
               </GlassIcon>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" as const, marginBottom: 4 }}>
+                <Text style={{ color: colors.foreground, ...theme.typography.bodySemi, marginBottom: 4 }}>
                   {item.title}
                 </Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 19 }}>
+                <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall, lineHeight: 19 }}>
                   {item.body}
                 </Text>
               </View>
@@ -413,30 +415,33 @@ function PrivacyModal({
 
           <View
             style={{
-              marginTop: 8,
+              marginTop: theme.spacing[8],
               borderTopWidth: 1,
               borderTopColor: colors.border,
-              paddingTop: 24,
+              paddingTop: theme.spacing[24],
             }}
           >
-            <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" as const, marginBottom: 8 }}>
+            <Text style={{ color: colors.foreground, ...theme.typography.bodySemi, marginBottom: theme.spacing[8] }}>
               Data Management
             </Text>
-            <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 19, marginBottom: 20 }}>
+            <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall, lineHeight: 19, marginBottom: theme.spacing[20] }}>
               This will permanently delete all contacts, events, and notes stored on this device. Your profile will be reset to defaults.
             </Text>
             <Pressable
               onPress={onClearData}
-              style={{
-                backgroundColor: "#FF475718",
-                borderWidth: 1,
-                borderColor: "#FF475744",
-                borderRadius: 12,
-                paddingVertical: 14,
-                alignItems: "center",
-              }}
+              style={({ pressed }) => [
+                {
+                  backgroundColor: "#FF475718",
+                  borderWidth: 1,
+                  borderColor: "#FF475744",
+                  borderRadius: theme.radius.md,
+                  paddingVertical: theme.spacing[14],
+                  alignItems: "center",
+                },
+                pressed && { opacity: 0.7 }
+              ]}
             >
-              <Text style={{ color: "#FF4757", fontSize: 15, fontWeight: "600" as const }}>
+              <Text style={{ color: "#FF4757", ...theme.typography.bodySemi }}>
                 Clear All App Data
               </Text>
             </Pressable>
@@ -492,30 +497,27 @@ function HelpModal({
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingHorizontal: 20,
-            paddingTop: insets.top + 16,
-            paddingBottom: 16,
+            paddingHorizontal: theme.spacing[20],
+            paddingTop: insets.top + theme.spacing[16],
+            paddingBottom: theme.spacing[16],
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
           }}
         >
-          <Pressable onPress={onClose}>
+          <Pressable onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={24} color={colors.foreground} />
           </Pressable>
-          <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: "600" as const }}>
+          <Text style={{ color: colors.foreground, ...theme.typography.h4 }}>
             Help & Support
           </Text>
           <View style={{ width: 24 }} />
         </View>
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
+        <ScrollView contentContainerStyle={{ padding: theme.spacing[20] }}>
           <Text
             style={{
               color: colors.mutedForeground,
-              fontSize: 12,
-              fontWeight: "600" as const,
-              letterSpacing: 0.8,
-              textTransform: "uppercase",
-              marginBottom: 16,
+              ...theme.typography.label,
+              marginBottom: theme.spacing[16],
             }}
           >
             Frequently Asked Questions
@@ -524,18 +526,19 @@ function HelpModal({
             <View
               key={i}
               style={{
-                marginBottom: 20,
+                marginBottom: theme.spacing[20],
                 backgroundColor: colors.card,
-                borderRadius: 14,
+                borderRadius: theme.radius.md,
                 borderWidth: 1,
                 borderColor: colors.border,
-                padding: 16,
+                padding: theme.spacing[16],
+                ...theme.getShadow("#000", "sm")
               }}
             >
-              <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "600" as const, marginBottom: 8 }}>
+              <Text style={{ color: colors.foreground, ...theme.typography.bodySemi, marginBottom: theme.spacing[8] }}>
                 {item.q}
               </Text>
-              <Text style={{ color: colors.mutedForeground, fontSize: 13, lineHeight: 19 }}>
+              <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall, lineHeight: 19 }}>
                 {item.a}
               </Text>
             </View>
@@ -543,29 +546,32 @@ function HelpModal({
 
           <View
             style={{
-              marginTop: 8,
+              marginTop: theme.spacing[8],
               borderTopWidth: 1,
               borderTopColor: colors.border,
-              paddingTop: 24,
-              gap: 12,
+              paddingTop: theme.spacing[24],
+              gap: theme.spacing[12],
             }}
           >
-            <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" as const, marginBottom: 4 }}>
+            <Text style={{ color: colors.foreground, ...theme.typography.bodySemi, marginBottom: 4 }}>
               Still need help?
             </Text>
             <Pressable
               onPress={() => Linking.openURL("mailto:hr@cygnisoft.com")}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                backgroundColor: colors.secondary,
-                borderRadius: 12,
-                padding: 14,
-              }}
+              style={({ pressed }) => [
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: theme.spacing[12],
+                  backgroundColor: colors.secondary,
+                  borderRadius: theme.radius.md,
+                  padding: theme.spacing[14],
+                },
+                pressed && { opacity: 0.8 }
+              ]}
             >
               <Feather name="mail" size={18} color={colors.primary} />
-              <Text style={{ color: colors.foreground, fontSize: 14 }}>Email hr@cygnisoft.com</Text>
+              <Text style={{ color: colors.foreground, ...theme.typography.body }}>Email hr@cygnisoft.com</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -592,13 +598,12 @@ export default function ProfileScreen() {
   const [integrations, setIntegrations] = useState<IntegrationStatus | null>(null);
   const [syncing, setSyncing] = useState<"calendar" | null>(null);
 
+  const bottomPad = Platform.OS === "web" ? 84 + 16 : insets.bottom + 56 + 16;
+
   async function handleManageSubscription() {
     if (portalLoading) return;
     setPortalLoading(true);
 
-    // App is framed in the Replit preview and the Stripe portal can't load in an
-    // iframe. Pre-open a blank tab SYNCHRONOUSLY (before any await) so the browser
-    // treats it as user-initiated and doesn't block it, then redirect it.
     const popup =
       Platform.OS === "web"
         ? window.open("", "_blank", "noopener,noreferrer")
@@ -674,40 +679,31 @@ export default function ProfileScreen() {
     if (followUps.length === 0) {
       notify(
         "Nothing to sync",
-        "Add a follow-up date to a contact and it will show up in your Google Calendar.",
+        "No pending follow-ups found to sync.",
       );
       return;
     }
 
     setSyncing("calendar");
-    const result = await syncFollowUpsToCalendar(followUps);
-    setSyncing(null);
-
-    if (result.success) {
+    try {
+      const result = await syncFollowUpsToCalendar(followUps);
+      if (result.success) {
+        notify(
+          "Synced",
+          `${result.synced ?? 0} follow-up reminders added to your calendar.`,
+        );
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (err) {
       notify(
-        "Google Calendar",
-        `Added ${result.synced} follow-up${result.synced === 1 ? "" : "s"} to your calendar.` +
-          (result.skipped ? ` ${result.skipped} already there.` : ""),
+        "Sync failed",
+        err instanceof Error ? err.message : "Please try again later.",
       );
-    } else {
-      notify("Calendar sync failed", result.error ?? "Please try again.");
+    } finally {
+      setSyncing(null);
     }
   }
-
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const bottomPad = Platform.OS === "web" ? 84 + 24 : insets.bottom + 56 + 24;
-
-  const totalRevenue = events.reduce((s, e) => s + e.revenueGenerated, 0);
-
-  const profileAsContact = {
-    id: "profile",
-    firstName: profile.name.split(" ")[0] ?? "",
-    lastName: profile.name.split(" ").slice(1).join(" ") ?? "",
-    company: profile.company,
-    jobTitle: profile.jobTitle,
-    email: profile.email,
-    phone: profile.phone,
-  };
 
   async function doSignOut() {
     await signOut();
@@ -743,7 +739,11 @@ export default function ProfileScreen() {
 
   function handleClearData() {
     if (Platform.OS === "web") {
-      if (window.confirm("This will permanently delete all contacts, events, and notes. This cannot be undone.")) {
+      if (
+        window.confirm(
+          "This will permanently delete all contacts, events, and notes. This cannot be undone.",
+        )
+      ) {
         clearAllData().then(() => setShowPrivacy(false));
       }
       return;
@@ -818,332 +818,211 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottomPad }}
       >
-        {/* Profile Hero */}
-        <LinearGradient
-          colors={["#0f1120", "#151828"]}
-          style={{
-            paddingTop: topPad + 20,
-            paddingBottom: 28,
-            paddingHorizontal: 20,
-            alignItems: "center",
-          }}
-        >
-          <Pressable onPress={() => setShowEdit(true)} style={{ marginBottom: 14 }}>
-            <View style={{ position: "relative" }}>
-              <Avatar
-                contact={profileAsContact as any}
-                size={80}
-              />
-              <View
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  right: 0,
-                  width: 26,
-                  height: 26,
-                  borderRadius: 13,
-                  backgroundColor: colors.primary,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 2,
-                  borderColor: "#151828",
-                }}
-              >
-                <Feather name="edit-2" size={12} color="#fff" />
-              </View>
-            </View>
-          </Pressable>
+        <ScreenHeader title="Profile" />
 
-          <Text
-            style={{
-              color: "#fff",
-              fontSize: 22,
-              fontWeight: "700" as const,
-              letterSpacing: -0.3,
-            }}
-          >
-            {profile.name || "Your Name"}
-          </Text>
-          {[profile.jobTitle, profile.company].filter(Boolean).length > 0 ? (
-            <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginTop: 3 }}>
-              {[profile.jobTitle, profile.company].filter(Boolean).join(" · ")}
-            </Text>
-          ) : (
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginTop: 3 }}>
-              Tap the avatar to set up your profile
-            </Text>
-          )}
-
-          {/* Inline stats */}
-          <View
-            style={{
-              flexDirection: "row",
-              marginTop: 20,
-              gap: 0,
-              borderRadius: 14,
-              overflow: "hidden",
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.1)",
-              alignSelf: "stretch",
-            }}
-          >
-            {[
-              { label: "Contacts", value: contacts.length },
-              { label: "Events", value: events.length },
-              {
-                label: "Revenue",
-                value:
-                  totalRevenue >= 1000
-                    ? `$${(totalRevenue / 1000).toFixed(0)}K`
-                    : `$${totalRevenue}`,
-              },
-            ].map((stat, i) => (
-              <View
-                key={i}
-                style={{
-                  flex: 1,
-                  alignItems: "center",
-                  paddingVertical: 12,
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  borderRightWidth: i < 2 ? 1 : 0,
-                  borderRightColor: "rgba(255,255,255,0.1)",
-                }}
-              >
-                <Text
-                  style={{ color: "#fff", fontSize: 18, fontWeight: "700" as const }}
-                >
-                  {stat.value}
-                </Text>
-                <Text
-                  style={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}
-                >
-                  {stat.label}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </LinearGradient>
-
-        {/* Subscription */}
-        <View style={{ margin: 16, marginBottom: 8 }}>
-          <LinearGradient
-            colors={isPro ? PLAN_COLORS : ["#1A1D2B", "#12141F"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{
-              borderRadius: colors.radius,
-              padding: 16,
-              borderWidth: isPro ? 0 : 1,
-              borderColor: colors.border,
-            }}
-          >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: "600" as const }}>
-                  CURRENT PLAN
-                </Text>
-                <Text style={{ color: "#fff", fontSize: 20, fontWeight: "700" as const }}>
-                  {isPro ? "RelateIQ+ Pro" : "Free"}
-                </Text>
-                <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 2 }}>
-                  {isPro
-                    ? subscription?.cancelAtPeriodEnd && subscription.currentPeriodEnd
-                      ? `Cancels on ${formatPeriodEnd(subscription.currentPeriodEnd)}`
-                      : subscription?.currentPeriodEnd
-                        ? `Renews ${formatPeriodEnd(subscription.currentPeriodEnd)}`
-                        : "Unlimited scans · AI features · ROI tracking"
-                    : "Scanning & AI emails are limited"}
-                </Text>
-              </View>
-              <View
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 20,
-                }}
-              >
-                <Text style={{ color: "#fff", fontSize: 12, fontWeight: "600" as const }}>
-                  {isPro ? (subscription?.cancelAtPeriodEnd ? "Canceling" : "Active") : "Free"}
-                </Text>
-              </View>
-            </View>
-
-            <Pressable
-              onPress={isPro ? handleManageSubscription : () => setShowPaywall(true)}
-              disabled={portalLoading}
+        <View style={{ paddingHorizontal: theme.spacing[20] }}>
+          {/* User info */}
+          <View style={{ alignItems: "center", marginBottom: theme.spacing[32] }}>
+            <Avatar contact={{ firstName: profile.name, lastName: "", id: "me" } as any} size={88} />
+            <Text
               style={{
-                marginTop: 16,
-                backgroundColor: "rgba(255,255,255,0.16)",
-                borderRadius: 12,
-                paddingVertical: 12,
-                alignItems: "center",
-                opacity: portalLoading ? 0.6 : 1,
+                color: colors.foreground,
+                ...theme.typography.h2,
+                marginTop: theme.spacing[16],
               }}
             >
-              {portalLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" as const }}>
-                  {isPro ? "Manage Subscription" : "Upgrade to Pro"}
-                </Text>
-              )}
+              {profile.name}
+            </Text>
+            <Text style={{ color: colors.mutedForeground, ...theme.typography.body, marginTop: theme.spacing[4] }}>
+              {profile.jobTitle && profile.company
+                ? `${profile.jobTitle} at ${profile.company}`
+                : profile.email}
+            </Text>
+
+            <Pressable
+              onPress={() => setShowEdit(true)}
+              style={({ pressed }) => [
+                {
+                  marginTop: theme.spacing[16],
+                  backgroundColor: colors.secondary,
+                  paddingHorizontal: theme.spacing[20],
+                  paddingVertical: theme.spacing[8],
+                  borderRadius: theme.radius.full,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                },
+                pressed && { opacity: 0.8 }
+              ]}
+            >
+              <Text style={{ color: colors.foreground, ...theme.typography.bodySmallSemi }}>
+                Edit Profile
+              </Text>
             </Pressable>
-          </LinearGradient>
-        </View>
+          </View>
 
-        {/* Account section */}
-        <View
-          style={{
-            marginHorizontal: 16,
-            marginTop: 16,
-            backgroundColor: colors.card,
-            borderRadius: colors.radius,
-            borderWidth: 1,
-            borderColor: colors.border,
-            overflow: "hidden",
-          }}
-        >
-          <Text
-            style={{
-              color: colors.mutedForeground,
-              fontSize: 12,
-              fontWeight: "600" as const,
-              letterSpacing: 0.8,
-              textTransform: "uppercase",
-              paddingHorizontal: 16,
-              paddingTop: 14,
-              paddingBottom: 8,
-            }}
+          {/* Subscription Banner */}
+          <Pressable
+            onPress={isPro ? handleManageSubscription : () => setShowPaywall(true)}
+            style={({ pressed }) => [
+              {
+                marginBottom: theme.spacing[24],
+                borderRadius: theme.radius.lg,
+                overflow: "hidden",
+                ...theme.getShadow(isPro ? "#7B5EFF" : "#000", "md")
+              },
+              pressed && { opacity: 0.95, transform: [{ scale: 0.98 }] }
+            ]}
           >
-            Account
-          </Text>
-          <SettingRow
-            icon={<Feather name="user" size={16} color={colors.primary} />}
-            label="Edit Profile"
-            onPress={() => setShowEdit(true)}
-          />
-        </View>
+            <LinearGradient
+              colors={isPro ? PLAN_COLORS : ["#1A1E35", "#0F1120"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ padding: theme.spacing[20] }}
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <Feather name={isPro ? "star" : "zap"} size={16} color="#fff" />
+                    <Text style={{ color: "#fff", ...theme.typography.bodyLargeSemi }}>
+                      {isPro ? "Pro Plan" : "Free Plan"}
+                    </Text>
+                  </View>
+                  <Text style={{ color: "rgba(255,255,255,0.7)", ...theme.typography.bodySmall }}>
+                    {isPro
+                      ? subscription?.currentPeriodEnd
+                        ? `Renews ${formatPeriodEnd(subscription.currentPeriodEnd)}`
+                        : "Active subscription"
+                      : "Upgrade for unlimited scans"}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    paddingHorizontal: theme.spacing[12],
+                    paddingVertical: 6,
+                    borderRadius: theme.radius.xl,
+                  }}
+                >
+                  <Text style={{ color: "#fff", ...theme.typography.captionSemi }}>
+                    {isPro ? "Manage" : "Upgrade"}
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </Pressable>
 
-        {/* Integrations */}
-        <View
-          style={{
-            marginHorizontal: 16,
-            marginTop: 16,
-            backgroundColor: colors.card,
-            borderRadius: colors.radius,
-            borderWidth: 1,
-            borderColor: colors.border,
-            overflow: "hidden",
-          }}
-        >
-          <Text
-            style={{
-              color: colors.mutedForeground,
-              fontSize: 12,
-              fontWeight: "600" as const,
-              letterSpacing: 0.8,
-              textTransform: "uppercase",
-              paddingHorizontal: 16,
-              paddingTop: 14,
-              paddingBottom: 8,
-            }}
-          >
-            Integrations
-          </Text>
-          <SettingRow
-            icon={<Feather name="mail" size={16} color="#EA4335" />}
-            label="Gmail"
-            value={integrations?.gmail ? "Connected" : "Not connected"}
-            onPress={() =>
-              notify(
-                "Gmail",
-                integrations?.gmail
-                  ? "Connected. Your AI intro emails are sent through Gmail."
-                  : "Gmail is not configured for this app yet.",
-              )
-            }
-          />
-          <SettingRow
-            icon={<Feather name="calendar" size={16} color="#4285F4" />}
-            label="Google Calendar"
-            value={
-              syncing === "calendar"
-                ? "Syncing…"
-                : integrations?.googleCalendar
-                ? "Sync follow-ups"
-                : "Not connected"
-            }
-            onPress={handleSyncCalendar}
-          />
-        </View>
+          {/* Settings sections */}
+          <View style={{ gap: theme.spacing[24] }}>
+            <View>
+              <Text
+                style={{
+                  color: colors.mutedForeground,
+                  ...theme.typography.label,
+                  marginBottom: theme.spacing[8],
+                  paddingHorizontal: theme.spacing[16],
+                }}
+              >
+                Integrations
+              </Text>
+              <View style={{ backgroundColor: colors.card, borderRadius: theme.radius.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+                <SettingRow
+                  icon={<Feather name="calendar" size={18} />}
+                  label="Sync to Google Calendar"
+                  value={
+                    syncing === "calendar"
+                      ? "Syncing..."
+                      : integrations?.googleCalendar
+                      ? "Connected"
+                      : "Not connected"
+                  }
+                  onPress={handleSyncCalendar}
+                />
+              </View>
+            </View>
 
-        {/* Preferences */}
-        <View
-          style={{
-            marginHorizontal: 16,
-            marginTop: 16,
-            marginBottom: 8,
-            backgroundColor: colors.card,
-            borderRadius: colors.radius,
-            borderWidth: 1,
-            borderColor: colors.border,
-            overflow: "hidden",
-          }}
-        >
-          <Text
-            style={{
-              color: colors.mutedForeground,
-              fontSize: 12,
-              fontWeight: "600" as const,
-              letterSpacing: 0.8,
-              textTransform: "uppercase",
-              paddingHorizontal: 16,
-              paddingTop: 14,
-              paddingBottom: 8,
-            }}
-          >
-            Preferences
-          </Text>
-          <SettingRow
-            icon={<Feather name="bell" size={16} color={colors.accent} />}
-            label="Notifications"
-            onPress={() => setShowNotifications(true)}
-          />
-          <SettingRow
-            icon={<Feather name="shield" size={16} color={colors.accent} />}
-            label="Privacy & Data"
-            onPress={() => setShowPrivacy(true)}
-          />
-          <SettingRow
-            icon={<Feather name="help-circle" size={16} color={colors.accent} />}
-            label="Help & Support"
-            onPress={() => setShowHelp(true)}
-          />
-          <SettingRow
-            icon={<Feather name="log-out" size={16} color="#FF4757" />}
-            label="Sign Out"
-            danger
-            onPress={handleSignOut}
-          />
-          <SettingRow
-            icon={
-              deleting ? (
-                <ActivityIndicator size="small" color="#FF4757" />
-              ) : (
-                <Feather name="trash-2" size={16} color="#FF4757" />
-              )
-            }
-            label={deleting ? "Deleting Account…" : "Delete Account"}
-            danger
-            onPress={deleting ? undefined : handleDeleteAccount}
-          />
+            <View>
+              <Text
+                style={{
+                  color: colors.mutedForeground,
+                  ...theme.typography.label,
+                  marginBottom: theme.spacing[8],
+                  paddingHorizontal: theme.spacing[16],
+                }}
+              >
+                Preferences
+              </Text>
+              <View style={{ backgroundColor: colors.card, borderRadius: theme.radius.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+                <SettingRow
+                  icon={<Feather name="bell" size={18} />}
+                  label="Notifications"
+                  onPress={() => setShowNotifications(true)}
+                />
+                <SettingRow
+                  icon={<Feather name="shield" size={18} />}
+                  label="Privacy & Data"
+                  onPress={() => setShowPrivacy(true)}
+                />
+              </View>
+            </View>
+
+            <View>
+              <Text
+                style={{
+                  color: colors.mutedForeground,
+                  ...theme.typography.label,
+                  marginBottom: theme.spacing[8],
+                  paddingHorizontal: theme.spacing[16],
+                }}
+              >
+                Support
+              </Text>
+              <View style={{ backgroundColor: colors.card, borderRadius: theme.radius.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+                <SettingRow
+                  icon={<Feather name="help-circle" size={18} />}
+                  label="Help & FAQ"
+                  onPress={() => setShowHelp(true)}
+                />
+                <SettingRow
+                  icon={<Feather name="mail" size={18} />}
+                  label="Contact Support"
+                  onPress={() => Linking.openURL("mailto:hr@cygnisoft.com")}
+                />
+              </View>
+            </View>
+
+            <View>
+              <View style={{ backgroundColor: colors.card, borderRadius: theme.radius.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+                <SettingRow
+                  icon={<Feather name="log-out" size={18} />}
+                  label="Sign Out"
+                  onPress={handleSignOut}
+                  danger
+                />
+                <SettingRow
+                  icon={<Feather name="trash-2" size={18} />}
+                  label={deleting ? "Deleting Account..." : "Delete Account"}
+                  onPress={deleting ? undefined : handleDeleteAccount}
+                  danger
+                />
+              </View>
+              <Text style={{ textAlign: "center", color: colors.mutedForeground, ...theme.typography.caption, marginTop: theme.spacing[16] }}>
+                RelateIQ+ Version 1.0.0
+              </Text>
+              <Text style={{ textAlign: "center", color: colors.mutedForeground, ...theme.typography.caption, marginTop: 4 }}>
+                {user?.emailAddresses[0]?.emailAddress}
+              </Text>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
       <EditProfileModal visible={showEdit} onClose={() => setShowEdit(false)} />
       <NotificationsModal visible={showNotifications} onClose={() => setShowNotifications(false)} />
-      <PrivacyModal visible={showPrivacy} onClose={() => setShowPrivacy(false)} onClearData={handleClearData} />
+      <PrivacyModal
+        visible={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        onClearData={handleClearData}
+      />
       <HelpModal visible={showHelp} onClose={() => setShowHelp(false)} />
       <Paywall visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>

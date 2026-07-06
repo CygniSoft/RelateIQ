@@ -15,6 +15,7 @@ import { ContactCard } from "@/components/ContactCard";
 import { GlassIcon } from "@/components/GlassIcon";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 type Filter = "All" | "Hot" | "Warm" | "Cool" | "Priority";
 
@@ -78,9 +79,9 @@ export default function ContactsScreen() {
         <View style={{ backgroundColor: colors.background }}>
           <View
             style={{
-              paddingTop: topPad + 16,
-              paddingHorizontal: 20,
-              paddingBottom: 12,
+              paddingTop: topPad + theme.spacing[16],
+              paddingHorizontal: theme.spacing[20],
+              paddingBottom: theme.spacing[12],
             }}
           >
             <View
@@ -88,15 +89,13 @@ export default function ContactsScreen() {
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 16,
+                marginBottom: theme.spacing[16],
               }}
             >
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 28,
-                  fontWeight: "700" as const,
-                  letterSpacing: -0.5,
+                  ...theme.typography.h1,
                 }}
               >
                 Contacts
@@ -106,10 +105,10 @@ export default function ContactsScreen() {
                   backgroundColor: colors.primary + "22",
                   paddingHorizontal: 10,
                   paddingVertical: 4,
-                  borderRadius: 20,
+                  borderRadius: theme.radius.xl,
                 }}
               >
-                <Text style={{ color: colors.primary, fontSize: 14, fontWeight: "700" as const }}>
+                <Text style={{ color: colors.primary, ...theme.typography.bodySemi }}>
                   {contacts.length}
                 </Text>
               </View>
@@ -121,13 +120,13 @@ export default function ContactsScreen() {
                 flexDirection: "row",
                 alignItems: "center",
                 backgroundColor: colors.secondary,
-                borderRadius: 14,
+                borderRadius: theme.radius.md,
                 borderWidth: 1,
                 borderColor: colors.border,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-                gap: 10,
-                marginBottom: 14,
+                paddingHorizontal: theme.spacing[14],
+                paddingVertical: theme.spacing[10],
+                gap: theme.spacing[10],
+                marginBottom: theme.spacing[14],
               }}
             >
               <Feather name="search" size={16} color={colors.mutedForeground} />
@@ -139,11 +138,11 @@ export default function ContactsScreen() {
                 style={{
                   flex: 1,
                   color: colors.foreground,
-                  fontSize: 15,
+                  ...theme.typography.body,
                 }}
               />
               {search.length > 0 && (
-                <Pressable onPress={() => setSearch("")} hitSlop={8}>
+                <Pressable onPress={() => setSearch("")} hitSlop={12}>
                   <Ionicons name="close-circle" size={18} color={colors.mutedForeground} />
                 </Pressable>
               )}
@@ -153,7 +152,7 @@ export default function ContactsScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 8 }}
+              contentContainerStyle={{ gap: 8, paddingRight: theme.spacing[20] }}
             >
               {filters.map((f) => (
                 <Pressable
@@ -162,10 +161,11 @@ export default function ContactsScreen() {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setActiveFilter(f);
                   }}
+                  hitSlop={{ top: 8, bottom: 8 }}
                   style={{
-                    paddingHorizontal: 16,
+                    paddingHorizontal: theme.spacing[16],
                     paddingVertical: 7,
-                    borderRadius: 20,
+                    borderRadius: theme.radius.xl,
                     backgroundColor:
                       activeFilter === f ? colors.primary : colors.card,
                     borderWidth: 1,
@@ -177,8 +177,7 @@ export default function ContactsScreen() {
                     style={{
                       color:
                         activeFilter === f ? "#fff" : colors.mutedForeground,
-                      fontSize: 13,
-                      fontWeight: "600" as const,
+                      ...theme.typography.bodySmallSemi,
                     }}
                   >
                     {f}
@@ -196,7 +195,7 @@ export default function ContactsScreen() {
               alignItems: "center",
               justifyContent: "center",
               paddingTop: 80,
-              gap: 12,
+              gap: theme.spacing[12],
             }}
           >
             <GlassIcon tint={colors.primary} size={80}>
@@ -205,8 +204,7 @@ export default function ContactsScreen() {
             <Text
               style={{
                 color: colors.mutedForeground,
-                fontSize: 16,
-                fontWeight: "600" as const,
+                ...theme.typography.bodyLargeSemi,
               }}
             >
               No contacts found
@@ -214,7 +212,7 @@ export default function ContactsScreen() {
             <Text
               style={{
                 color: colors.mutedForeground,
-                fontSize: 14,
+                ...theme.typography.body,
                 textAlign: "center",
               }}
             >
@@ -222,7 +220,7 @@ export default function ContactsScreen() {
             </Text>
           </View>
         ) : (
-          <View style={{ paddingTop: 8 }}>
+          <View style={{ paddingTop: theme.spacing[8] }}>
             {filtered.map((c, i) => (
               <ContactCard key={c.id} contact={c} index={i} />
             ))}

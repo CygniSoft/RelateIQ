@@ -7,6 +7,7 @@ import { Pressable, Text, View } from "react-native";
 import { GlassIcon } from "@/components/GlassIcon";
 import { Contact } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 interface FollowUpCardProps {
   contact: Contact;
@@ -44,30 +45,34 @@ export function FollowUpCard({ contact, onComplete }: FollowUpCardProps) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/contact/${contact.id}`);
       }}
-      style={{
-        backgroundColor: colors.card,
-        borderWidth: 1,
-        borderColor: isOverdue ? "#FF475744" : colors.border,
-        borderRadius: colors.radius,
-        padding: 14,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-        marginBottom: 8,
-      }}
+      style={({ pressed }) => [
+        {
+          backgroundColor: colors.card,
+          borderWidth: 1,
+          borderColor: isOverdue ? "#FF475744" : colors.border,
+          borderRadius: theme.radius.lg,
+          padding: theme.spacing[14],
+          flexDirection: "row",
+          alignItems: "center",
+          gap: theme.spacing[12],
+          marginBottom: theme.spacing[8],
+          ...theme.getShadow("#000", "sm"),
+        },
+        pressed && { opacity: 0.8 },
+      ]}
     >
       <GlassIcon tint={colors.primary} size={40}>
         <Feather name="clock" size={18} color="#fff" />
       </GlassIcon>
       <View style={{ flex: 1 }}>
-        <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "600" as const }}>
+        <Text style={{ color: colors.foreground, ...theme.typography.bodySemi }}>
           {contact.firstName} {contact.lastName}
         </Text>
-        <Text style={{ color: colors.mutedForeground, fontSize: 12, marginTop: 1 }}>
+        <Text style={{ color: colors.mutedForeground, ...theme.typography.caption, marginTop: 1 }}>
           {contact.followUpAction}
         </Text>
       </View>
-      <Text style={{ color: dueLabelColor, fontSize: 12, fontWeight: "600" as const }}>
+      <Text style={{ color: dueLabelColor, ...theme.typography.captionSemi }}>
         {dueLabelText}
       </Text>
       <Pressable
@@ -76,7 +81,7 @@ export function FollowUpCard({ contact, onComplete }: FollowUpCardProps) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           onComplete();
         }}
-        hitSlop={8}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
       >
         <GlassIcon tint="#10B981" size={28}>
           <Feather name="check" size={14} color="#fff" />

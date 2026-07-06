@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect } from "react";
-import { Platform, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { Platform, StyleSheet, Text, ViewStyle } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -11,6 +11,7 @@ import Animated, {
 
 import { GlassIcon } from "@/components/GlassIcon";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 interface StatCardProps {
   label: string;
@@ -58,16 +59,8 @@ export function StatCard({
         style={[
           styles.card,
           {
-            borderRadius: appColors.radius,
-            ...(Platform.OS !== "web"
-              ? {
-                  shadowColor: gradColors[0],
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 12,
-                  elevation: 6,
-                }
-              : {}),
+            borderRadius: theme.radius.lg,
+            ...theme.getShadow(gradColors[0], "md"),
           },
         ]}
       >
@@ -84,28 +77,25 @@ export function StatCard({
 
 const styles = StyleSheet.create({
   card: {
-    padding: 16,
+    padding: theme.spacing[16],
     minWidth: 120,
     flex: 1,
   },
   iconWrap: {
-    marginBottom: 10,
+    marginBottom: theme.spacing[10],
   },
   value: {
     color: "#fff",
-    fontSize: 24,
-    fontWeight: "700" as const,
-    letterSpacing: -0.5,
+    ...theme.typography.h2,
   },
   label: {
     color: "rgba(255,255,255,0.85)",
-    fontSize: 12,
+    ...theme.typography.captionSemi,
     marginTop: 2,
-    fontWeight: "500" as const,
   },
   subtitle: {
     color: "rgba(255,255,255,0.65)",
-    fontSize: 11,
+    ...theme.typography.caption,
     marginTop: 2,
   },
 });

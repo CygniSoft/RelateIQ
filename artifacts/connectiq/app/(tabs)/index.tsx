@@ -26,6 +26,7 @@ import { GlassIcon } from "@/components/GlassIcon";
 import { StatCard } from "@/components/StatCard";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 function ScanFAB() {
   const colors = useColors();
@@ -55,23 +56,15 @@ function ScanFAB() {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: 10,
-            paddingHorizontal: 24,
-            paddingVertical: 16,
-            borderRadius: 50,
-            ...(Platform.OS !== "web"
-              ? {
-                  shadowColor: "#7B5EFF",
-                  shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.45,
-                  shadowRadius: 16,
-                  elevation: 8,
-                }
-              : {}),
+            gap: theme.spacing[10],
+            paddingHorizontal: theme.spacing[24],
+            paddingVertical: theme.spacing[16],
+            borderRadius: theme.radius.full,
+            ...theme.getShadow("#7B5EFF", "lg"),
           }}
         >
           <Ionicons name="scan" size={20} color="#fff" />
-          <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" as const, letterSpacing: 0.3 }}>
+          <Text style={{ color: "#fff", ...theme.typography.bodyLargeSemi, letterSpacing: 0.3 }}>
             Scan Business Card
           </Text>
         </LinearGradient>
@@ -106,22 +99,20 @@ function GreetingHeader({ name }: { name: string }) {
       style={[
         animStyle,
         {
-          paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16,
-          paddingHorizontal: 20,
-          paddingBottom: 16,
+          paddingTop: Platform.OS === "web" ? 67 + theme.spacing[16] : insets.top + theme.spacing[16],
+          paddingHorizontal: theme.spacing[20],
+          paddingBottom: theme.spacing[16],
         },
       ]}
     >
-      <Text style={{ color: colors.mutedForeground, fontSize: 14, fontWeight: "500" as const }}>
+      <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySemi }}>
         {greeting}
       </Text>
       <Text
         style={{
           color: colors.foreground,
-          fontSize: 26,
-          fontWeight: "700" as const,
+          ...theme.typography.h1,
           marginTop: 2,
-          letterSpacing: -0.5,
         }}
       >
         {name.split(" ")[0]}
@@ -182,14 +173,12 @@ function HowItWorks() {
 
   return (
     <Animated.View
-      style={[animStyle, { paddingHorizontal: 16, marginBottom: 24 }]}
+      style={[animStyle, { paddingHorizontal: theme.spacing[16], marginBottom: theme.spacing[24] }]}
     >
       <Text
         style={{
           color: colors.foreground,
-          fontSize: 18,
-          fontWeight: "700" as const,
-          letterSpacing: -0.3,
+          ...theme.typography.h4,
           marginBottom: 4,
           paddingHorizontal: 4,
         }}
@@ -199,9 +188,9 @@ function HowItWorks() {
       <Text
         style={{
           color: colors.mutedForeground,
-          fontSize: 13,
+          ...theme.typography.bodySmall,
           lineHeight: 18,
-          marginBottom: 16,
+          marginBottom: theme.spacing[16],
           paddingHorizontal: 4,
         }}
       >
@@ -210,17 +199,18 @@ function HowItWorks() {
       <View
         style={{
           backgroundColor: colors.card,
-          borderRadius: colors.radius,
+          borderRadius: theme.radius.lg,
           borderWidth: 1,
           borderColor: colors.border,
-          padding: 18,
-          gap: 20,
+          padding: theme.spacing[16],
+          gap: theme.spacing[20],
+          ...theme.getShadow("#000", "sm"),
         }}
       >
         {HOW_STEPS.map((step, i) => (
           <View
             key={step.title}
-            style={{ flexDirection: "row", alignItems: "center", gap: 14 }}
+            style={{ flexDirection: "row", alignItems: "center", gap: theme.spacing[14] }}
           >
             <GlassIcon tint={step.tint} size={44}>
               {step.icon}
@@ -229,8 +219,7 @@ function HowItWorks() {
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 15,
-                  fontWeight: "600" as const,
+                  ...theme.typography.bodySemi,
                   marginBottom: 2,
                 }}
               >
@@ -239,7 +228,7 @@ function HowItWorks() {
               <Text
                 style={{
                   color: colors.mutedForeground,
-                  fontSize: 13,
+                  ...theme.typography.bodySmall,
                   lineHeight: 18,
                 }}
               >
@@ -298,7 +287,7 @@ export default function HomeScreen() {
     [contacts]
   );
 
-  const bottomPad = Platform.OS === "web" ? 84 + 16 : insets.bottom + 56 + 24;
+  const bottomPad = Platform.OS === "web" ? 84 + theme.spacing[16] : insets.bottom + 56 + theme.spacing[24];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -313,9 +302,9 @@ export default function HomeScreen() {
           style={{
             flexDirection: "row",
             alignItems: "stretch",
-            paddingHorizontal: 16,
-            gap: 10,
-            marginBottom: 24,
+            paddingHorizontal: theme.spacing[16],
+            gap: theme.spacing[10],
+            marginBottom: theme.spacing[24],
           }}
         >
           <StatCard
@@ -346,10 +335,11 @@ export default function HomeScreen() {
           <Animated.View
             style={[
               {
-                marginHorizontal: 16,
-                marginBottom: 24,
-                borderRadius: colors.radius,
+                marginHorizontal: theme.spacing[16],
+                marginBottom: theme.spacing[24],
+                borderRadius: theme.radius.lg,
                 overflow: "hidden",
+                ...theme.getShadow("#000", "sm"),
               },
             ]}
           >
@@ -358,7 +348,7 @@ export default function HomeScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{
-                padding: 18,
+                padding: theme.spacing[16],
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -368,8 +358,7 @@ export default function HomeScreen() {
                 <Text
                   style={{
                     color: "rgba(255,255,255,0.7)",
-                    fontSize: 12,
-                    fontWeight: "500" as const,
+                    ...theme.typography.bodySmallSemi,
                   }}
                 >
                   Total Revenue Generated
@@ -377,9 +366,7 @@ export default function HomeScreen() {
                 <Text
                   style={{
                     color: "#fff",
-                    fontSize: 28,
-                    fontWeight: "700" as const,
-                    letterSpacing: -1,
+                    ...theme.typography.h1,
                     marginTop: 2,
                   }}
                 >
@@ -394,7 +381,7 @@ export default function HomeScreen() {
         )}
 
         {/* Scan CTA */}
-        <View style={{ alignItems: "center", marginBottom: 28 }}>
+        <View style={{ alignItems: "center", marginBottom: theme.spacing[28] }}>
           <ScanFAB />
         </View>
 
@@ -403,33 +390,31 @@ export default function HomeScreen() {
 
         {/* Follow-ups */}
         {followUps.length > 0 && (
-          <View style={{ marginBottom: 24 }}>
+          <View style={{ marginBottom: theme.spacing[24] }}>
             <View
               style={{
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
-                paddingHorizontal: 20,
-                marginBottom: 12,
+                paddingHorizontal: theme.spacing[20],
+                marginBottom: theme.spacing[12],
               }}
             >
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 18,
-                  fontWeight: "700" as const,
-                  letterSpacing: -0.3,
+                  ...theme.typography.h4,
                 }}
               >
                 Follow-ups
               </Text>
-              <Pressable onPress={() => router.push("/(tabs)/contacts")}>
-                <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "600" as const }}>
+              <Pressable onPress={() => router.push("/(tabs)/contacts")} hitSlop={12}>
+                <Text style={{ color: colors.primary, ...theme.typography.bodySmallSemi }}>
                   See all
                 </Text>
               </Pressable>
             </View>
-            <View style={{ paddingHorizontal: 16 }}>
+            <View style={{ paddingHorizontal: theme.spacing[16] }}>
               {followUps.map((c) => (
                 <FollowUpCard
                   key={c.id}
@@ -451,22 +436,20 @@ export default function HomeScreen() {
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
-                paddingHorizontal: 20,
-                marginBottom: 12,
+                paddingHorizontal: theme.spacing[20],
+                marginBottom: theme.spacing[12],
               }}
             >
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 18,
-                  fontWeight: "700" as const,
-                  letterSpacing: -0.3,
+                  ...theme.typography.h4,
                 }}
               >
                 Recent Contacts
               </Text>
-              <Pressable onPress={() => router.push("/(tabs)/contacts")}>
-                <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "600" as const }}>
+              <Pressable onPress={() => router.push("/(tabs)/contacts")} hitSlop={12}>
+                <Text style={{ color: colors.primary, ...theme.typography.bodySmallSemi }}>
                   See all
                 </Text>
               </Pressable>

@@ -14,6 +14,7 @@ import Animated, {
 
 import { Event } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 interface EventCardProps {
   event: Event;
@@ -27,9 +28,9 @@ function ROIBadge({ roi }: { roi: number }) {
     <View
       style={{
         backgroundColor: isPositive ? "#10B98122" : "#FF475722",
-        paddingHorizontal: 8,
+        paddingHorizontal: theme.spacing[8],
         paddingVertical: 3,
-        borderRadius: 20,
+        borderRadius: theme.radius.xl,
         borderWidth: 1,
         borderColor: isPositive ? "#10B98155" : "#FF475755",
       }}
@@ -37,8 +38,7 @@ function ROIBadge({ roi }: { roi: number }) {
       <Text
         style={{
           color: isPositive ? "#10B981" : "#FF4757",
-          fontSize: 12,
-          fontWeight: "700" as const,
+          ...theme.typography.captionSemi,
         }}
       >
         {isPositive ? "+" : ""}
@@ -97,43 +97,35 @@ export function EventCard({ event, contactCount, index = 0 }: EventCardProps) {
           backgroundColor: colors.card,
           borderWidth: 1,
           borderColor: colors.border,
-          borderRadius: colors.radius,
-          padding: 16,
-          marginHorizontal: 16,
-          marginBottom: 10,
-          ...(Platform.OS !== "web"
-            ? {
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 2,
-              }
-            : {}),
+          borderRadius: theme.radius.lg,
+          padding: theme.spacing[16],
+          marginHorizontal: theme.spacing[16],
+          marginBottom: theme.spacing[10],
+          ...theme.getShadow("#000", "sm"),
         }}
       >
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
             <Text
-              style={{ color: colors.foreground, fontSize: 16, fontWeight: "600" as const }}
+              style={{ color: colors.foreground, ...theme.typography.bodyLargeSemi }}
               numberOfLines={1}
             >
               {event.name}
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
               <Feather name="map-pin" size={12} color={colors.mutedForeground} />
-              <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>
+              <Text style={{ color: colors.mutedForeground, ...theme.typography.caption }}>
                 {event.location}
               </Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
               <Feather name="calendar" size={12} color={colors.mutedForeground} />
-              <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>
+              <Text style={{ color: colors.mutedForeground, ...theme.typography.caption }}>
                 {formattedDate}
               </Text>
             </View>
           </View>
-          <View style={{ alignItems: "flex-end", gap: 6 }}>
+          <View style={{ alignItems: "flex-end", gap: theme.spacing[6] }}>
             <ROIBadge roi={roi} />
             <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
           </View>
@@ -142,8 +134,8 @@ export function EventCard({ event, contactCount, index = 0 }: EventCardProps) {
         <View
           style={{
             flexDirection: "row",
-            marginTop: 14,
-            paddingTop: 12,
+            marginTop: theme.spacing[14],
+            paddingTop: theme.spacing[12],
             borderTopWidth: 1,
             borderTopColor: colors.border,
             gap: 0,
@@ -173,13 +165,12 @@ export function EventCard({ event, contactCount, index = 0 }: EventCardProps) {
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 16,
-                  fontWeight: "700" as const,
+                  ...theme.typography.bodyLargeSemi,
                 }}
               >
                 {stat.value}
               </Text>
-              <Text style={{ color: colors.mutedForeground, fontSize: 11 }}>
+              <Text style={{ color: colors.mutedForeground, ...theme.typography.caption }}>
                 {stat.label}
               </Text>
             </View>

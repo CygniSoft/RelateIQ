@@ -24,6 +24,7 @@ import { useApp, TimelineEvent } from "@/context/AppContext";
 import { notifyNow } from "@/lib/notifications";
 import { sendEmail } from "@/lib/emailApi";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 function TimelineItem({
   event,
@@ -52,7 +53,7 @@ function TimelineItem({
   });
 
   return (
-    <View style={{ flexDirection: "row", gap: 12 }}>
+    <View style={{ flexDirection: "row", gap: theme.spacing[12] }}>
       <View style={{ alignItems: "center", width: 36 }}>
         <GlassIcon tint={color} size={36}>
           <Feather name={name} size={15} color="#fff" />
@@ -69,18 +70,18 @@ function TimelineItem({
           />
         )}
       </View>
-      <View style={{ flex: 1, paddingBottom: 20 }}>
+      <View style={{ flex: 1, paddingBottom: theme.spacing[20] }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "600" as const }}>
+          <Text style={{ color: colors.foreground, ...theme.typography.bodySemi }}>
             {event.title}
           </Text>
-          <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>
+          <Text style={{ color: colors.mutedForeground, ...theme.typography.caption }}>
             {formattedDate}
           </Text>
         </View>
         {event.description && (
           <Text
-            style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 3 }}
+            style={{ color: colors.mutedForeground, ...theme.typography.bodySmall, marginTop: 3 }}
           >
             {event.description}
           </Text>
@@ -278,8 +279,8 @@ export default function ContactDetailScreen() {
           locations={[0, 0.6, 1]}
           style={{
             paddingTop: topPad + 8,
-            paddingBottom: 24,
-            paddingHorizontal: 20,
+            paddingBottom: theme.spacing[24],
+            paddingHorizontal: theme.spacing[20],
           }}
         >
           {/* Back + actions */}
@@ -288,11 +289,12 @@ export default function ContactDetailScreen() {
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 20,
+              marginBottom: theme.spacing[20],
             }}
           >
             <Pressable
               onPress={() => router.back()}
+              hitSlop={12}
               style={{
                 width: 36,
                 height: 36,
@@ -306,6 +308,7 @@ export default function ContactDetailScreen() {
             </Pressable>
             <Pressable
               onPress={handleDelete}
+              hitSlop={12}
               style={{
                 width: 36,
                 height: 36,
@@ -319,21 +322,19 @@ export default function ContactDetailScreen() {
             </Pressable>
           </View>
 
-          <View style={{ alignItems: "center", gap: 12 }}>
+          <View style={{ alignItems: "center", gap: theme.spacing[12] }}>
             <Avatar contact={contact} size={72} />
             <View style={{ alignItems: "center" }}>
               <Text
                 style={{
                   color: "#fff",
-                  fontSize: 24,
-                  fontWeight: "700" as const,
-                  letterSpacing: -0.3,
+                  ...theme.typography.h2,
                 }}
               >
                 {contact.firstName} {contact.lastName}
               </Text>
               <Text
-                style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginTop: 2 }}
+                style={{ color: "rgba(255,255,255,0.65)", ...theme.typography.body, marginTop: 2 }}
               >
                 {contact.jobTitle} · {contact.company}
               </Text>
@@ -341,7 +342,7 @@ export default function ContactDetailScreen() {
                 <Text
                   style={{
                     color: "rgba(255,255,255,0.45)",
-                    fontSize: 12,
+                    ...theme.typography.caption,
                     marginTop: 4,
                   }}
                 >
@@ -357,9 +358,9 @@ export default function ContactDetailScreen() {
                 alignItems: "center",
                 gap: 6,
                 backgroundColor: scoreColor + "22",
-                paddingHorizontal: 16,
+                paddingHorizontal: theme.spacing[16],
                 paddingVertical: 6,
-                borderRadius: 20,
+                borderRadius: theme.radius.xl,
                 borderWidth: 1,
                 borderColor: scoreColor + "55",
               }}
@@ -372,7 +373,7 @@ export default function ContactDetailScreen() {
                   backgroundColor: scoreColor,
                 }}
               />
-              <Text style={{ color: scoreColor, fontSize: 14, fontWeight: "700" as const }}>
+              <Text style={{ color: scoreColor, ...theme.typography.bodySemi }}>
                 {contact.relationshipScore} Relationship Score
               </Text>
             </View>
@@ -383,10 +384,10 @@ export default function ContactDetailScreen() {
         <View
           style={{
             flexDirection: "row",
-            paddingHorizontal: 20,
-            gap: 10,
+            paddingHorizontal: theme.spacing[20],
+            gap: theme.spacing[10],
             marginTop: -12,
-            marginBottom: 20,
+            marginBottom: theme.spacing[20],
           }}
         >
           {[
@@ -426,19 +427,22 @@ export default function ContactDetailScreen() {
             <Pressable
               key={action.label}
               onPress={action.onPress}
-              style={{
-                flex: 1,
-                backgroundColor: action.color + "18",
-                borderWidth: 1,
-                borderColor: action.color + "44",
-                borderRadius: 14,
-                paddingVertical: 12,
-                alignItems: "center",
-                gap: 4,
-              }}
+              style={({ pressed }) => [
+                {
+                  flex: 1,
+                  backgroundColor: action.color + "18",
+                  borderWidth: 1,
+                  borderColor: action.color + "44",
+                  borderRadius: theme.radius.md,
+                  paddingVertical: theme.spacing[12],
+                  alignItems: "center",
+                  gap: 4,
+                },
+                pressed && { opacity: 0.8 }
+              ]}
             >
               <Feather name={action.icon as any} size={18} color={action.color} />
-              <Text style={{ color: action.color, fontSize: 12, fontWeight: "600" as const }}>
+              <Text style={{ color: action.color, ...theme.typography.captionSemi }}>
                 {action.label}
               </Text>
             </Pressable>
@@ -449,11 +453,11 @@ export default function ContactDetailScreen() {
         <View
           style={{
             flexDirection: "row",
-            marginHorizontal: 20,
+            marginHorizontal: theme.spacing[20],
             backgroundColor: colors.secondary,
-            borderRadius: 12,
+            borderRadius: theme.radius.md,
             padding: 3,
-            marginBottom: 20,
+            marginBottom: theme.spacing[20],
           }}
         >
           {(["overview", "timeline", "email"] as const).map((tab) => (
@@ -462,8 +466,8 @@ export default function ContactDetailScreen() {
               onPress={() => setActiveTab(tab)}
               style={{
                 flex: 1,
-                paddingVertical: 8,
-                borderRadius: 10,
+                paddingVertical: theme.spacing[8],
+                borderRadius: theme.radius.sm,
                 alignItems: "center",
                 backgroundColor:
                   activeTab === tab ? colors.card : "transparent",
@@ -473,8 +477,8 @@ export default function ContactDetailScreen() {
                 style={{
                   color:
                     activeTab === tab ? colors.foreground : colors.mutedForeground,
-                  fontSize: 13,
-                  fontWeight: activeTab === tab ? ("600" as const) : ("400" as const),
+                  ...theme.typography.bodySmallSemi,
+                  fontWeight: activeTab === tab ? "600" : "400",
                   textTransform: "capitalize",
                 }}
               >
@@ -488,10 +492,10 @@ export default function ContactDetailScreen() {
         <Animated.View
           key={activeTab}
           entering={FadeInDown.duration(200)}
-          style={{ paddingHorizontal: 20 }}
+          style={{ paddingHorizontal: theme.spacing[20] }}
         >
           {activeTab === "overview" && (
-            <View style={{ gap: 12 }}>
+            <View style={{ gap: theme.spacing[12] }}>
               {/* AI Summary */}
               {contact.aiSummary && (
                 <View
@@ -499,17 +503,17 @@ export default function ContactDetailScreen() {
                     backgroundColor: colors.primary + "14",
                     borderWidth: 1,
                     borderColor: colors.primary + "33",
-                    borderRadius: 14,
-                    padding: 16,
+                    borderRadius: theme.radius.md,
+                    padding: theme.spacing[16],
                   }}
                 >
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: theme.spacing[8] }}>
                     <Ionicons name="sparkles" size={14} color={colors.primary} />
-                    <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" as const, letterSpacing: 0.5 }}>
+                    <Text style={{ color: colors.primary, ...theme.typography.label }}>
                       AI SUMMARY
                     </Text>
                   </View>
-                  <Text style={{ color: colors.foreground, fontSize: 13, lineHeight: 20 }}>
+                  <Text style={{ color: colors.foreground, ...theme.typography.bodySmall, lineHeight: 20 }}>
                     {contact.aiSummary}
                   </Text>
                 </View>
@@ -519,7 +523,7 @@ export default function ContactDetailScreen() {
               <View
                 style={{
                   backgroundColor: colors.card,
-                  borderRadius: 14,
+                  borderRadius: theme.radius.md,
                   borderWidth: 1,
                   borderColor: colors.border,
                   overflow: "hidden",
@@ -540,19 +544,19 @@ export default function ContactDetailScreen() {
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      paddingHorizontal: 16,
-                      paddingVertical: 13,
+                      paddingHorizontal: theme.spacing[16],
+                      paddingVertical: theme.spacing[12],
                       borderBottomWidth: i < arr.length - 1 ? 1 : 0,
                       borderBottomColor: colors.border,
-                      gap: 12,
+                      gap: theme.spacing[12],
                     }}
                   >
                     <Feather name={item.icon as any} size={16} color={colors.mutedForeground} />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.mutedForeground, fontSize: 11, fontWeight: "600" as const }}>
-                        {item.label.toUpperCase()}
+                      <Text style={{ color: colors.mutedForeground, ...theme.typography.label }}>
+                        {item.label}
                       </Text>
-                      <Text style={{ color: colors.foreground, fontSize: 14, marginTop: 1 }}>
+                      <Text style={{ color: colors.foreground, ...theme.typography.body, marginTop: 1 }}>
                         {item.value}
                       </Text>
                     </View>
@@ -562,20 +566,20 @@ export default function ContactDetailScreen() {
 
               {/* Tags */}
               {contact.tags.length > 0 && (
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing[8] }}>
                   {contact.tags.map((tag) => (
                     <View
                       key={tag}
                       style={{
                         backgroundColor: colors.secondary,
-                        paddingHorizontal: 12,
+                        paddingHorizontal: theme.spacing[12],
                         paddingVertical: 5,
-                        borderRadius: 20,
+                        borderRadius: theme.radius.xl,
                         borderWidth: 1,
                         borderColor: colors.border,
                       }}
                     >
-                      <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>
+                      <Text style={{ color: colors.mutedForeground, ...theme.typography.caption }}>
                         {tag}
                       </Text>
                     </View>
@@ -584,7 +588,7 @@ export default function ContactDetailScreen() {
               )}
 
               {/* Add note */}
-              <View style={{ gap: 8 }}>
+              <View style={{ gap: theme.spacing[8] }}>
                 <TextInput
                   value={noteText}
                   onChangeText={setNoteText}
@@ -595,11 +599,11 @@ export default function ContactDetailScreen() {
                     backgroundColor: colors.secondary,
                     borderWidth: 1,
                     borderColor: colors.border,
-                    borderRadius: 12,
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
+                    borderRadius: theme.radius.md,
+                    paddingHorizontal: theme.spacing[14],
+                    paddingVertical: theme.spacing[12],
                     color: colors.foreground,
-                    fontSize: 14,
+                    ...theme.typography.body,
                     minHeight: 70,
                     textAlignVertical: "top",
                   }}
@@ -607,14 +611,17 @@ export default function ContactDetailScreen() {
                 {noteText.trim().length > 0 && (
                   <Pressable
                     onPress={handleAddNote}
-                    style={{
-                      backgroundColor: colors.primary,
-                      paddingVertical: 12,
-                      borderRadius: 12,
-                      alignItems: "center",
-                    }}
+                    style={({ pressed }) => [
+                      {
+                        backgroundColor: colors.primary,
+                        paddingVertical: theme.spacing[12],
+                        borderRadius: theme.radius.md,
+                        alignItems: "center",
+                      },
+                      pressed && { opacity: 0.8 }
+                    ]}
                   >
-                    <Text style={{ color: "#fff", fontWeight: "600" as const }}>
+                    <Text style={{ color: "#fff", ...theme.typography.bodySemi }}>
                       Save Note
                     </Text>
                   </Pressable>
@@ -626,9 +633,12 @@ export default function ContactDetailScreen() {
           {activeTab === "timeline" && (
             <View style={{ paddingTop: 4 }}>
               {contact.timeline.length === 0 ? (
-                <View style={{ alignItems: "center", paddingTop: 40, gap: 10 }}>
-                  <Feather name="clock" size={32} color={colors.mutedForeground} />
-                  <Text style={{ color: colors.mutedForeground }}>No activity yet</Text>
+                <View style={{ alignItems: "center", paddingTop: 40, gap: theme.spacing[10] }}>
+                  <GlassIcon tint={colors.primary} size={64}>
+                    <Feather name="clock" size={24} color="#fff" />
+                  </GlassIcon>
+                  <Text style={{ color: colors.mutedForeground, ...theme.typography.bodyLargeSemi }}>No activity yet</Text>
+                  <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>Interactions will appear here.</Text>
                 </View>
               ) : (
                 [...contact.timeline]
@@ -648,7 +658,7 @@ export default function ContactDetailScreen() {
           )}
 
           {activeTab === "email" && (
-            <View style={{ gap: 14 }}>
+            <View style={{ gap: theme.spacing[14] }}>
               {contact.introEmailDraft ? (
                 <View>
                   <View
@@ -656,113 +666,70 @@ export default function ContactDetailScreen() {
                       flexDirection: "row",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      marginBottom: 12,
+                      marginBottom: theme.spacing[12],
                     }}
                   >
                     <Text
                       style={{
                         color: colors.foreground,
-                        fontSize: 16,
-                        fontWeight: "600" as const,
+                        ...theme.typography.bodyLargeSemi,
                       }}
                     >
-                      Intro Email
+                      Email Draft
                     </Text>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                        backgroundColor: contact.emailSent
-                          ? "#10B98122"
-                          : colors.secondary,
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderRadius: 20,
-                      }}
-                    >
-                      <Feather
-                        name={contact.emailSent ? "check" : "clock"}
-                        size={12}
-                        color={contact.emailSent ? "#10B981" : colors.mutedForeground}
-                      />
-                      <Text
-                        style={{
-                          color: contact.emailSent
-                            ? "#10B981"
-                            : colors.mutedForeground,
-                          fontSize: 12,
-                          fontWeight: "600" as const,
-                        }}
-                      >
-                        {contact.emailSent ? "Sent" : "Draft"}
-                      </Text>
-                    </View>
+                    {contact.emailSent && (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <Feather name="check" size={14} color="#10B981" />
+                        <Text style={{ color: "#10B981", ...theme.typography.captionSemi }}>Sent</Text>
+                      </View>
+                    )}
                   </View>
+
                   <View
                     style={{
                       backgroundColor: colors.card,
-                      borderRadius: 14,
+                      borderRadius: theme.radius.md,
                       borderWidth: 1,
                       borderColor: colors.border,
-                      padding: 16,
+                      padding: theme.spacing[16],
                     }}
                   >
-                    <Text
-                      style={{
-                        color: colors.foreground,
-                        fontSize: 14,
-                        lineHeight: 22,
-                      }}
-                    >
+                    <Text style={{ color: colors.foreground, ...theme.typography.body, lineHeight: 22 }}>
                       {contact.introEmailDraft}
                     </Text>
                   </View>
+
                   {!contact.emailSent && (
                     <Pressable
                       onPress={() => setShowEmailModal(true)}
-                      style={{ marginTop: 12 }}
-                    >
-                      <LinearGradient
-                        colors={["#7B5EFF", "#4F8EFF"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={{
-                          paddingVertical: 14,
-                          borderRadius: 14,
+                      style={({ pressed }) => [
+                        {
+                          marginTop: theme.spacing[16],
+                          backgroundColor: colors.primary,
+                          paddingVertical: theme.spacing[14],
+                          borderRadius: theme.radius.md,
                           alignItems: "center",
                           flexDirection: "row",
                           justifyContent: "center",
                           gap: 8,
-                        }}
-                      >
-                        <Feather name="send" size={16} color="#fff" />
-                        <Text style={{ color: "#fff", fontWeight: "700" as const }}>
-                          Send Email
-                        </Text>
-                      </LinearGradient>
+                        },
+                        pressed && { opacity: 0.8 }
+                      ]}
+                    >
+                      <Feather name="send" size={16} color="#fff" />
+                      <Text style={{ color: "#fff", ...theme.typography.bodySemi }}>
+                        Edit & Send
+                      </Text>
                     </Pressable>
                   )}
                 </View>
               ) : (
-                <View style={{ alignItems: "center", paddingTop: 40, gap: 12 }}>
-                  <Feather name="mail" size={40} color={colors.mutedForeground} />
-                  <Text style={{ color: colors.mutedForeground, fontSize: 16, fontWeight: "600" as const }}>
-                    No email draft
-                  </Text>
-                  <Pressable
-                    onPress={() => setShowEmailModal(true)}
-                    style={{
-                      backgroundColor: colors.primary,
-                      paddingHorizontal: 20,
-                      paddingVertical: 12,
-                      borderRadius: 20,
-                    }}
-                  >
-                    <Text style={{ color: "#fff", fontWeight: "600" as const }}>
-                      Compose Email
-                    </Text>
-                  </Pressable>
+                <View style={{ alignItems: "center", paddingTop: 40, gap: 10 }}>
+                  <GlassIcon tint={colors.primary} size={64}>
+                    <Feather name="mail" size={24} color="#fff" />
+                  </GlassIcon>
+                  <Text style={{ color: colors.mutedForeground, ...theme.typography.bodyLargeSemi }}>No draft available</Text>
+                  <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>Draft an email during the scan process.</Text>
                 </View>
               )}
             </View>
@@ -770,46 +737,82 @@ export default function ContactDetailScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Email confirmation modal */}
-      <Modal
-        visible={showEmailModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
+      {/* Send Email Modal */}
+      <Modal visible={showEmailModal} animationType="slide" presentationStyle="pageSheet">
         <View style={{ flex: 1, backgroundColor: colors.background }}>
           <View
             style={{
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "center",
-              paddingHorizontal: 20,
-              paddingTop: insets.top + 16,
-              paddingBottom: 16,
+              paddingHorizontal: theme.spacing[20],
+              paddingTop: insets.top + theme.spacing[16],
+              paddingBottom: theme.spacing[16],
               borderBottomWidth: 1,
               borderBottomColor: colors.border,
             }}
           >
-            <Pressable onPress={() => setShowEmailModal(false)}>
-              <Ionicons name="close" size={24} color={colors.foreground} />
+            <Pressable onPress={() => setShowEmailModal(false)} hitSlop={10}>
+              <Text style={{ color: colors.mutedForeground, ...theme.typography.bodyLargeSemi }}>
+                Cancel
+              </Text>
             </Pressable>
-            <Text style={{ color: colors.foreground, fontSize: 17, fontWeight: "600" as const }}>
+            <Text style={{ color: colors.foreground, ...theme.typography.h4 }}>
               Send Email
             </Text>
-            <Pressable onPress={handleSendEmail}>
-              <Text style={{ color: colors.primary, fontSize: 17, fontWeight: "600" as const }}>
+            <Pressable onPress={handleSendEmail} hitSlop={10}>
+              <Text style={{ color: colors.primary, ...theme.typography.bodyLargeSemi }}>
                 Send
               </Text>
             </Pressable>
           </View>
-          <View style={{ padding: 20 }}>
-            <Text style={{ color: colors.mutedForeground, fontSize: 14, marginBottom: 16 }}>
-              To: {contact.email}
+          <ScrollView contentContainerStyle={{ padding: theme.spacing[20] }}>
+            <View style={{ marginBottom: theme.spacing[16] }}>
+              <Text style={{ color: colors.mutedForeground, ...theme.typography.label, marginBottom: theme.spacing[6] }}>
+                To
+              </Text>
+              <TextInput
+                value={contact.email}
+                editable={false}
+                style={{
+                  backgroundColor: colors.secondary,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: theme.radius.md,
+                  paddingHorizontal: theme.spacing[14],
+                  paddingVertical: theme.spacing[12],
+                  color: colors.foreground,
+                  ...theme.typography.body,
+                  opacity: 0.7,
+                }}
+              />
+            </View>
+            <View style={{ marginBottom: theme.spacing[16] }}>
+              <Text style={{ color: colors.mutedForeground, ...theme.typography.label, marginBottom: theme.spacing[6] }}>
+                Message
+              </Text>
+              <TextInput
+                value={contact.introEmailDraft}
+                onChangeText={(v) => updateContact(contact.id, { introEmailDraft: v })}
+                multiline
+                style={{
+                  backgroundColor: colors.secondary,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: theme.radius.md,
+                  paddingHorizontal: theme.spacing[14],
+                  paddingVertical: theme.spacing[12],
+                  color: colors.foreground,
+                  ...theme.typography.body,
+                  minHeight: 200,
+                  textAlignVertical: "top",
+                }}
+              />
+            </View>
+            <Text style={{ color: colors.mutedForeground, ...theme.typography.caption }}>
+              This email will be sent via RelateIQ+ verified servers. Your reply-to address will be set to your email.
             </Text>
-            <Text style={{ color: colors.foreground, fontSize: 14, lineHeight: 22 }}>
-              {contact.introEmailDraft ||
-                `Hi ${contact.firstName},\n\nGreat connecting with you!\n\nLooking forward to staying in touch.\n\nBest regards,`}
-            </Text>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </View>

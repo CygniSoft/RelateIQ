@@ -18,9 +18,11 @@ import { EventCard } from "@/components/EventCard";
 import { GlassIcon } from "@/components/GlassIcon";
 import { InsightCard } from "@/components/InsightCard";
 import { StatCard } from "@/components/StatCard";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { getPortfolioInsights } from "@/lib/eventIntelligence";
+import { theme } from "@/constants/theme";
 
 function AddEventModal({
   visible,
@@ -90,34 +92,33 @@ function AddEventModal({
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingHorizontal: 20,
-            paddingTop: insets.top + 16,
-            paddingBottom: 16,
+            paddingHorizontal: theme.spacing[20],
+            paddingTop: insets.top + theme.spacing[16],
+            paddingBottom: theme.spacing[16],
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
           }}
         >
-          <Pressable onPress={onClose}>
+          <Pressable onPress={onClose} hitSlop={10}>
             <Ionicons name="close" size={24} color={colors.foreground} />
           </Pressable>
           <Text
             style={{
               color: colors.foreground,
-              fontSize: 17,
-              fontWeight: "600" as const,
+              ...theme.typography.h4,
             }}
           >
             Add Event
           </Text>
-          <Pressable onPress={handleAdd}>
-            <Text style={{ color: colors.primary, fontSize: 17, fontWeight: "600" as const }}>
+          <Pressable onPress={handleAdd} hitSlop={10}>
+            <Text style={{ color: colors.primary, ...theme.typography.bodyLargeSemi }}>
               Add
             </Text>
           </Pressable>
         </View>
 
         <ScrollView
-          contentContainerStyle={{ padding: 20 }}
+          contentContainerStyle={{ padding: theme.spacing[20] }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -126,15 +127,12 @@ function AddEventModal({
             { id: "location", label: "Location", value: location, onChange: setLocation, placeholder: "Convention Centre" },
             { id: "cost", label: "Cost ($)", value: cost, onChange: setCost, placeholder: "1200", numeric: true },
           ].map((f) => (
-            <View key={f.label} style={{ marginBottom: 16 }}>
+            <View key={f.label} style={{ marginBottom: theme.spacing[16] }}>
               <Text
                 style={{
                   color: colors.mutedForeground,
-                  fontSize: 12,
-                  fontWeight: "600" as const,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.8,
-                  marginBottom: 6,
+                  ...theme.typography.label,
+                  marginBottom: theme.spacing[6],
                 }}
               >
                 {f.label}
@@ -152,15 +150,15 @@ function AddEventModal({
                   backgroundColor: colors.secondary,
                   borderWidth: 1,
                   borderColor: errors[f.id] ? "#FF4757" : colors.border,
-                  borderRadius: 12,
-                  paddingHorizontal: 14,
-                  paddingVertical: 12,
+                  borderRadius: theme.radius.md,
+                  paddingHorizontal: theme.spacing[14],
+                  paddingVertical: theme.spacing[12],
                   color: colors.foreground,
-                  fontSize: 15,
+                  ...theme.typography.body,
                 }}
               />
               {errors[f.id] ? (
-                <Text style={{ color: "#FF4757", fontSize: 12, marginTop: 6 }}>
+                <Text style={{ color: "#FF4757", ...theme.typography.caption, marginTop: 6 }}>
                   {errors[f.id]}
                 </Text>
               ) : null}
@@ -170,24 +168,21 @@ function AddEventModal({
           <Text
             style={{
               color: colors.mutedForeground,
-              fontSize: 12,
-              fontWeight: "600" as const,
-              textTransform: "uppercase",
-              letterSpacing: 0.8,
-              marginBottom: 8,
+              ...theme.typography.label,
+              marginBottom: theme.spacing[8],
             }}
           >
             Event Type
           </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: theme.spacing[24] }}>
             {EVENT_TYPES.map((t) => (
               <Pressable
                 key={t}
                 onPress={() => setType(t)}
                 style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 20,
+                  paddingHorizontal: theme.spacing[14],
+                  paddingVertical: theme.spacing[8],
+                  borderRadius: theme.radius.xl,
                   borderWidth: 1,
                   borderColor: type === t ? colors.primary : colors.border,
                   backgroundColor: type === t ? colors.primary + "22" : colors.card,
@@ -196,8 +191,8 @@ function AddEventModal({
                 <Text
                   style={{
                     color: type === t ? colors.primary : colors.mutedForeground,
-                    fontSize: 13,
-                    fontWeight: type === t ? ("600" as const) : ("400" as const),
+                    ...theme.typography.bodySmallSemi,
+                    fontWeight: type === t ? "600" : "400",
                   }}
                 >
                   {t}
@@ -217,7 +212,6 @@ export default function EventsScreen() {
   const insets = useSafeAreaInsets();
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 84 + 16 : insets.bottom + 56 + 16;
 
   const roiStats = useMemo(() => {
@@ -241,27 +235,11 @@ export default function EventsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottomPad }}
       >
-        {/* Header */}
-        <View style={{ paddingTop: topPad + 16, paddingHorizontal: 20, paddingBottom: 16 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 20,
-            }}
-          >
-            <Text
-              style={{
-                color: colors.foreground,
-                fontSize: 28,
-                fontWeight: "700" as const,
-                letterSpacing: -0.5,
-              }}
-            >
-              Event Intelligence
-            </Text>
+        <ScreenHeader 
+          title="Event Intelligence" 
+          rightElement={
             <Pressable
+              hitSlop={10}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowAddModal(true);
@@ -271,23 +249,27 @@ export default function EventsScreen() {
                 <Feather name="plus" size={20} color="#fff" />
               </GlassIcon>
             </Pressable>
-          </View>
+          }
+        />
 
+        <View style={{ paddingHorizontal: theme.spacing[20], paddingBottom: theme.spacing[16] }}>
           {/* ROI Banner */}
           <Animated.View entering={FadeIn.duration(500)}>
             <LinearGradient
               colors={["#1a1a2e", "#16213e", "#0f3460"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={{ borderRadius: colors.radius, padding: 20, marginBottom: 16 }}
+              style={{ 
+                borderRadius: theme.radius.lg, 
+                padding: theme.spacing[20], 
+                marginBottom: theme.spacing[16],
+                ...theme.getShadow("#000", "md")
+              }}
             >
               <Text
                 style={{
                   color: "rgba(255,255,255,0.6)",
-                  fontSize: 12,
-                  fontWeight: "600" as const,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
+                  ...theme.typography.label,
                   marginBottom: 6,
                 }}
               >
@@ -297,8 +279,9 @@ export default function EventsScreen() {
                 style={{
                   color: "#fff",
                   fontSize: 36,
-                  fontWeight: "800" as const,
+                  fontWeight: "800",
                   letterSpacing: -1,
+                  fontFamily: "Inter_700Bold",
                   marginBottom: 4,
                 }}
               >
@@ -306,7 +289,7 @@ export default function EventsScreen() {
                   ? `+${roiStats.roi.toFixed(0)}%`
                   : `${roiStats.roi.toFixed(0)}%`}
               </Text>
-              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>
+              <Text style={{ color: "rgba(255,255,255,0.5)", ...theme.typography.bodySmall }}>
                 ${roiStats.totalRevenue.toLocaleString()} revenue · $
                 {roiStats.totalCost.toLocaleString()} invested
               </Text>
@@ -314,7 +297,7 @@ export default function EventsScreen() {
           </Animated.View>
 
           {/* Stats */}
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "stretch" }}>
+          <View style={{ flexDirection: "row", gap: theme.spacing[10], alignItems: "stretch" }}>
             <StatCard
               label="Events"
               value={events.length}
@@ -343,29 +326,27 @@ export default function EventsScreen() {
         {insights.length > 0 && (
           <Animated.View
             entering={FadeIn.duration(500)}
-            style={{ paddingHorizontal: 20, marginBottom: 8 }}
+            style={{ paddingHorizontal: theme.spacing[20], marginBottom: theme.spacing[8] }}
           >
             <View
               style={{
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 8,
-                marginBottom: 12,
+                marginBottom: theme.spacing[12],
               }}
             >
               <Feather name="zap" size={16} color={colors.primary} />
               <Text
                 style={{
                   color: colors.foreground,
-                  fontSize: 18,
-                  fontWeight: "700" as const,
-                  letterSpacing: -0.3,
+                  ...theme.typography.h4,
                 }}
               >
                 AI Insights
               </Text>
             </View>
-            <View style={{ gap: 10 }}>
+            <View style={{ gap: theme.spacing[10] }}>
               {insights.map((insight) => (
                 <InsightCard
                   key={insight.id}
@@ -380,13 +361,13 @@ export default function EventsScreen() {
         )}
 
         {/* Events list */}
-        <View style={{ paddingTop: 8 }}>
+        <View style={{ paddingTop: theme.spacing[8] }}>
           {events.length === 0 ? (
             <View
               style={{
                 alignItems: "center",
                 paddingTop: 60,
-                gap: 12,
+                gap: theme.spacing[12],
               }}
             >
               <GlassIcon tint={colors.primary} size={80}>
@@ -395,8 +376,7 @@ export default function EventsScreen() {
               <Text
                 style={{
                   color: colors.mutedForeground,
-                  fontSize: 16,
-                  fontWeight: "600" as const,
+                  ...theme.typography.bodyLargeSemi,
                 }}
               >
                 No events yet
@@ -404,7 +384,7 @@ export default function EventsScreen() {
               <Text
                 style={{
                   color: colors.mutedForeground,
-                  fontSize: 14,
+                  ...theme.typography.body,
                 }}
               >
                 Add your first networking event

@@ -1,4 +1,4 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -15,6 +15,7 @@ import Animated, {
 
 import { Contact } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { theme } from "@/constants/theme";
 
 interface ContactCardProps {
   contact: Contact;
@@ -43,11 +44,11 @@ function ScoreBadge({ score }: { score: number }) {
       style={{
         flexDirection: "row",
         alignItems: "center",
-        gap: 4,
+        gap: theme.spacing[4],
         backgroundColor: color + "22",
-        paddingHorizontal: 8,
+        paddingHorizontal: theme.spacing[8],
         paddingVertical: 3,
-        borderRadius: 20,
+        borderRadius: theme.radius.xl,
         borderWidth: 1,
         borderColor: color + "55",
       }}
@@ -55,7 +56,7 @@ function ScoreBadge({ score }: { score: number }) {
       <View
         style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }}
       />
-      <Text style={{ color, fontSize: 11, fontWeight: "600" as const }}>
+      <Text style={{ color, ...theme.typography.captionSemi }}>
         {score} · {label}
       </Text>
     </View>
@@ -63,7 +64,6 @@ function ScoreBadge({ score }: { score: number }) {
 }
 
 function Avatar({ contact, size = 48 }: { contact: Contact; size?: number }) {
-  const colors = useColors();
   const initials =
     `${contact.firstName?.[0] ?? ""}${contact.lastName?.[0] ?? ""}`.toUpperCase();
   const seed =
@@ -90,6 +90,7 @@ function Avatar({ contact, size = 48 }: { contact: Contact; size?: number }) {
             color: "#fff",
             fontSize: size * 0.35,
             fontWeight: "700" as const,
+            fontFamily: "Inter_700Bold",
           }}
         >
           {initials}
@@ -140,35 +141,27 @@ export function ContactCard({ contact, index = 0, compact = false }: ContactCard
           {
             backgroundColor: colors.card,
             borderColor: colors.border,
-            borderRadius: colors.radius,
-            ...(Platform.OS !== "web"
-              ? {
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.12,
-                  shadowRadius: 8,
-                  elevation: 3,
-                }
-              : {}),
+            borderRadius: theme.radius.lg,
+            ...theme.getShadow("#000", "sm"),
           },
         ]}
       >
         <Avatar contact={contact} />
-        <View style={{ flex: 1, marginLeft: 12 }}>
+        <View style={{ flex: 1, marginLeft: theme.spacing[12] }}>
           <Text
-            style={{ color: colors.foreground, fontSize: 16, fontWeight: "600" as const }}
+            style={{ color: colors.foreground, ...theme.typography.bodyLargeSemi }}
             numberOfLines={1}
           >
             {contact.firstName} {contact.lastName}
           </Text>
           <Text
-            style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 1 }}
+            style={{ color: colors.mutedForeground, ...theme.typography.bodySmall, marginTop: 1 }}
             numberOfLines={1}
           >
             {contact.jobTitle} · {contact.company}
           </Text>
           {!compact && (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: theme.spacing[8], marginTop: theme.spacing[6] }}>
               <ScoreBadge score={contact.relationshipScore} />
               {contact.priority === "High" && (
                 <View
@@ -176,12 +169,12 @@ export function ContactCard({ contact, index = 0, compact = false }: ContactCard
                     backgroundColor: "#FF475722",
                     paddingHorizontal: 7,
                     paddingVertical: 2,
-                    borderRadius: 10,
+                    borderRadius: theme.radius.sm,
                     borderWidth: 1,
                     borderColor: "#FF475755",
                   }}
                 >
-                  <Text style={{ color: "#FF4757", fontSize: 11, fontWeight: "600" as const }}>
+                  <Text style={{ color: "#FF4757", ...theme.typography.captionSemi }}>
                     Priority
                   </Text>
                 </View>
@@ -189,9 +182,9 @@ export function ContactCard({ contact, index = 0, compact = false }: ContactCard
             </View>
           )}
         </View>
-        <View style={{ alignItems: "flex-end", gap: 6 }}>
+        <View style={{ alignItems: "flex-end", gap: theme.spacing[6] }}>
           {contact.dealValue ? (
-            <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "700" as const }}>
+            <Text style={{ color: colors.primary, ...theme.typography.bodySmallSemi }}>
               ${(contact.dealValue / 1000).toFixed(0)}K
             </Text>
           ) : null}
@@ -206,9 +199,9 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 14,
-    marginHorizontal: 16,
-    marginBottom: 8,
+    padding: theme.spacing[14],
+    marginHorizontal: theme.spacing[16],
+    marginBottom: theme.spacing[8],
     borderWidth: 1,
   },
 });
