@@ -43,6 +43,12 @@
           "photosPermission": "Allow RelateIQ+ to access your photos to scan business cards.",
           "cameraPermission": "Allow RelateIQ+ to use your camera to scan business cards."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#080A12"
+        }
       ]
     ],
     "experiments": {

@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Avatar } from "@/components/ContactCard";
 import { GlassIcon } from "@/components/GlassIcon";
 import { useApp, TimelineEvent } from "@/context/AppContext";
+import { notifyNow } from "@/lib/notifications";
 import { sendEmail } from "@/lib/emailApi";
 import { useColors } from "@/hooks/useColors";
 
@@ -93,7 +94,8 @@ export default function ContactDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { contacts, updateContact, deleteContact, addTimelineEvent, profile } = useApp();
+  const { contacts, updateContact, deleteContact, addTimelineEvent, profile, notificationPrefs } =
+    useApp();
   const { getToken } = useAuth();
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [savedToPhone, setSavedToPhone] = useState(false);
@@ -215,6 +217,12 @@ export default function ContactDetailScreen() {
         date: new Date().toISOString(),
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (notificationPrefs.emailAlerts) {
+        void notifyNow(
+          "Intro email sent",
+          `Your intro email to ${contact.firstName || contact.email} was delivered.`,
+        );
+      }
       setShowEmailModal(false);
     } else {
       Alert.alert("Send failed", result.error ?? "Could not send email. Please try again.");

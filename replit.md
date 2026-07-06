@@ -85,6 +85,27 @@ successful extraction / manual entry). Billing is server-driven via Stripe +
   (Stripe portal) in `app/(tabs)/profile.tsx`.
 - Seed plans with `pnpm --filter @workspace/scripts run seed-stripe-products`.
 
+### Notifications (real, native)
+
+Notification preferences (`context/AppContext.tsx` → `notificationPrefs` /
+`updateNotificationPrefs`, persisted at `@connectiq/notificationPrefs`) drive **real**
+device notifications via `expo-notifications`. The UI is `NotificationsModal` in
+`app/(tabs)/profile.tsx`. Scheduling logic lives in `lib/notifications.ts`:
+
+- **Follow-up Reminders** — `DATE` trigger at each contact's `followUpDate`.
+- **Email Sent Alerts** — immediate `notifyNow()` fired at the email-send success point
+  in `app/contact/[id].tsx` (gated on `prefs.emailAlerts`).
+- **Meeting Reminders** — 1 hour before any future-dated `meeting` timeline event.
+- **Weekly Digest** — `WEEKLY` trigger (Mon 9am) with live contact/follow-up counts.
+- **Onboarding Tips** — 3 tips over days 1–3, anchored to a persisted baseline
+  (`@connectiq/onboardingAnchor`) so repeated syncs reschedule to stable times.
+
+`AppContext` runs `syncScheduledNotifications(prefs, contacts)` in an effect whenever
+`isLoaded`/prefs/contacts change; it does cancel-all-then-reschedule, **serialized and
+coalesced** (single-flight promise chain, latest-wins) to avoid interleaving. **Native
+only** — every function is a no-op on web (`Platform.OS !== "web"`); prefs still persist.
+Account deletion / `clearAllData` also clears the notif prefs + onboarding anchor.
+
 ### Concurrent-session enforcement
 
 To detect account sharing, the client sends a heartbeat (`POST /api/sessions/heartbeat`,

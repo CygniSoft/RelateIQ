@@ -7,6 +7,13 @@ import React, {
   useState,
 } from "react";
 
+import {
+  DEFAULT_NOTIFICATION_PREFS,
+  configureNotifications,
+  syncScheduledNotifications,
+  type NotificationPrefs,
+} from "@/lib/notifications";
+
 export type ContactCategory =
   | "Potential client"
   | "Partner"
@@ -121,6 +128,8 @@ interface AppContextType {
   isLoaded: boolean;
   freeScansUsed: number;
   consumeFreeScan: () => void;
+  notificationPrefs: NotificationPrefs;
+  updateNotificationPrefs: (updates: Partial<NotificationPrefs>) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -138,6 +147,7 @@ const STORAGE_KEYS = {
   PROFILE: "@connectiq/profile",
   VERSION: "@connectiq/dataVersion",
   FREE_SCANS: "@connectiq/freeScansUsed",
+  NOTIF_PREFS: "@connectiq/notificationPrefs",
 };
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -160,6 +170,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isLoaded, setIsLoaded] = useState(false);
   const [freeScansUsed, setFreeScansUsed] = useState(0);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>(
+    DEFAULT_NOTIFICATION_PREFS,
+  );
 
   useEffect(() => {
     (async () => {
@@ -178,16 +191,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setProfile(DEFAULT_PROFILE);
           return;
         }
-        const [c, e, p, fs] = await Promise.all([
+        const [c, e, p, fs, np] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.CONTACTS),
           AsyncStorage.getItem(STORAGE_KEYS.EVENTS),
           AsyncStorage.getItem(STORAGE_KEYS.PROFILE),
           AsyncStorage.getItem(STORAGE_KEYS.FREE_SCANS),
+          AsyncStorage.getItem(STORAGE_KEYS.NOTIF_PREFS),
         ]);
         setContacts(c ? JSON.parse(c) : []);
         setEvents(e ? JSON.parse(e) : []);
         setProfile(p ? JSON.parse(p) : DEFAULT_PROFILE);
         setFreeScansUsed(fs ? Number(fs) || 0 : 0);
+        setNotificationPrefs(
+          np
+            ? { ...DEFAULT_NOTIFICATION_PREFS, ...JSON.parse(np) }
+            : DEFAULT_NOTIFICATION_PREFS,
+        );
       } catch {
         setContacts([]);
         setEvents([]);
@@ -196,6 +215,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     })();
   }, []);
+
+  // Configure the OS notification handler once on mount.
+  useEffect(() => {
+    configureNotifications();
+  }, []);
+
+  // Keep OS-scheduled notifications in sync with prefs and contacts. Runs after
+  // data has loaded and whenever contacts or prefs change (meeting reminders read
+  // from contact.timeline, so events aren't a dependency). No-op on web; runs are
+  // serialized/coalesced inside syncScheduledNotifications.
+  useEffect(() => {
+    if (!isLoaded) return;
+    void syncScheduledNotifications(notificationPrefs, contacts);
+  }, [isLoaded, notificationPrefs, contacts]);
 
   const saveContacts = useCallback(async (updated: Contact[]) => {
     setContacts(updated);
@@ -305,13 +338,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       STORAGE_KEYS.EVENTS,
       STORAGE_KEYS.PROFILE,
       STORAGE_KEYS.FREE_SCANS,
+      STORAGE_KEYS.NOTIF_PREFS,
+      "@connectiq/onboardingAnchor",
     ]);
     await AsyncStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
     setContacts([]);
     setEvents([]);
     setProfile(DEFAULT_PROFILE);
     setFreeScansUsed(0);
+    setNotificationPrefs(DEFAULT_NOTIFICATION_PREFS);
   }, []);
+
+  const updateNotificationPrefs = useCallback(
+    (updates: Partial<NotificationPrefs>) => {
+      setNotificationPrefs((prev) => {
+        const next = { ...prev, ...updates };
+        void AsyncStorage.setItem(
+          STORAGE_KEYS.NOTIF_PREFS,
+          JSON.stringify(next),
+        );
+        return next;
+      });
+    },
+    [],
+  );
 
   const addTimelineEvent = useCallback(
     (contactId: string, event: Omit<TimelineEvent, "id">) => {
@@ -355,6 +405,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isLoaded,
         freeScansUsed,
         consumeFreeScan,
+        notificationPrefs,
+        updateNotificationPrefs,
       }}
     >
       {children}

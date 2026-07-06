@@ -238,13 +238,7 @@ function NotificationsModal({
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [prefs, setPrefs] = useState({
-    followUpReminders: true,
-    emailAlerts: true,
-    meetingReminders: true,
-    weeklyDigest: false,
-    newContactTips: true,
-  });
+  const { notificationPrefs: prefs, updateNotificationPrefs } = useApp();
 
   const rows: Array<{ key: keyof typeof prefs; label: string; sub: string }> = [
     {
@@ -268,7 +262,7 @@ function NotificationsModal({
       sub: "Summary of your networking activity",
     },
     {
-      key: "newContactTips",
+      key: "onboardingTips",
       label: "Onboarding Tips",
       sub: "Helpful suggestions as you build your network",
     },
@@ -323,7 +317,7 @@ function NotificationsModal({
               </View>
               <Switch
                 value={prefs[row.key]}
-                onValueChange={(v) => setPrefs((p) => ({ ...p, [row.key]: v }))}
+                onValueChange={(v) => updateNotificationPrefs({ [row.key]: v })}
                 trackColor={{ false: colors.border, true: colors.primary + "88" }}
                 thumbColor={prefs[row.key] ? colors.primary : colors.mutedForeground}
               />
