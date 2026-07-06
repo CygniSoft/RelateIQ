@@ -3,6 +3,7 @@ import { useSignUp } from "@clerk/expo";
 import { Link } from "expo-router";
 import React from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -130,13 +131,12 @@ export default function SignUpScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={authStyles.brandRow}>
-          <View
-            style={[
-              authStyles.brandBadge,
-              { backgroundColor: authColors.primary },
-            ]}
-          >
-            <Feather name="zap" size={26} color="#fff" />
+          <View style={[authStyles.brandBadge, { backgroundColor: "#fff" }]}>
+            <Image
+              source={require("@/assets/images/logo-mark.png")}
+              style={{ width: 40, height: 40 }}
+              resizeMode="contain"
+            />
           </View>
           <Text style={authStyles.brandName}>RelateIQ+</Text>
         </View>
