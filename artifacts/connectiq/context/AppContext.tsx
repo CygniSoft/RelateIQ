@@ -304,11 +304,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       STORAGE_KEYS.CONTACTS,
       STORAGE_KEYS.EVENTS,
       STORAGE_KEYS.PROFILE,
+      STORAGE_KEYS.FREE_SCANS,
     ]);
     await AsyncStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
     setContacts([]);
     setEvents([]);
     setProfile(DEFAULT_PROFILE);
+    setFreeScansUsed(0);
   }, []);
 
   const addTimelineEvent = useCallback(

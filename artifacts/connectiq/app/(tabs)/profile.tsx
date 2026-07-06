@@ -1,5 +1,5 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { useAuth, useClerk } from "@clerk/expo";
+import { useAuth, useClerk, useUser } from "@clerk/expo";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ExpoLinking from "expo-linking";
 import { router } from "expo-router";
@@ -584,6 +584,8 @@ export default function ProfileScreen() {
   const colors = useColors();
   const { profile, contacts, events, signOut, clearAllData } = useApp();
   const { signOut: clerkSignOut } = useClerk();
+  const { user } = useUser();
+  const [deleting, setDeleting] = useState(false);
   const { getToken } = useAuth();
   const { subscription, isPro, refresh: refreshSubscription } = useSubscription();
   const insets = useSafeAreaInsets();
@@ -767,6 +769,53 @@ export default function ProfileScreen() {
         },
       ],
     );
+  }
+
+  async function doDeleteAccount() {
+    setDeleting(true);
+    try {
+      // Delete the remote Clerk account FIRST, while still authenticated. Only
+      // after that succeeds do we wipe local data — otherwise a failed remote
+      // delete (e.g. Clerk requires recent re-authentication) would leave the
+      // account intact but the device already erased.
+      if (!user) {
+        throw new Error("Your session isn't ready yet.");
+      }
+      await user.delete();
+      await clearAllData();
+      await signOut();
+      await clerkSignOut();
+      // On success the auth state flips to signed-out and this screen unmounts,
+      // so there's no need to reset `deleting` here.
+    } catch (err) {
+      setDeleting(false);
+      const detail =
+        err instanceof Error && err.message ? ` (${err.message})` : "";
+      const msg =
+        "We couldn't delete your account. Please sign out, sign back in, and try again." +
+        detail;
+      if (Platform.OS === "web") window.alert(msg);
+      else Alert.alert("Couldn't delete account", msg);
+    }
+  }
+
+  function handleDeleteAccount() {
+    const message =
+      "This permanently deletes your account and erases all contacts, events, and notes from this device. This cannot be undone.";
+    if (Platform.OS === "web") {
+      if (window.confirm(message)) void doDeleteAccount();
+      return;
+    }
+    Alert.alert("Delete Account", message, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete Account",
+        style: "destructive",
+        onPress: () => {
+          void doDeleteAccount();
+        },
+      },
+    ]);
   }
 
   return (
@@ -1082,6 +1131,18 @@ export default function ProfileScreen() {
             label="Sign Out"
             danger
             onPress={handleSignOut}
+          />
+          <SettingRow
+            icon={
+              deleting ? (
+                <ActivityIndicator size="small" color="#FF4757" />
+              ) : (
+                <Feather name="trash-2" size={16} color="#FF4757" />
+              )
+            }
+            label={deleting ? "Deleting Account…" : "Delete Account"}
+            danger
+            onPress={deleting ? undefined : handleDeleteAccount}
           />
         </View>
       </ScrollView>
