@@ -21,7 +21,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 mb-8"
+            className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.15] pb-2 text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 mb-6"
           >
             Never let a connection<br />go cold again.
           </motion.h1>
