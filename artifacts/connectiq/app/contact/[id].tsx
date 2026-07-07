@@ -7,6 +7,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -122,6 +123,14 @@ export default function ContactDetailScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 24 : insets.bottom + 24;
+
+  function showMessage(title: string, message: string) {
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  }
 
   function getScoreColor(score: number) {
     if (score >= 80) return "#10B981";
@@ -401,20 +410,64 @@ export default function ContactDetailScreen() {
               icon: "phone",
               label: "Call",
               color: "#10B981",
-              onPress: () => {},
+              onPress: () => {
+                if (!contact.phone) {
+                  showMessage(
+                    "No phone number",
+                    "This contact doesn't have a phone number saved.",
+                  );
+                  return;
+                }
+                const digits = contact.phone.replace(/[^+\d]/g, "");
+                if (!digits) {
+                  showMessage(
+                    "No phone number",
+                    "This contact doesn't have a valid phone number saved.",
+                  );
+                  return;
+                }
+                Linking.openURL(`tel:${digits}`).catch(() => {
+                  showMessage(
+                    "Can't place call",
+                    "Calling isn't available on this device.",
+                  );
+                });
+              },
             },
             {
               icon: "calendar",
               label: "Meet",
               color: "#F59E0B",
               onPress: () => {
-                addTimelineEvent(contact.id, {
-                  type: "meeting",
-                  title: "Meeting booked",
-                  date: new Date().toISOString(),
-                });
-                updateContact(contact.id, { meetingBooked: true });
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                const bookMeeting = () => {
+                  addTimelineEvent(contact.id, {
+                    type: "meeting",
+                    title: "Meeting booked",
+                    date: new Date().toISOString(),
+                  });
+                  updateContact(contact.id, { meetingBooked: true });
+                  Haptics.notificationAsync(
+                    Haptics.NotificationFeedbackType.Success,
+                  );
+                  showMessage(
+                    "Meeting booked",
+                    "Added to this contact's timeline.",
+                  );
+                };
+                if (Platform.OS === "web") {
+                  if (window.confirm(`Log a meeting with ${contact.firstName} ${contact.lastName}?`)) {
+                    bookMeeting();
+                  }
+                  return;
+                }
+                Alert.alert(
+                  "Book a meeting",
+                  `Log a meeting with ${contact.firstName} ${contact.lastName}?`,
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Book meeting", onPress: bookMeeting },
+                  ],
+                );
               },
             },
             {
