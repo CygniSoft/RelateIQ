@@ -97,6 +97,9 @@ export function Pricing() {
             <p className="text-center text-sm text-muted-foreground mt-4">
               3 free scans included before subscribing.
             </p>
+            <p className="text-center text-xs text-muted-foreground mt-2">
+              Sign in to the app with the same email you use at checkout to unlock Pro.
+            </p>
           </motion.div>
         </div>
       </div>
