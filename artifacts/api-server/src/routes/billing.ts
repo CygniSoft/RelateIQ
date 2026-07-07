@@ -1,6 +1,9 @@
 import { Router, type IRouter } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
-import { getUncachableStripeClient } from "../lib/stripeClient";
+import {
+  getUncachableStripeClient,
+  ensureStripeBackfill,
+} from "../lib/stripeClient";
 import {
   getUser,
   upsertUser,
@@ -83,6 +86,30 @@ function isRateLimited(ip: string, limit = 5, windowMs = 60_000): boolean {
   return entry.count > limit;
 }
 
+/**
+ * Loads products; if the synced stripe schema is empty (or the query fails,
+ * e.g. tables missing because startup init never completed), self-heals by
+ * running migrations + a Stripe backfill, then re-queries once. Backfill
+ * attempts are single-flight and cooldown-limited in ensureStripeBackfill.
+ */
+async function loadProductsWithRecovery(
+  log: { warn: (msg: string) => void },
+): Promise<Awaited<ReturnType<typeof listProductsWithPrices>>> {
+  let products: Awaited<ReturnType<typeof listProductsWithPrices>> | null = null;
+  try {
+    products = await listProductsWithPrices();
+  } catch {
+    log.warn("Billing products query failed; attempting Stripe self-heal");
+  }
+  if (products && products.length > 0) return products;
+  if (products) {
+    log.warn("No billing products found; triggering Stripe backfill");
+  }
+  const ran = await ensureStripeBackfill();
+  if (!ran && products) return products;
+  return listProductsWithPrices();
+}
+
 // List active products + prices (the plans shown on the paywall).
 router.get("/billing/products", async (req, res): Promise<void> => {
   const { userId } = getAuth(req);
@@ -91,7 +118,7 @@ router.get("/billing/products", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const products = await listProductsWithPrices();
+    const products = await loadProductsWithRecovery(req.log);
     res.json({ products });
   } catch (err) {
     req.log.error({ err }, "Failed to list billing products");
@@ -213,7 +240,7 @@ router.post("/billing/web-checkout", async (req, res): Promise<void> => {
   }
 
   try {
-    const products = await listProductsWithPrices();
+    const products = await loadProductsWithRecovery(req.log);
     const price = products
       .flatMap((p) => p.prices)
       .find((pr) => pr.interval === interval);

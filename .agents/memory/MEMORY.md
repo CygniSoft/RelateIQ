@@ -6,3 +6,4 @@
 - [ConnectIQ real notifications](connectiq-notifications.md) — expo-notifications native-only; cancel-all reschedule must be single-flight; relative-to-now schedules drift so anchor them.
 - [ConnectIQ Clerk auth (Expo)](connectiq-clerk-auth.md) — Stack.Protected (not useEffect) for flash-free gating; EXPO_PUBLIC_CLERK_* wired in BOTH package.json dev script and scripts/build.js.
 - [ConnectIQ Stripe + session client](connectiq-stripe-sessions-client.md) — one provider owns isPro + heartbeat; gate every premium scan step not just entry; deep-link checkout return; alias expo-linking to avoid RN Linking clash.
+- [Stripe prod backfill self-heal](stripe-prod-backfill.md) — startup-only syncBackfill can silently fail in deployments leaving stripe.* empty; billing reads self-heal via migrations+backfill (single-flight, 5-min cooldown).

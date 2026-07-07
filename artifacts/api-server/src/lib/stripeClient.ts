@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { StripeSync } from "stripe-replit-sync";
+import { StripeSync, runMigrations } from "stripe-replit-sync";
 
 interface StripeCredentials {
   secretKey: string;
@@ -89,4 +89,44 @@ export async function getStripeSync(): Promise<StripeSync> {
     stripeSecretKey: secretKey,
     stripeWebhookSecret: webhookSecret ?? "",
   });
+}
+
+// Single-flight guard so concurrent requests don't trigger parallel backfills,
+// plus a cooldown so a genuinely empty Stripe catalog doesn't re-trigger a
+// backfill on every request.
+let backfillInFlight: Promise<void> | null = null;
+let lastBackfillAt = 0;
+const BACKFILL_COOLDOWN_MS = 5 * 60_000;
+
+/**
+ * Runs Stripe schema migrations + a data backfill (products, prices,
+ * subscriptions, ...) into the local `stripe` schema. Concurrent callers share
+ * one in-flight backfill; completed attempts (success or failure) are subject
+ * to a cooldown. Used to self-heal when the startup backfill did not complete
+ * (e.g. in a fresh production deployment).
+ *
+ * Returns true if a backfill ran (or was joined), false if skipped by cooldown.
+ */
+export async function ensureStripeBackfill(): Promise<boolean> {
+  if (backfillInFlight) {
+    await backfillInFlight;
+    return true;
+  }
+  if (Date.now() - lastBackfillAt < BACKFILL_COOLDOWN_MS) {
+    return false;
+  }
+  backfillInFlight = (async () => {
+    const databaseUrl = process.env["DATABASE_URL"];
+    if (databaseUrl) {
+      // Also covers the case where startup init failed before migrations ran.
+      await runMigrations({ databaseUrl });
+    }
+    const stripeSync = await getStripeSync();
+    await stripeSync.syncBackfill();
+  })().finally(() => {
+    lastBackfillAt = Date.now();
+    backfillInFlight = null;
+  });
+  await backfillInFlight;
+  return true;
 }
