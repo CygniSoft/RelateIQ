@@ -4,7 +4,7 @@ import { Star } from "lucide-react";
 export function Testimonials() {
   const testimonials = [
     {
-      quote: "ConnectIQ completely changed how I network at CES. I sent 40 follow-ups before the flight home.",
+      quote: "RelateIQ+ completely changed how I network at CES. I sent 40 follow-ups before the flight home.",
       author: "Sarah J.",
       role: "VP of Sales, TechLogix"
     },

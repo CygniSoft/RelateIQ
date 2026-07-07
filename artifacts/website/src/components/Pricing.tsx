@@ -1,7 +1,37 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
+
+async function startCheckout(interval: "month" | "year"): Promise<string> {
+  const res = await fetch("/api/billing/web-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ interval }),
+  });
+  const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
+  if (!res.ok || !data?.url) {
+    throw new Error(data?.error ?? "Failed to start checkout");
+  }
+  return data.url;
+}
 
 export function Pricing() {
+  const [loading, setLoading] = useState<"month" | "year" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCheckout = async (interval: "month" | "year") => {
+    if (loading) return;
+    setLoading(interval);
+    setError(null);
+    try {
+      const url = await startCheckout(interval);
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setLoading(null);
+    }
+  };
+
   return (
     <section className="py-32 bg-background relative" id="pricing">
       <div className="container mx-auto px-4">
@@ -22,7 +52,7 @@ export function Pricing() {
                 PRO
               </span>
             </div>
-            
+
             <h3 className="text-2xl font-semibold mb-2">RelateIQ+ Pro</h3>
             <div className="flex items-baseline gap-2 mb-6">
               <span className="text-5xl font-bold">$9.99</span>
@@ -45,9 +75,25 @@ export function Pricing() {
               ))}
             </ul>
 
-            <button className="w-full py-4 rounded-xl bg-white text-black font-semibold text-lg hover:bg-white/90 transition-colors">
+            <button
+              onClick={() => handleCheckout("month")}
+              disabled={loading !== null}
+              className="w-full py-4 rounded-xl bg-white text-black font-semibold text-lg hover:bg-white/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {loading === "month" && <Loader2 className="w-5 h-5 animate-spin" />}
               Get Started
             </button>
+            <button
+              onClick={() => handleCheckout("year")}
+              disabled={loading !== null}
+              className="w-full py-3 mt-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-colors border border-white/10 disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {loading === "year" && <Loader2 className="w-4 h-4 animate-spin" />}
+              Go Annual — $99/year
+            </button>
+            {error && (
+              <p className="text-center text-sm text-red-400 mt-4">{error}</p>
+            )}
             <p className="text-center text-sm text-muted-foreground mt-4">
               3 free scans included before subscribing.
             </p>

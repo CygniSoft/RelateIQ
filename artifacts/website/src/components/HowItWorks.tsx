@@ -5,7 +5,7 @@ export function HowItWorks() {
     {
       number: "01",
       title: "Scan the Card",
-      description: "Open ConnectIQ and point your camera. Our specialized OCR engine reads the card instantly, even in low-light networking events.",
+      description: "Open RelateIQ+ and point your camera. Our specialized OCR engine reads the card instantly, even in low-light networking events.",
     },
     {
       number: "02",

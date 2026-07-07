@@ -48,6 +48,41 @@ async function getUserEmail(userId: string): Promise<string | null> {
   }
 }
 
+/** Only returns an email the user has actually verified with Clerk. */
+async function getVerifiedUserEmail(userId: string): Promise<string | null> {
+  try {
+    const u = await clerkClient.users.getUser(userId);
+    const verified = u.emailAddresses.find(
+      (e) => e.verification?.status === "verified",
+    );
+    const primary = u.primaryEmailAddress;
+    if (primary && primary.verification?.status === "verified") {
+      return primary.emailAddress;
+    }
+    return verified?.emailAddress ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Simple in-memory per-IP rate limiter for the public checkout endpoint.
+const webCheckoutHits = new Map<string, { count: number; resetAt: number }>();
+function isRateLimited(ip: string, limit = 5, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const entry = webCheckoutHits.get(ip);
+  if (!entry || now > entry.resetAt) {
+    webCheckoutHits.set(ip, { count: 1, resetAt: now + windowMs });
+    if (webCheckoutHits.size > 10_000) {
+      for (const [k, v] of webCheckoutHits) {
+        if (now > v.resetAt) webCheckoutHits.delete(k);
+      }
+    }
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > limit;
+}
+
 // List active products + prices (the plans shown on the paywall).
 router.get("/billing/products", async (req, res): Promise<void> => {
   const { userId } = getAuth(req);
@@ -72,7 +107,31 @@ router.get("/billing/subscription", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const user = await getUser(userId);
+    let user = await getUser(userId);
+    // If the user has no linked Stripe customer yet, they may have subscribed
+    // on the marketing website before installing the app. Adopt an existing
+    // Stripe customer only when (a) the email is verified with Clerk and
+    // (b) that customer actually holds an active subscription in this account.
+    if (!user?.stripeCustomerId) {
+      const email = await getVerifiedUserEmail(userId);
+      if (email) {
+        const stripe = await getUncachableStripeClient();
+        const found = await stripe.customers.list({ email, limit: 10 });
+        for (const customer of found.data) {
+          const candidate = await getSubscriptionForUser(customer.id);
+          if (candidate.active) {
+            if (!user) user = await upsertUser(userId, email);
+            await setStripeCustomerId(userId, customer.id);
+            user = { ...user, stripeCustomerId: customer.id };
+            req.log.info(
+              { userId, customerId: customer.id },
+              "Adopted web-purchase Stripe customer by verified email",
+            );
+            break;
+          }
+        }
+      }
+    }
     const summary = await getSubscriptionForUser(user?.stripeCustomerId ?? null);
     res.json(summary);
   } catch (err) {
@@ -135,6 +194,51 @@ router.post("/billing/checkout", async (req, res): Promise<void> => {
     res.json({ url: session.url });
   } catch (err) {
     req.log.error({ err }, "Failed to create checkout session");
+    res.status(500).json({ error: "Failed to start checkout" });
+  }
+});
+
+// Public checkout for the marketing website. No auth: Stripe collects the
+// buyer's email at checkout, and the app links the subscription to their
+// account by email on first sign-in (see /billing/subscription fallback).
+router.post("/billing/web-checkout", async (req, res): Promise<void> => {
+  if (isRateLimited(req.ip ?? "unknown")) {
+    res.status(429).json({ error: "Too many requests. Please try again shortly." });
+    return;
+  }
+  const interval = (req.body as { interval?: unknown })?.interval;
+  if (interval !== "month" && interval !== "year") {
+    res.status(400).json({ error: "Invalid 'interval' (expected 'month' or 'year')" });
+    return;
+  }
+
+  try {
+    const products = await listProductsWithPrices();
+    const price = products
+      .flatMap((p) => p.prices)
+      .find((pr) => pr.interval === interval);
+    if (!price) {
+      res.status(404).json({ error: "Plan not available" });
+      return;
+    }
+
+    const stripe = await getUncachableStripeClient();
+    const base = publicBaseUrl();
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: price.id, quantity: 1 }],
+      allow_promotion_codes: true,
+      success_url: `${base}/website/?checkout=success`,
+      cancel_url: `${base}/website/?checkout=cancel`,
+    });
+
+    if (!session.url) {
+      res.status(502).json({ error: "Stripe did not return a checkout URL" });
+      return;
+    }
+    res.json({ url: session.url });
+  } catch (err) {
+    req.log.error({ err }, "Failed to create web checkout session");
     res.status(500).json({ error: "Failed to start checkout" });
   }
 });

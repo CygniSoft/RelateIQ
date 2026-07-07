@@ -13,7 +13,7 @@ export function Hero() {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-white/70 text-sm font-medium tracking-wide mb-6">
-              RelateIQ+ Pro is now ConnectIQ
+              Turn business cards into revenue
             </span>
           </motion.div>
 

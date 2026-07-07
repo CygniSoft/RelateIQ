@@ -13,8 +13,8 @@ function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 py-4 px-6 backdrop-blur-md bg-background/50 border-b border-white/10">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src={logoMark} alt="ConnectIQ Logo" className="w-8 h-8 rounded" />
-          <span className="text-xl font-bold tracking-tight">ConnectIQ</span>
+          <img src={logoMark} alt="RelateIQ+ Logo" className="w-8 h-8 rounded" />
+          <span className="text-xl font-bold tracking-tight">RelateIQ+</span>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/70">
           <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
@@ -38,11 +38,11 @@ function Footer() {
     <footer className="py-12 border-t border-white/10 bg-background">
       <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img src={logoMark} alt="ConnectIQ Logo" className="w-6 h-6 rounded" />
-          <span className="font-semibold tracking-tight text-white/80">ConnectIQ</span>
+          <img src={logoMark} alt="RelateIQ+ Logo" className="w-6 h-6 rounded" />
+          <span className="font-semibold tracking-tight text-white/80">RelateIQ+</span>
         </div>
         <p className="text-muted-foreground text-sm">
-          &copy; {new Date().getFullYear()} ConnectIQ (RelateIQ+). All rights reserved.
+          &copy; {new Date().getFullYear()} RelateIQ+. All rights reserved.
         </p>
         <div className="flex gap-4 text-sm text-muted-foreground">
           <a href="#" className="hover:text-white transition-colors">Privacy</a>
