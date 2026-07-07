@@ -34,10 +34,10 @@ export function BottomCTA() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <a href="#" className="w-full sm:w-auto px-8 py-4 bg-white text-black rounded-full font-medium hover:bg-white/90 transition-colors flex items-center justify-center gap-2">
+            <a href="#" className="btn-halo btn-glass-light w-full sm:w-auto px-8 py-4 rounded-full font-medium flex items-center justify-center gap-2">
               Download on the App Store
             </a>
-            <a href="#" className="w-full sm:w-auto px-8 py-4 bg-white/10 text-white rounded-full font-medium hover:bg-white/20 transition-colors border border-white/10 flex items-center justify-center gap-2">
+            <a href="#" className="btn-halo btn-glass-dark w-full sm:w-auto px-8 py-4 rounded-full font-medium flex items-center justify-center gap-2">
               Get it on Google Play
             </a>
           </motion.div>

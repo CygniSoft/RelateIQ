@@ -78,7 +78,7 @@ export function Pricing() {
             <button
               onClick={() => handleCheckout("month")}
               disabled={loading !== null}
-              className="w-full py-4 rounded-xl bg-white text-black font-semibold text-lg hover:bg-white/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="btn-halo btn-glass-light w-full py-4 rounded-2xl font-semibold text-lg disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading === "month" && <Loader2 className="w-5 h-5 animate-spin" />}
               Get Started
@@ -86,7 +86,7 @@ export function Pricing() {
             <button
               onClick={() => handleCheckout("year")}
               disabled={loading !== null}
-              className="w-full py-3 mt-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-colors border border-white/10 disabled:opacity-60 flex items-center justify-center gap-2"
+              className="btn-halo btn-glass-dark w-full py-3 mt-3 rounded-2xl font-medium disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading === "year" && <Loader2 className="w-4 h-4 animate-spin" />}
               Go Annual — $99/year

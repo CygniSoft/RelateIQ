@@ -24,7 +24,7 @@ function Navbar() {
           <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
         </div>
         <div>
-          <a href="#" className="px-5 py-2.5 bg-white text-black rounded-full text-sm font-medium hover:bg-white/90 transition-colors">
+          <a href="#" className="btn-halo btn-glass-light px-5 py-2.5 rounded-full text-sm font-medium">
             Download
           </a>
         </div>
