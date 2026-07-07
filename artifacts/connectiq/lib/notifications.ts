@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 
 import type { Contact } from "@/context/AppContext";
 
@@ -24,13 +24,31 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
 
 // expo-notifications scheduling is a native (iOS/Android) capability. On web we
 // no-op everywhere so preferences still persist and the UI works, but nothing is
-// scheduled. `Device.isDevice` guards simulators where notifications are limited.
-const NOTIFICATIONS_SUPPORTED = Platform.OS !== "web";
+// scheduled. Additionally, Expo Go on Android (SDK 53+) removed expo-notifications
+// support entirely — even importing the module there raises a console error — so
+// we treat it as unsupported and lazy-require the module only where it works.
+// Notifications work normally in development/production builds.
+const IS_EXPO_GO = Constants.executionEnvironment === "storeClient";
+const NOTIFICATIONS_SUPPORTED =
+  Platform.OS !== "web" && !(Platform.OS === "android" && IS_EXPO_GO);
+
+type NotificationsModule = typeof import("expo-notifications");
+let notificationsModule: NotificationsModule | null = null;
+
+function getNotifications(): NotificationsModule | null {
+  if (!NOTIFICATIONS_SUPPORTED) return null;
+  if (!notificationsModule) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    notificationsModule = require("expo-notifications") as NotificationsModule;
+  }
+  return notificationsModule;
+}
 
 let handlerConfigured = false;
 
 export function configureNotifications() {
-  if (!NOTIFICATIONS_SUPPORTED || handlerConfigured) return;
+  const Notifications = getNotifications();
+  if (!Notifications || handlerConfigured) return;
   handlerConfigured = true;
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -47,7 +65,8 @@ export function configureNotifications() {
  * Safe to call repeatedly — the OS only prompts once.
  */
 export async function ensureNotificationPermissions(): Promise<boolean> {
-  if (!NOTIFICATIONS_SUPPORTED) return false;
+  const Notifications = getNotifications();
+  if (!Notifications) return false;
   try {
     const { status } = await Notifications.getPermissionsAsync();
     if (status === "granted") return true;
@@ -60,7 +79,8 @@ export async function ensureNotificationPermissions(): Promise<boolean> {
 
 /** Fire an immediate notification (used for "Email Sent Alerts"). */
 export async function notifyNow(title: string, body: string): Promise<void> {
-  if (!NOTIFICATIONS_SUPPORTED) return;
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   const granted = await ensureNotificationPermissions();
   if (!granted) return;
   try {
@@ -112,6 +132,8 @@ async function runSync(
   prefs: NotificationPrefs,
   contacts: Contact[],
 ): Promise<void> {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   const anyEnabled =
     prefs.followUpReminders ||
     prefs.meetingReminders ||
