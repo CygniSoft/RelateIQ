@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "RelateIQ",
+    "slug": "relateiq",
+    "owner": "cygnisofts-organization",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "android": {
+      "package": "com.cygnisoft.relateiq"
+    },
+    "ios": {
+      "bundleIdentifier": "com.cygnisoft.relateiq",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ed972b85-21f5-4192-8f9e-31d6a5f4c135"
+      }
+    }
+  }
+}
