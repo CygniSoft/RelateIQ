@@ -14,6 +14,7 @@ import {
 } from "react-native";
 
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { authColors, authStyles } from "@/components/auth/authStyles";
 
 export default function SignUpScreen() {
@@ -168,17 +169,12 @@ export default function SignUpScreen() {
         )}
 
         <Text style={authStyles.label}>Password</Text>
-        <TextInput
-          style={[
-            authStyles.input,
-            errors.fields.password && authStyles.inputError,
-          ]}
+        <PasswordInput
           value={password}
           placeholder="At least 8 characters"
-          placeholderTextColor={authColors.muted}
-          secureTextEntry
           onChangeText={setPassword}
           textContentType="newPassword"
+          hasError={!!errors.fields.password}
         />
         {errors.fields.password && (
           <Text style={authStyles.error}>{errors.fields.password.message}</Text>
