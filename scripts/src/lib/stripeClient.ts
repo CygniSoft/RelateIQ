@@ -40,7 +40,23 @@ async function getStripeCredentials(): Promise<StripeCredentials> {
   const data = (await resp.json()) as {
     items?: { settings?: { secret?: string; secret_key?: string } }[];
   };
-  const settings = data.items?.[0]?.settings;
+
+  // The Stripe connection can expose multiple accounts (sandbox + live).
+  // Set STRIPE_MODE=live to seed the live account; defaults to sandbox/test.
+  const candidates = (data.items ?? [])
+    .map((i) => i.settings)
+    .filter((s): s is NonNullable<typeof s> => !!(s?.secret ?? s?.secret_key));
+  const wantLive = process.env["STRIPE_MODE"] === "live";
+  const isLive = (s: { secret?: string; secret_key?: string }) =>
+    (s.secret ?? s.secret_key ?? "").startsWith("sk_live");
+  const settings =
+    candidates.find((s) => isLive(s) === wantLive) ??
+    (candidates.length === 1 ? candidates[0] : undefined);
+  if (candidates.length > 1 && !settings) {
+    throw new Error(
+      `Stripe connection has no ${wantLive ? "live" : "test"}-mode account.`,
+    );
+  }
   const secretKey = settings?.secret ?? settings?.secret_key;
 
   if (!secretKey) {

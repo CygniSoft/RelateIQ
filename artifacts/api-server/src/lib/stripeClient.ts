@@ -48,7 +48,27 @@ async function getStripeCredentials(): Promise<StripeCredentials> {
       };
     }[];
   };
-  const settings = data.items?.[0]?.settings;
+
+  // The Stripe connection can expose multiple accounts (sandbox + live).
+  // Use the live account in deployments (real payments), sandbox in the
+  // development workspace.
+  const isDeployment =
+    !process.env["REPL_IDENTITY"] && !!process.env["WEB_REPL_RENEWAL"];
+  const candidates = (data.items ?? [])
+    .map((i) => i.settings)
+    .filter((s): s is NonNullable<typeof s> => !!(s?.secret ?? s?.secret_key));
+  const isLive = (s: { secret?: string; secret_key?: string }) =>
+    (s.secret ?? s.secret_key ?? "").startsWith("sk_live");
+  // Fail closed: if multiple accounts exist but none matches the required
+  // mode, do not silently fall back (a deployment must never use a test key).
+  const settings =
+    candidates.find((s) => isLive(s) === isDeployment) ??
+    (candidates.length === 1 ? candidates[0] : undefined);
+  if (candidates.length > 1 && !settings) {
+    throw new Error(
+      `Stripe connection has no ${isDeployment ? "live" : "test"}-mode account for this environment.`,
+    );
+  }
   const secretKey = settings?.secret ?? settings?.secret_key;
 
   if (!secretKey) {

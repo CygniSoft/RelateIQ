@@ -194,6 +194,17 @@ router.post("/billing/checkout", async (req, res): Promise<void> => {
     const stripe = await getUncachableStripeClient();
 
     let customerId = user.stripeCustomerId;
+    if (customerId) {
+      // A stored customer id may belong to a different Stripe account/mode
+      // (e.g. created against the sandbox before going live). Verify it and
+      // re-create if it doesn't exist in the current account.
+      try {
+        const existing = await stripe.customers.retrieve(customerId);
+        if ((existing as { deleted?: boolean }).deleted) customerId = null;
+      } catch {
+        customerId = null;
+      }
+    }
     if (!customerId) {
       const customer = await stripe.customers.create({
         ...(email ? { email } : {}),
@@ -291,6 +302,18 @@ router.post("/billing/portal", async (req, res): Promise<void> => {
       return;
     }
     const stripe = await getUncachableStripeClient();
+    // Reject customer ids that don't exist in the current Stripe account/mode
+    // (e.g. sandbox-era ids after switching the app to the live account).
+    try {
+      const existing = await stripe.customers.retrieve(user.stripeCustomerId);
+      if ((existing as { deleted?: boolean }).deleted) {
+        res.status(400).json({ error: "No billing account yet" });
+        return;
+      }
+    } catch {
+      res.status(400).json({ error: "No billing account yet" });
+      return;
+    }
     const base = publicBaseUrl();
     const encoded = encodeURIComponent(returnUrl);
     const session = await stripe.billingPortal.sessions.create({
