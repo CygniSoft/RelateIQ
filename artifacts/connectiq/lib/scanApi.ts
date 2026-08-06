@@ -20,12 +20,16 @@ export interface ScanCardResult {
 /**
  * Sends a business-card image to the API for AI extraction.
  * `image` may be a raw base64 string or a full data URL.
+ * `token` is the Clerk session token; the endpoint requires sign-in.
  */
-export async function scanCard(image: string): Promise<ScanCardResult> {
+export async function scanCard(image: string, token?: string): Promise<ScanCardResult> {
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
     const res = await fetch(`${API_BASE}/scan-card`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ imageBase64: image }),
     });
 

@@ -136,7 +136,13 @@ export default function ScanScreen() {
       return;
     }
 
-    const result = await scanCard(image);
+    let scanToken: string | undefined;
+    try {
+      scanToken = (await getToken()) ?? undefined;
+    } catch {
+      scanToken = undefined;
+    }
+    const result = await scanCard(image, scanToken);
 
     if (result.success && result.data) {
       if (!isPro) consumeFreeScan();

@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { getAuth } from "@clerk/express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router: IRouter = Router();
@@ -41,7 +42,14 @@ function isRateLimited(ip: string): boolean {
 }
 
 router.post("/scan-card", async (req, res): Promise<void> => {
-  if (isRateLimited(req.ip ?? "unknown")) {
+  // Card scanning is a paid AI feature: require a signed-in user and
+  // rate-limit per user rather than per IP.
+  const { userId } = getAuth(req);
+  if (!userId) {
+    res.status(401).json({ error: "Please sign in to scan business cards." });
+    return;
+  }
+  if (isRateLimited(userId)) {
     res
       .status(429)
       .json({ error: "Too many requests. Please wait a moment and try again." });

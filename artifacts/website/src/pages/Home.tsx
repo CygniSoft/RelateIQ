@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { HowItWorks } from "@/components/HowItWorks";
@@ -45,8 +46,8 @@ function Footer() {
           &copy; {new Date().getFullYear()} RelateIQ+. All rights reserved.
         </p>
         <div className="flex gap-4 text-sm text-muted-foreground">
-          <a href="#" className="hover:text-white transition-colors">Privacy</a>
-          <a href="#" className="hover:text-white transition-colors">Terms</a>
+          <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+          <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
           <a href="#" className="hover:text-white transition-colors">Contact</a>
         </div>
       </div>
