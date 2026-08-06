@@ -86,11 +86,76 @@ function isRateLimited(ip: string, limit = 5, windowMs = 60_000): boolean {
   return entry.count > limit;
 }
 
+// Direct-from-Stripe fallback for the paywall. The synced `stripe.*` schema
+// can lag or fail to backfill (a large live account makes the full backfill
+// slow/fragile), so when the local copy has no usable plans we read them
+// straight from the Stripe API. Cached briefly to avoid hammering Stripe.
+let stripePlansCache: {
+  at: number;
+  products: Awaited<ReturnType<typeof listProductsWithPrices>>;
+} | null = null;
+const STRIPE_PLANS_CACHE_MS = 60_000;
+
+async function fetchPlansFromStripeApi(): Promise<
+  Awaited<ReturnType<typeof listProductsWithPrices>>
+> {
+  if (stripePlansCache && Date.now() - stripePlansCache.at < STRIPE_PLANS_CACHE_MS) {
+    return stripePlansCache.products;
+  }
+  const stripe = await getUncachableStripeClient();
+  // Paginate fully — a large live account can hold many prices, and the
+  // RelateIQ+ ones may not be on the first page.
+  const allPrices: import("stripe").Stripe.Price[] = [];
+  for await (const price of stripe.prices.list({
+    active: true,
+    type: "recurring",
+    limit: 100,
+    expand: ["data.product"],
+  })) {
+    allPrices.push(price);
+  }
+  const map = new Map<string, Awaited<ReturnType<typeof listProductsWithPrices>>[number]>();
+  for (const price of allPrices) {
+    const product = price.product;
+    if (typeof product === "string" || product.deleted) continue;
+    // Only RelateIQ+ plans — the live account also holds unrelated products.
+    const isRelateiq =
+      product.active &&
+      (product.metadata?.["app"] === "relateiq" || product.name.startsWith("RelateIQ+"));
+    if (!isRelateiq) continue;
+    let entry = map.get(product.id);
+    if (!entry) {
+      entry = {
+        id: product.id,
+        name: product.name,
+        description: product.description ?? null,
+        metadata: product.metadata ?? null,
+        prices: [],
+      };
+      map.set(product.id, entry);
+    }
+    entry.prices.push({
+      id: price.id,
+      unitAmount: price.unit_amount,
+      currency: price.currency,
+      interval: price.recurring?.interval ?? null,
+    });
+  }
+  const products = Array.from(map.values());
+  for (const p of products) {
+    p.prices.sort((a, b) => (a.unitAmount ?? 0) - (b.unitAmount ?? 0));
+  }
+  stripePlansCache = { at: Date.now(), products };
+  return products;
+}
+
 /**
  * Loads products; if the synced stripe schema is empty (or the query fails,
  * e.g. tables missing because startup init never completed), self-heals by
  * running migrations + a Stripe backfill, then re-queries once. Backfill
  * attempts are single-flight and cooldown-limited in ensureStripeBackfill.
+ * If the local copy still has no usable plans, falls back to reading the
+ * plans directly from the Stripe API.
  */
 async function loadProductsWithRecovery(
   log: { warn: (msg: string) => void },
@@ -110,11 +175,14 @@ async function loadProductsWithRecovery(
   // mode (a partial backfill can sync products but miss prices).
   if (isUsable(products)) return products;
   if (products) {
-    log.warn("No billing products with prices found; triggering Stripe backfill");
+    log.warn("No billing products with prices found; using Stripe API fallback");
   }
-  const ran = await ensureStripeBackfill();
-  if (!ran && products) return products;
-  return listProductsWithPrices();
+  // Kick off a repair of the local copy in the background (single-flight,
+  // cooldown-limited) but don't make the paywall wait on it — a large live
+  // account can take a long time (or fail) to backfill.
+  void ensureStripeBackfill().catch(() => {});
+  // Serve the plans straight from the Stripe API instead.
+  return fetchPlansFromStripeApi();
 }
 
 // List active products + prices (the plans shown on the paywall).
@@ -194,6 +262,16 @@ router.post("/billing/checkout", async (req, res): Promise<void> => {
   }
 
   try {
+    // Only allow prices that belong to the RelateIQ+ catalog — the live
+    // Stripe account also holds unrelated products, and a caller-supplied
+    // price id must never be able to buy one of those.
+    const catalog = await loadProductsWithRecovery(req.log);
+    const allowed = catalog.some((p) => p.prices.some((pr) => pr.id === priceId));
+    if (!allowed) {
+      res.status(400).json({ error: "Unknown plan" });
+      return;
+    }
+
     const email = await getUserEmail(userId);
     let user = await getUser(userId);
     if (!user) user = await upsertUser(userId, email);
@@ -259,9 +337,14 @@ router.post("/billing/web-checkout", async (req, res): Promise<void> => {
 
   try {
     const products = await loadProductsWithRecovery(req.log);
-    const price = products
+    // Deterministic pick: sort products by name, then take the cheapest CAD
+    // price for the requested interval (falling back to any currency).
+    const candidates = [...products]
+      .sort((a, b) => a.name.localeCompare(b.name))
       .flatMap((p) => p.prices)
-      .find((pr) => pr.interval === interval);
+      .filter((pr) => pr.interval === interval)
+      .sort((a, b) => (a.unitAmount ?? 0) - (b.unitAmount ?? 0));
+    const price = candidates.find((pr) => pr.currency === "cad") ?? candidates[0];
     if (!price) {
       res.status(404).json({ error: "Plan not available" });
       return;

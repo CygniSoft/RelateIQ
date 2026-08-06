@@ -133,6 +133,9 @@ export async function listProductsWithPrices(): Promise<ProductWithPrices[]> {
         ON pr.product = p.id AND pr.active = true
         AND pr._account_id = ${accountId}
       WHERE p.active = true AND p._account_id = ${accountId}
+        -- The live Stripe account also contains unrelated business products;
+        -- only RelateIQ+ plans may surface on the paywall.
+        AND (p.metadata->>'app' = 'relateiq' OR p.name LIKE 'RelateIQ+%')
       ORDER BY pr.unit_amount ASC NULLS LAST
     `,
   );

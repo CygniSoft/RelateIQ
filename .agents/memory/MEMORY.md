@@ -7,4 +7,4 @@
 - [ConnectIQ Clerk auth (Expo)](connectiq-clerk-auth.md) — Stack.Protected (not useEffect) for flash-free gating; EXPO_PUBLIC_CLERK_* wired in BOTH package.json dev script and scripts/build.js.
 - [ConnectIQ Stripe + session client](connectiq-stripe-sessions-client.md) — one provider owns isPro + heartbeat; gate every premium scan step not just entry; deep-link checkout return; alias expo-linking to avoid RN Linking clash.
 - [Stripe dual-account connection](stripe-dual-account-connection.md) — connector returns sandbox+live items; pick by env (deploy=live), filter stripe.* reads by livemode, fail closed, verify stored customer ids.
-- [Stripe prod backfill self-heal](stripe-prod-backfill.md) — startup-only syncBackfill can silently fail in deployments leaving stripe.* empty; billing reads self-heal via migrations+backfill (single-flight, 5-min cooldown).
+- [Stripe prod backfill self-heal](stripe-prod-backfill.md) — big live accounts never finish full backfill; serve plans direct from Stripe API (app=relateiq tag), validate checkout priceIds, backfill in background.
