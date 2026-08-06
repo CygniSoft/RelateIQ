@@ -95,15 +95,22 @@ function isRateLimited(ip: string, limit = 5, windowMs = 60_000): boolean {
 async function loadProductsWithRecovery(
   log: { warn: (msg: string) => void },
 ): Promise<Awaited<ReturnType<typeof listProductsWithPrices>>> {
+  const isUsable = (
+    list: Awaited<ReturnType<typeof listProductsWithPrices>> | null,
+  ): list is Awaited<ReturnType<typeof listProductsWithPrices>> =>
+    !!list && list.some((p) => p.prices.length > 0);
+
   let products: Awaited<ReturnType<typeof listProductsWithPrices>> | null = null;
   try {
     products = await listProductsWithPrices();
   } catch {
     log.warn("Billing products query failed; attempting Stripe self-heal");
   }
-  if (products && products.length > 0) return products;
+  // Self-heal when there are no products OR no product has any price for this
+  // mode (a partial backfill can sync products but miss prices).
+  if (isUsable(products)) return products;
   if (products) {
-    log.warn("No billing products found; triggering Stripe backfill");
+    log.warn("No billing products with prices found; triggering Stripe backfill");
   }
   const ran = await ensureStripeBackfill();
   if (!ran && products) return products;

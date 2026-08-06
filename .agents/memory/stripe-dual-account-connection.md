@@ -19,8 +19,14 @@ user's "switch to live" attempts in the Stripe dashboard change nothing — mode
 selection is entirely in our credential-picking code.
 
 **How to apply:** all reads of the synced `stripe.*` schema (products, prices,
-subscriptions) must filter on `livemode` matching the environment, or stale
-opposite-mode rows resurface (wrong prices, false entitlement). Stored
+subscriptions) must filter on `_account_id` matching the current key's account
+(livemode alone is insufficient — two different *test* accounts share
+livemode=false; the old deleted test account's rows caused "No such price").
+Get the account id via parameterless `accounts.retrieve()` and cache per key.
+Also: stripe-replit-sync backfill can half-finish in autoscale deployments
+(product row synced, prices missing) — self-heal must trigger when no product
+has any price, not only when products are empty. `stripe.*` tables cannot be
+mutated via executeSql (blocked); only the app's sync can repopulate them. Stored
 `users.stripeCustomerId` can belong to the other mode — verify with
 `customers.retrieve` before checkout/portal and re-create when missing.
 

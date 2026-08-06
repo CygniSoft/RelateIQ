@@ -1,6 +1,7 @@
 import { db, usersTable } from "@workspace/db";
 import type { User } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
+import { getStripeAccountId } from "./stripeClient";
 
 /** Get the application user row keyed by Clerk user id. */
 export async function getUser(id: string): Promise<User | null> {
@@ -64,15 +65,14 @@ export async function getSubscriptionForUser(
   };
   if (!customerId) return empty;
 
-  // Match the environment's Stripe mode (live in deployments, sandbox in dev)
-  // so stale rows synced from the other mode never grant entitlement.
-  const wantLive =
-    !process.env["REPL_IDENTITY"] && !!process.env["WEB_REPL_RENEWAL"];
+  // Only trust rows synced from the Stripe account this environment actually
+  // uses — stale rows from an old/test account must never grant entitlement.
+  const accountId = await getStripeAccountId();
   const result = await db.execute(
     sql`SELECT id, status, current_period_end, cancel_at_period_end
         FROM stripe.subscriptions
         WHERE customer = ${customerId}
-          AND livemode = ${wantLive}
+          AND _account_id = ${accountId}
           AND status IN ('active', 'trialing', 'past_due')
         ORDER BY created DESC
         LIMIT 1`,
@@ -113,11 +113,10 @@ export interface ProductWithPrices {
 
 /** List active products with their active prices from the synced stripe schema. */
 export async function listProductsWithPrices(): Promise<ProductWithPrices[]> {
-  // In deployments the app uses the live Stripe account; in the dev workspace
-  // it uses the sandbox. Filter by livemode so stale rows synced from the
-  // other mode (e.g. old test data left in the table) never surface.
-  const wantLive =
-    !process.env["REPL_IDENTITY"] && !!process.env["WEB_REPL_RENEWAL"];
+  // Only list rows synced from the Stripe account this environment actually
+  // uses (live in deployments, sandbox in dev) — stale rows from an
+  // old/other account must never surface on the paywall.
+  const accountId = await getStripeAccountId();
   const result = await db.execute(
     sql`
       SELECT
@@ -131,8 +130,9 @@ export async function listProductsWithPrices(): Promise<ProductWithPrices[]> {
         pr.recurring
       FROM stripe.products p
       LEFT JOIN stripe.prices pr
-        ON pr.product = p.id AND pr.active = true AND pr.livemode = ${wantLive}
-      WHERE p.active = true AND p.livemode = ${wantLive}
+        ON pr.product = p.id AND pr.active = true
+        AND pr._account_id = ${accountId}
+      WHERE p.active = true AND p._account_id = ${accountId}
       ORDER BY pr.unit_amount ASC NULLS LAST
     `,
   );

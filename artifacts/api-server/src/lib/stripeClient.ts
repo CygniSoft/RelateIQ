@@ -93,6 +93,29 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
   return new Stripe(secretKey);
 }
 
+// Cache the Stripe account id per secret key so hot paths (product /
+// subscription queries) don't call the Stripe API every time.
+const accountIdCache = new Map<string, string>();
+
+/**
+ * Returns the Stripe account id ("acct_...") for the currently selected
+ * credentials. Synced `stripe.*` rows are tagged with `_account_id`, so
+ * queries filter on this to ignore rows synced from other/older accounts.
+ */
+export async function getStripeAccountId(): Promise<string> {
+  const { secretKey } = await getStripeCredentials();
+  const cached = accountIdCache.get(secretKey);
+  if (cached) return cached;
+  const stripe = new Stripe(secretKey);
+  // Parameterless form retrieves the account that owns the API key; the SDK
+  // types only describe the by-id overload, so cast the call signature.
+  const account = await (
+    stripe.accounts.retrieve.bind(stripe.accounts) as unknown as () => Promise<Stripe.Account>
+  )();
+  accountIdCache.set(secretKey, account.id);
+  return account.id;
+}
+
 /**
  * Returns a fresh StripeSync instance for webhook processing and data sync.
  * Not cached -- fetches credentials on every call so rotated keys are picked up.
