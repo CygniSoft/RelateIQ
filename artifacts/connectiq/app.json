@@ -38,6 +38,12 @@
         }
       ],
       [
+        "expo-calendar",
+        {
+          "calendarPermission": "Allow RelateIQ+ to access your calendar to add follow-up reminders."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Allow RelateIQ+ to access your photos to scan business cards.",

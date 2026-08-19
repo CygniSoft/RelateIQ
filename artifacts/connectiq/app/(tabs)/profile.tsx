@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as ExpoLinking from "expo-linking";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -30,10 +30,9 @@ import { useColors } from "@/hooks/useColors";
 import { theme } from "@/constants/theme";
 import { createPortalSession } from "@/lib/billingApi";
 import {
-  getIntegrationStatus,
-  syncFollowUpsToCalendar,
-  type IntegrationStatus,
-} from "@/lib/integrationsApi";
+  exportFollowUpsToDeviceCalendar,
+  type CalendarFollowUp,
+} from "@/lib/deviceCalendar";
 
 const PLAN_COLORS: [string, string] = ["#7B5EFF", "#4F8EFF"];
 
@@ -595,7 +594,6 @@ export default function ProfileScreen() {
   const [showHelp, setShowHelp] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [integrations, setIntegrations] = useState<IntegrationStatus | null>(null);
   const [syncing, setSyncing] = useState<"calendar" | null>(null);
 
   const bottomPad = Platform.OS === "web" ? 84 + 16 : insets.bottom + 56 + 16;
@@ -635,15 +633,6 @@ export default function ProfileScreen() {
     }
   }
 
-  const refreshIntegrations = useCallback(async () => {
-    const status = await getIntegrationStatus();
-    setIntegrations(status);
-  }, []);
-
-  useEffect(() => {
-    void refreshIntegrations();
-  }, [refreshIntegrations]);
-
   function notify(title: string, message: string) {
     if (Platform.OS === "web") {
       window.alert(`${title}\n\n${message}`);
@@ -652,16 +641,9 @@ export default function ProfileScreen() {
     }
   }
 
-  async function handleSyncCalendar() {
+  async function handleAddCalendarReminders() {
     if (syncing) return;
-    if (!integrations?.googleCalendar) {
-      notify(
-        "Google Calendar not connected",
-        "Connect Google Calendar from Replit to sync your follow-up reminders.",
-      );
-      return;
-    }
-    const followUps = contacts
+    const followUps: CalendarFollowUp[] = contacts
       .filter(
         (c) =>
           c.followUpDate &&
@@ -678,27 +660,54 @@ export default function ProfileScreen() {
 
     if (followUps.length === 0) {
       notify(
-        "Nothing to sync",
-        "No pending follow-ups found to sync.",
+        "Nothing to add",
+        "No pending follow-up reminders were found.",
       );
       return;
     }
 
     setSyncing("calendar");
     try {
-      const result = await syncFollowUpsToCalendar(followUps);
-      if (result.success) {
+      const result = await exportFollowUpsToDeviceCalendar(followUps);
+      if (result.status === "unsupported") {
         notify(
-          "Synced",
-          `${result.synced ?? 0} follow-up reminders added to your calendar.`,
+          "Available on your phone",
+          "Calendar reminders can be added from the iPhone, iPad, or Android app, but not from the browser preview.",
         );
-      } else {
-        throw new Error(result.error);
+        return;
       }
+      if (result.status === "permission-denied") {
+        notify(
+          "Calendar permission needed",
+          "Allow RelateIQ+ to access your calendar in your device settings, then try again.",
+        );
+        return;
+      }
+      if (result.status === "no-calendar") {
+        notify(
+          "No writable calendar found",
+          "Add or enable a calendar account on your device, then try again.",
+        );
+        return;
+      }
+      if (result.status !== "success") return;
+
+      const changes = [
+        result.created ? `${result.created} added` : null,
+        result.updated ? `${result.updated} updated` : null,
+        result.skipped ? `${result.skipped} already current` : null,
+        result.failed ? `${result.failed} could not be added` : null,
+      ].filter(Boolean);
+      notify(
+        result.failed ? "Calendar partially updated" : "Calendar updated",
+        changes.length > 0
+          ? `${changes.join(", ")}.`
+          : "Your follow-up reminders are already current.",
+      );
     } catch (err) {
       notify(
-        "Sync failed",
-        err instanceof Error ? err.message : "Please try again later.",
+        "Couldn't update calendar",
+        err instanceof Error ? err.message : "Please try again.",
       );
     } finally {
       setSyncing(null);
@@ -927,15 +936,13 @@ export default function ProfileScreen() {
               <View style={{ backgroundColor: colors.card, borderRadius: theme.radius.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
                 <SettingRow
                   icon={<Feather name="calendar" size={18} />}
-                  label="Sync to Google Calendar"
+                  label="Add follow-up reminders to my calendar"
                   value={
                     syncing === "calendar"
-                      ? "Syncing..."
-                      : integrations?.googleCalendar
-                      ? "Connected"
-                      : "Not connected"
+                      ? "Adding..."
+                      : "Device calendar"
                   }
-                  onPress={handleSyncCalendar}
+                  onPress={handleAddCalendarReminders}
                 />
               </View>
             </View>

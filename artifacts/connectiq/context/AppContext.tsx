@@ -13,6 +13,7 @@ import {
   syncScheduledNotifications,
   type NotificationPrefs,
 } from "@/lib/notifications";
+import { CALENDAR_EXPORT_STORAGE_KEY } from "@/lib/deviceCalendar";
 
 export type ContactCategory =
   | "Potential client"
@@ -339,6 +340,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       STORAGE_KEYS.PROFILE,
       STORAGE_KEYS.FREE_SCANS,
       STORAGE_KEYS.NOTIF_PREFS,
+      CALENDAR_EXPORT_STORAGE_KEY,
       "@connectiq/onboardingAnchor",
     ]);
     await AsyncStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
