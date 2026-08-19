@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 
+import { AppleSignInButton } from "@/components/auth/AppleSignInButton";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { authColors, authStyles } from "@/components/auth/authStyles";
@@ -413,6 +414,7 @@ export default function SignInScreen() {
           <View style={authStyles.dividerLine} />
         </View>
 
+        <AppleSignInButton />
         <GoogleSignInButton />
 
         <View style={authStyles.footerRow}>

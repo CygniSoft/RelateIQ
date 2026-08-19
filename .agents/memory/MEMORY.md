@@ -8,3 +8,4 @@
 - [ConnectIQ Stripe + session client](connectiq-stripe-sessions-client.md) — one provider owns isPro + heartbeat; gate every premium scan step not just entry; deep-link checkout return; alias expo-linking to avoid RN Linking clash.
 - [Stripe dual-account connection](stripe-dual-account-connection.md) — connector returns sandbox+live items; pick by env (deploy=live), filter stripe.* reads by livemode, fail closed, verify stored customer ids.
 - [Stripe prod backfill self-heal](stripe-prod-backfill.md) — big live accounts never finish full backfill; serve plans direct from Stripe API (app=relateiq tag), validate checkout priceIds, backfill in background.
+- [ConnectIQ Apple login compliance](connectiq-apple-login.md) — Google login triggers App Store Guideline 4.8; keep Apple equivalent enabled in production auth and verify each release build.

@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 
+import { AppleSignInButton } from "@/components/auth/AppleSignInButton";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { authColors, authStyles } from "@/components/auth/authStyles";
@@ -204,6 +205,7 @@ export default function SignUpScreen() {
           <View style={authStyles.dividerLine} />
         </View>
 
+        <AppleSignInButton />
         <GoogleSignInButton />
 
         {/* Required for sign-up flows. Clerk's bot sign-up protection is enabled by default */}
