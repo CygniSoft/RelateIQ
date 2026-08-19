@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { StripeSync, runMigrations } from "stripe-replit-sync";
+import { selectStripeSettingsForMode } from "./stripeMode";
 
 interface StripeCredentials {
   secretKey: string;
@@ -57,14 +58,10 @@ async function getStripeCredentials(): Promise<StripeCredentials> {
   const candidates = (data.items ?? [])
     .map((i) => i.settings)
     .filter((s): s is NonNullable<typeof s> => !!(s?.secret ?? s?.secret_key));
-  const isLive = (s: { secret?: string; secret_key?: string }) =>
-    (s.secret ?? s.secret_key ?? "").startsWith("sk_live");
-  // Fail closed: if multiple accounts exist but none matches the required
-  // mode, do not silently fall back (a deployment must never use a test key).
-  const settings =
-    candidates.find((s) => isLive(s) === isDeployment) ??
-    (candidates.length === 1 ? candidates[0] : undefined);
-  if (candidates.length > 1 && !settings) {
+  // Fail closed whenever no credential matches the required mode. A
+  // deployment must never use a test key, even when it is the only candidate.
+  const settings = selectStripeSettingsForMode(candidates, isDeployment);
+  if (!settings) {
     throw new Error(
       `Stripe connection has no ${isDeployment ? "live" : "test"}-mode account for this environment.`,
     );

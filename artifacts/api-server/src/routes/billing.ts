@@ -11,6 +11,10 @@ import {
   getSubscriptionForUser,
   listProductsWithPrices,
 } from "../lib/stripeStorage";
+import {
+  hasAnyPlan,
+  hasCompletePlanCatalog,
+} from "../lib/stripePlans";
 
 const router: IRouter = Router();
 
@@ -154,35 +158,43 @@ async function fetchPlansFromStripeApi(): Promise<
  * e.g. tables missing because startup init never completed), self-heals by
  * running migrations + a Stripe backfill, then re-queries once. Backfill
  * attempts are single-flight and cooldown-limited in ensureStripeBackfill.
- * If the local copy still has no usable plans, falls back to reading the
- * plans directly from the Stripe API.
+ * If the local copy is incomplete, falls back to reading the plans directly
+ * from the Stripe API.
  */
 async function loadProductsWithRecovery(
   log: { warn: (msg: string) => void },
 ): Promise<Awaited<ReturnType<typeof listProductsWithPrices>>> {
-  const isUsable = (
-    list: Awaited<ReturnType<typeof listProductsWithPrices>> | null,
-  ): list is Awaited<ReturnType<typeof listProductsWithPrices>> =>
-    !!list && list.some((p) => p.prices.length > 0);
-
   let products: Awaited<ReturnType<typeof listProductsWithPrices>> | null = null;
   try {
     products = await listProductsWithPrices();
   } catch {
     log.warn("Billing products query failed; attempting Stripe self-heal");
   }
-  // Self-heal when there are no products OR no product has any price for this
-  // mode (a partial backfill can sync products but miss prices).
-  if (isUsable(products)) return products;
-  if (products) {
+  // A partial backfill can contain the monthly price while still missing the
+  // annual price. Only trust the local catalog when both expected intervals
+  // are present.
+  if (hasCompletePlanCatalog(products)) return products;
+  if (hasAnyPlan(products)) {
+    log.warn("Billing catalog is incomplete; using Stripe API fallback");
+  } else if (products) {
     log.warn("No billing products with prices found; using Stripe API fallback");
   }
   // Kick off a repair of the local copy in the background (single-flight,
   // cooldown-limited) but don't make the paywall wait on it — a large live
   // account can take a long time (or fail) to backfill.
   void ensureStripeBackfill().catch(() => {});
-  // Serve the plans straight from the Stripe API instead.
-  return fetchPlansFromStripeApi();
+  // Serve the complete plans straight from the Stripe API instead. If Stripe
+  // is temporarily unavailable, retain a partial local catalog rather than
+  // hiding every purchase option.
+  try {
+    return await fetchPlansFromStripeApi();
+  } catch (error) {
+    if (hasAnyPlan(products)) {
+      log.warn("Stripe API fallback failed; using partial local billing catalog");
+      return products ?? [];
+    }
+    throw error;
+  }
 }
 
 // List active products + prices (the plans shown on the paywall).
