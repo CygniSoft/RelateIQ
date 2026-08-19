@@ -3,7 +3,13 @@ import { useSSO } from "@clerk/expo";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect } from "react";
-import { ActivityIndicator, Platform, Pressable, Text } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 
 import { authColors, authStyles } from "./authStyles";
 
@@ -17,6 +23,7 @@ WebBrowser.maybeCompleteAuthSession();
 export function AppleSignInButton() {
   const { startSSOFlow } = useSSO();
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -28,6 +35,7 @@ export function AppleSignInButton() {
 
   const onPress = useCallback(async () => {
     try {
+      setError(null);
       setLoading(true);
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy: "oauth_apple",
@@ -42,34 +50,43 @@ export function AppleSignInButton() {
             if (session?.currentTask) return;
           },
         });
+      } else {
+        setError("Apple sign-in did not complete. Please try again.");
       }
     } catch (err) {
-      // Cancellation is expected when the user dismisses Apple's sheet.
       console.error(JSON.stringify(err, null, 2));
+      setError(
+        Platform.OS === "web"
+          ? "Apple sign-in is not enabled for this preview. It will be available in the TestFlight build."
+          : "Apple sign-in could not start. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
   }, [startSSOFlow]);
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Continue with Apple"
-      style={({ pressed }) => [
-        authStyles.socialButton,
-        pressed && authStyles.buttonPressed,
-      ]}
-      onPress={onPress}
-      disabled={loading}
-    >
-      {loading ? (
-        <ActivityIndicator color={authColors.text} />
-      ) : (
-        <>
-          <Ionicons name="logo-apple" size={20} color={authColors.text} />
-          <Text style={authStyles.socialButtonText}>Continue with Apple</Text>
-        </>
-      )}
-    </Pressable>
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Continue with Apple"
+        style={({ pressed }) => [
+          authStyles.socialButton,
+          pressed && authStyles.buttonPressed,
+        ]}
+        onPress={onPress}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color={authColors.text} />
+        ) : (
+          <>
+            <Ionicons name="logo-apple" size={20} color={authColors.text} />
+            <Text style={authStyles.socialButtonText}>Continue with Apple</Text>
+          </>
+        )}
+      </Pressable>
+      {error && <Text style={authStyles.error}>{error}</Text>}
+    </View>
   );
 }
