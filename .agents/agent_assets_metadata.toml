@@ -1,8 +1,14 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "19A2VcDvS6xQhnC30E3VA"
 uri = "file://artifacts/connectiq/assets/images/icon.png"
 type = "image"
 title = "generated_image"
+
+[[outputs]]
+id = "P743rFdANDRCCqjbra-5R"
+uri = "file://attached_assets/store-assets/relateiq-feature-graphic-1024x500.png"
+type = "image"
+title = "RelateIQ+ Google Play Feature Graphic"
+description = "Store-ready PNG at exactly 1,024 × 500 px and under 15 MB."

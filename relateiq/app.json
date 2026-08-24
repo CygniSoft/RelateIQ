@@ -54,7 +54,10 @@
             ]
           }
         }
-      ]
+      ],
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -63,8 +66,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "5cfd08f9-b83b-4238-8e91-ec5c36bf375a"
+        "projectId": "b8ab10ef-87b4-4bd8-b581-c85be5eb53a0"
       }
-    }
+    },
+    "owner": "cygnisofts-organization"
   }
 }
