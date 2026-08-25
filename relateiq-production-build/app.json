@@ -1,0 +1,96 @@
+{
+  "expo": {
+    "name": "RelateIQ+",
+    "slug": "relateiq",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "relateiq",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "backgroundColor": "#080A12",
+      "package": "com.cygnisoft.relateiq",
+      "versionCode": 30
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow RelateIQ+ to save contacts to your phone."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Allow RelateIQ+ to access your calendar to add follow-up reminders."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow RelateIQ+ to access your photos to scan business cards.",
+          "cameraPermission": "Allow RelateIQ+ to use your camera to scan business cards."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#080A12"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [
+              {
+                "name": "GoogleUtilities",
+                "modular_headers": true
+              },
+              {
+                "name": "RecaptchaInterop",
+                "modular_headers": true
+              }
+            ]
+          },
+          "android": {
+            "packagingOptions": {
+              "exclude": [
+                "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+              ]
+            }
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b8ab10ef-87b4-4bd8-b581-c85be5eb53a0"
+      }
+    }
+  }
+}
