@@ -10,3 +10,4 @@
 - [Stripe prod backfill self-heal](stripe-prod-backfill.md) — big live accounts never finish full backfill; serve plans direct from Stripe API (app=relateiq tag), validate checkout priceIds, backfill in background.
 - [ConnectIQ Apple login compliance](connectiq-apple-login.md) — Google login triggers App Store Guideline 4.8; keep Apple equivalent enabled in production auth and verify each release build.
 - [ConnectIQ device calendar ownership](connectiq-device-calendar.md) — export manually to each user’s phone calendar; exported events stay user-owned and are not auto-deleted.
+- [ConnectIQ EAS workspace packaging](connectiq-eas-workspace.md) — the production build directory must remain a uniquely named pnpm workspace package so remote EAS installs Expo before config evaluation.

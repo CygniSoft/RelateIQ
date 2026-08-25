@@ -36,6 +36,7 @@ minimumReleaseAgeExclude:
 
 packages:
   - artifacts/*
+  - relateiq-production-build
   - lib/*
   - lib/integrations/*
   - scripts
