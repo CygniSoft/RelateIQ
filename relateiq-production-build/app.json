@@ -19,7 +19,7 @@
     "android": {
       "backgroundColor": "#080A12",
       "package": "com.cygnisoft.relateiq",
-      "versionCode": 30
+      "versionCode": 31
     },
     "web": {
       "favicon": "./assets/images/icon.png"

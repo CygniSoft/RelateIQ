@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "RelateIQ+",
-    "slug": "connectiq",
-    "version": "1.0.0",
+    "slug": "relateiq",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "connectiq",
+    "scheme": "relateiq",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -17,7 +17,9 @@
       "supportsTablet": false
     },
     "android": {
-      "backgroundColor": "#080A12"
+      "backgroundColor": "#080A12",
+      "package": "com.cygnisoft.relateiq",
+      "versionCode": 31
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -71,6 +73,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b8ab10ef-87b4-4bd8-b581-c85be5eb53a0"
+      }
     }
   }
 }
