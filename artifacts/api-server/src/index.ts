@@ -1,5 +1,6 @@
 import { runMigrations } from "stripe-replit-sync";
 import app from "./app";
+import { ensureClerkMobileRedirectUrl } from "./lib/clerkRedirectUrl";
 import { logger } from "./lib/logger";
 import { getStripeSync } from "./lib/stripeClient";
 
@@ -48,7 +49,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-await initStripe();
+await Promise.all([initStripe(), ensureClerkMobileRedirectUrl()]);
 
 app.listen(port, (err) => {
   if (err) {

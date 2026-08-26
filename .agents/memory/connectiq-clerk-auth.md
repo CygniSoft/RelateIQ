@@ -45,10 +45,18 @@ clerk-auth skill template) — mount it BEFORE body parsers (it streams raw byte
 Use Replit managed Auth's pre-provisioned native callback convention,
 `<app-scheme>://oauth-redirect`.
 **Why:** the Auth pane does not expose authorized redirect URLs without Clerk dashboard
-access. Both a bare scheme and Clerk Expo's default `sso-callback` path can be rejected
-by the production Frontend API as `resource_mismatch`.
+access, and this project's production instance was not auto-provisioned. Both a bare
+scheme and Clerk Expo's default `sso-callback` path are rejected as `resource_mismatch`.
 **How to apply:** register the app scheme in Expo configuration and pass an explicit
-`oauth-redirect` path to `startSSOFlow`.
+`oauth-redirect` path to `startSSOFlow`. The API deployment idempotently ensures this
+redirect exists at startup.
+
+The workspace `CLERK_SECRET_KEY` manages the Development instance; Replit swaps in the
+Production credential only inside the published deployment.
+**Why:** calling Clerk's management API from the workspace can succeed while leaving
+the production redirect list unchanged.
+**How to apply:** any production Clerk management repair must execute inside the
+published API runtime, then be verified from production startup logs.
 
 ## Custom-UI API gotchas (Clerk Core v3)
 - Sign-up requires `<View nativeID="clerk-captcha" />` on the form (bot protection is on by default).
