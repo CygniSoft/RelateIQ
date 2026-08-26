@@ -25,7 +25,13 @@ function publicBaseUrl(): string {
 
 // Allowlist of acceptable post-checkout return targets to avoid open redirects.
 function isAllowedReturnUrl(url: string): boolean {
-  if (url.startsWith("connectiq://") || url.startsWith("exp://")) return true;
+  if (
+    url.startsWith("connectiq://") ||
+    url.startsWith("relateiq://") ||
+    url.startsWith("exp://")
+  ) {
+    return true;
+  }
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
