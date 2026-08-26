@@ -21,6 +21,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider } from "@/context/AppContext";
 import { SubscriptionProvider } from "@/context/SubscriptionContext";
+import { getClerkConfig } from "@/lib/clerkConfig";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,8 +30,11 @@ const queryClient = new QueryClient();
 const domain = process.env.EXPO_PUBLIC_DOMAIN;
 if (domain) setBaseUrl(`https://${domain}`);
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
-const proxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
+const { publishableKey, proxyUrl } = getClerkConfig(
+  domain,
+  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  process.env.EXPO_PUBLIC_CLERK_PROXY_URL,
+);
 
 function RootLayoutNav() {
   const { isLoaded, isSignedIn, getToken } = useAuth();

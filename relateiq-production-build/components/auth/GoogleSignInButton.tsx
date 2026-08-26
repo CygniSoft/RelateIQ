@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSSO } from "@clerk/expo";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import { type Href, useRouter } from "expo-router";
 import React, { useCallback, useEffect } from "react";
 import {
   ActivityIndicator,
@@ -18,7 +17,6 @@ WebBrowser.maybeCompleteAuthSession();
 
 export function GoogleSignInButton() {
   const { startSSOFlow } = useSSO();
-  const router = useRouter();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -45,20 +43,23 @@ export function GoogleSignInButton() {
       if (createdSessionId && setActive) {
         await setActive({
           session: createdSessionId,
-          navigate: async ({ session, decorateUrl }) => {
+          navigate: async ({ session }) => {
             if (session?.currentTask) {
               setError("Google sign-in needs another verification step.");
-              return;
             }
-            router.replace(decorateUrl("/") as Href);
           },
         });
       } else {
+        const flowStatus = signIn?.status ?? signUp?.status;
         console.warn("Google SSO did not create a session", {
           signInStatus: signIn?.status,
           signUpStatus: signUp?.status,
         });
-        setError("Google sign-in did not complete. Please try again.");
+        setError(
+          flowStatus
+            ? `Google sign-in did not complete (${flowStatus}). Please try again.`
+            : "Google sign-in did not complete. Please try again.",
+        );
       }
     } catch (err) {
       console.error(JSON.stringify(err, null, 2));
@@ -66,7 +67,7 @@ export function GoogleSignInButton() {
     } finally {
       setLoading(false);
     }
-  }, [router, startSSOFlow]);
+  }, [startSSOFlow]);
 
   return (
     <View>

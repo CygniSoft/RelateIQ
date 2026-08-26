@@ -7322,7 +7322,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 26.3.0
 
   '@types/graceful-fs@4.1.9':
     dependencies:
@@ -7370,7 +7370,7 @@ snapshots:
 
   '@types/ws@7.4.7':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 26.3.0
 
   '@types/ws@8.18.1':
     dependencies:

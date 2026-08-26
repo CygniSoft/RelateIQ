@@ -27,6 +27,14 @@ Clerk keys reach the bundle as `EXPO_PUBLIC_*` and are wired in TWO places:
 **Why:** Expo only inlines `EXPO_PUBLIC_`-prefixed vars; the raw `CLERK_*` secrets are not
 visible to the client. Forgetting the build.js side means prod has no key/proxy.
 
+For direct EAS Android builds, Replit's publish-time key swap does not run. When the
+baked API domain is a production `.replit.app` host, derive the matching `pk_live_`
+publishable key for `clerk.<host>` and use `https://<host>/api/__clerk` as the proxy.
+**Why:** a development Clerk session can look signed in on-device while every live API
+request returns 401; dev and production Clerk instances have different token issuers.
+**How to apply:** keep development on the configured `pk_test_` key, but make EAS
+production builds use the host-derived live key/proxy and require users to sign in again.
+
 ## Frontend API proxy
 The api-server mounts the Clerk Frontend API proxy at a fixed path and runs
 `clerkMiddleware` with `publishableKeyFromHost(...)`. The proxy is production-only; in dev
