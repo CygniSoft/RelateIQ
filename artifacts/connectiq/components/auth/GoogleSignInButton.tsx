@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useSSO } from "@clerk/expo";
+import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect } from "react";
 import {
@@ -56,6 +57,10 @@ export function GoogleSignInButton() {
       } =
         await startSSOFlow({
           strategy: "oauth_google",
+          redirectUrl: AuthSession.makeRedirectUri({
+            scheme: "relateiq",
+            path: "oauth-redirect",
+          }),
         });
 
       if (createdSessionId && setActive) {
