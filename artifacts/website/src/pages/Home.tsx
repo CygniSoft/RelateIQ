@@ -42,9 +42,18 @@ function Footer() {
           <img src={logoMark} alt="RelateIQ+ Logo" className="w-6 h-6 rounded" />
           <span className="font-semibold tracking-tight text-white/80">RelateIQ+</span>
         </div>
-        <p className="text-muted-foreground text-sm">
-          &copy; {new Date().getFullYear()} RelateIQ+. All rights reserved.
-        </p>
+        <div className="text-muted-foreground text-sm text-center">
+          <p>&copy; {new Date().getFullYear()} RelateIQ+. All rights reserved.</p>
+          <p className="mt-1">
+            It is a product of{" "}
+            <a
+              href="https://cygnisoft.com/"
+              className="hover:text-white transition-colors"
+            >
+              CygniSoft Staffing Inc.
+            </a>
+          </p>
+        </div>
         <div className="flex gap-4 text-sm text-muted-foreground">
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
           <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
