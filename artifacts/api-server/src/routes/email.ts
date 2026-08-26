@@ -5,6 +5,10 @@ import nodemailer from "nodemailer";
 const router: IRouter = Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CONTACT_RECIPIENT = "manager@cygnisoft.com";
+const CONTACT_WINDOW_MS = 15 * 60 * 1000;
+const CONTACT_MAX_REQUESTS = 5;
+const contactRequests = new Map<string, number[]>();
 
 function hasControlChars(value: string): boolean {
   // Reject CR/LF and other control characters to prevent header injection.
@@ -17,6 +21,22 @@ function buildFrom(address: string, fromName?: unknown): string {
   const name = fromName.replace(/[\r\n"\\<>]/g, "").trim();
   if (name === "") return address;
   return `${name} <${address}>`;
+}
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (contactRequests.get(ip) ?? []).filter(
+    (timestamp) => now - timestamp < CONTACT_WINDOW_MS,
+  );
+
+  if (recent.length >= CONTACT_MAX_REQUESTS) {
+    contactRequests.set(ip, recent);
+    return true;
+  }
+
+  recent.push(now);
+  contactRequests.set(ip, recent);
+  return false;
 }
 
 type SmtpAuth = { user: string; pass: string };
@@ -65,6 +85,96 @@ function resolveSmtpTransport(): ResolvedTransport | null {
 
   return null;
 }
+
+router.post("/contact", async (req, res): Promise<void> => {
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
+  if (isRateLimited(ip)) {
+    res.status(429).json({
+      error: "Too many messages. Please wait a few minutes and try again.",
+    });
+    return;
+  }
+
+  const { name, email, message, website } = (req.body ?? {}) as Record<
+    string,
+    unknown
+  >;
+
+  // Bots commonly fill hidden fields. Return success without sending.
+  if (typeof website === "string" && website.trim() !== "") {
+    res.json({ success: true });
+    return;
+  }
+
+  const cleanName = typeof name === "string" ? name.trim() : "";
+  const cleanEmail = typeof email === "string" ? email.trim() : "";
+  const cleanMessage = typeof message === "string" ? message.trim() : "";
+
+  if (
+    cleanName.length < 2 ||
+    cleanName.length > 100 ||
+    hasControlChars(cleanName)
+  ) {
+    res.status(400).json({ error: "Please enter a valid name." });
+    return;
+  }
+  if (
+    cleanEmail.length > 254 ||
+    !EMAIL_RE.test(cleanEmail) ||
+    hasControlChars(cleanEmail)
+  ) {
+    res.status(400).json({ error: "Please enter a valid email address." });
+    return;
+  }
+  if (cleanMessage.length < 10 || cleanMessage.length > 5000) {
+    res.status(400).json({
+      error: "Your message must be between 10 and 5,000 characters.",
+    });
+    return;
+  }
+
+  const transport = resolveSmtpTransport();
+  if (!transport) {
+    req.log.error("SMTP is not configured for website contact messages");
+    res.status(503).json({
+      error: "Messaging is temporarily unavailable. Please try again later.",
+    });
+    return;
+  }
+
+  const transporter = nodemailer.createTransport(transport.options);
+
+  try {
+    const info = await transporter.sendMail({
+      from: buildFrom(transport.fromAddress, "RelateIQ+ Website"),
+      to: CONTACT_RECIPIENT,
+      subject: `RelateIQ+ website inquiry from ${cleanName}`,
+      text: [
+        "New message from the RelateIQ+ website",
+        "",
+        `Name: ${cleanName}`,
+        `Email: ${cleanEmail}`,
+        "",
+        cleanMessage,
+      ].join("\n"),
+      replyTo: cleanEmail,
+    });
+
+    req.log.info(
+      { to: CONTACT_RECIPIENT, id: info.messageId },
+      "Website contact message sent",
+    );
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error(
+      { err, to: CONTACT_RECIPIENT },
+      "Failed to send website contact message",
+    );
+    res.status(502).json({
+      error: "We could not send your message. Please try again shortly.",
+    });
+  }
+});
 
 router.post("/send-email", async (req, res): Promise<void> => {
   const { userId } = getAuth(req);

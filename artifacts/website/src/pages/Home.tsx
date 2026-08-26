@@ -6,6 +6,7 @@ import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { FAQ } from "@/components/FAQ";
 import { BottomCTA } from "@/components/BottomCTA";
+import { Contact } from "@/components/Contact";
 
 import logoMark from "../assets/logo-mark.png";
 
@@ -57,7 +58,7 @@ function Footer() {
         <div className="flex gap-4 text-sm text-muted-foreground">
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
           <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-          <a href="#" className="hover:text-white transition-colors">Contact</a>
+          <a href="#contact" className="hover:text-white transition-colors">Contact</a>
         </div>
       </div>
     </footer>
@@ -75,6 +76,7 @@ export default function Home() {
       <Pricing />
       <FAQ />
       <BottomCTA />
+      <Contact />
       <Footer />
     </div>
   );
