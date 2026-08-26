@@ -1,5 +1,5 @@
 kind = "mobile"
-previewPath = "/"
+previewPath = "/relateiq-production-build/"
 title = "ConnectIQ"
 version = "1.0.0"
 id = "artifacts/connectiq"
@@ -12,7 +12,7 @@ version = "1.0.0"
 [[services]]
 ensurePreviewReachable = "/status"
 name = "expo"
-paths = [ "/" ]
+paths = [ "/relateiq-production-build/" ]
 localPort = 26183
 
 [services.development]
@@ -24,4 +24,4 @@ run = [ "pnpm", "--filter", "@workspace/connectiq", "run", "serve" ]
 
 [services.env]
 PORT = "26183"
-BASE_PATH = "/"
+BASE_PATH = "/relateiq-production-build/"
