@@ -41,10 +41,16 @@ export function Hero() {
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <a href="#" className="btn-halo btn-glass-light w-full sm:w-auto px-8 py-4 rounded-full font-medium flex items-center justify-center gap-2">
+            <a
+              href="https://apps.apple.com/us/app/relateiq/id6783434262"
+              className="btn-halo btn-glass-light w-full sm:w-auto px-8 py-4 rounded-full font-medium flex items-center justify-center gap-2"
+            >
               Download on the App Store
             </a>
-            <a href="#" className="btn-halo btn-glass-dark w-full sm:w-auto px-8 py-4 rounded-full font-medium flex items-center justify-center gap-2">
+            <a
+              href="https://play.google.com/store/apps/details?id=com.cygnisoft.relateiq"
+              className="btn-halo btn-glass-dark w-full sm:w-auto px-8 py-4 rounded-full font-medium flex items-center justify-center gap-2"
+            >
               Get it on Google Play
             </a>
           </motion.div>
