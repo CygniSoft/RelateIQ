@@ -41,6 +41,15 @@ The api-server mounts the Clerk Frontend API proxy at a fixed path and runs
 the Expo app talks to Clerk directly. See `clerkProxyMiddleware.ts` (copied from the
 clerk-auth skill template) — mount it BEFORE body parsers (it streams raw bytes).
 
+## Native SSO callback
+Let `@clerk/expo` `useSSO().startSSOFlow` generate its native redirect URL; do not
+override it with the bare app scheme.
+**Why:** the SDK generates the registered scheme with its `sso-callback` path. A bare
+scheme callback can be rejected by the production Clerk Frontend API with HTTP 400
+during sign-in creation, before the Google browser flow opens.
+**How to apply:** register the app scheme in Expo configuration, call `startSSOFlow`
+with only the OAuth strategy, and keep Clerk's generated callback path.
+
 ## Custom-UI API gotchas (Clerk Core v3)
 - Sign-up requires `<View nativeID="clerk-captcha" />` on the form (bot protection is on by default).
 - Field errors live on `errors.fields.<field>.message`; `errors.raw[]` is typed opaque (`{}`) — don't index `.message` off it (TS error).

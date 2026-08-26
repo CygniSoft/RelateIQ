@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useSSO } from "@clerk/expo";
-import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect } from "react";
 import {
@@ -14,6 +13,22 @@ import {
 import { authColors, authStyles } from "./authStyles";
 
 WebBrowser.maybeCompleteAuthSession();
+
+function getClerkErrorMessage(error: unknown): string {
+  if (!error || typeof error !== "object") {
+    return "Google sign-in could not complete. Please try again.";
+  }
+
+  const clerkErrors = (error as {
+    errors?: Array<{ code?: string; longMessage?: string; message?: string }>;
+  }).errors;
+  const firstError = clerkErrors?.[0];
+  const message = firstError?.longMessage || firstError?.message;
+
+  return message
+    ? `${message}${firstError?.code ? ` (${firstError.code})` : ""}`
+    : "Google sign-in could not complete. Please try again.";
+}
 
 export function GoogleSignInButton() {
   const { startSSOFlow } = useSSO();
@@ -32,13 +47,16 @@ export function GoogleSignInButton() {
     try {
       setError(null);
       setLoading(true);
-      const { createdSessionId, setActive, signIn, signUp } =
+      const {
+        createdSessionId,
+        setActive,
+        signIn,
+        signUp,
+        authSessionResult,
+      } =
         await startSSOFlow({
-        strategy: "oauth_google",
-        // Keep the production Android callback tied to the scheme registered
-        // in app.json instead of relying on runtime scheme inference.
-        redirectUrl: AuthSession.makeRedirectUri({ scheme: "relateiq" }),
-      });
+          strategy: "oauth_google",
+        });
 
       if (createdSessionId && setActive) {
         await setActive({
@@ -54,16 +72,21 @@ export function GoogleSignInButton() {
         console.warn("Google SSO did not create a session", {
           signInStatus: signIn?.status,
           signUpStatus: signUp?.status,
+          authSessionType: authSessionResult?.type,
         });
         setError(
           flowStatus
             ? `Google sign-in did not complete (${flowStatus}). Please try again.`
+            : authSessionResult?.type === "cancel" ||
+                authSessionResult?.type === "dismiss"
+              ? "Google sign-in was cancelled."
             : "Google sign-in did not complete. Please try again.",
         );
       }
     } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
-      setError("Google sign-in could not complete. Please try again.");
+      const message = getClerkErrorMessage(err);
+      console.error("Google SSO failed", { message });
+      setError(message);
     } finally {
       setLoading(false);
     }
