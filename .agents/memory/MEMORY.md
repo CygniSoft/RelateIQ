@@ -11,3 +11,4 @@
 - [ConnectIQ Apple login compliance](connectiq-apple-login.md) — Google login triggers App Store Guideline 4.8; keep Apple equivalent enabled in production auth and verify each release build.
 - [ConnectIQ device calendar ownership](connectiq-device-calendar.md) — export manually to each user’s phone calendar; exported events stay user-owned and are not auto-deleted.
 - [ConnectIQ EAS workspace packaging](connectiq-eas-workspace.md) — the production build directory must remain a uniquely named pnpm workspace package so remote EAS installs Expo before config evaluation.
+- [Meeting delivery idempotency](meeting-delivery-idempotency.md) — fail closed on uncertain SMTP delivery; native calendar retries reconcile by stable meeting UID before creating.

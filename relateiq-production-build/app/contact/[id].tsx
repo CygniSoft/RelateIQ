@@ -21,20 +21,26 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/ContactCard";
 import { GlassIcon } from "@/components/GlassIcon";
-import { useApp, TimelineEvent } from "@/context/AppContext";
+import { MeetingModal } from "@/components/MeetingModal";
+import { useApp, TimelineEvent, Contact, MeetingMetadata } from "@/context/AppContext";
 import { notifyNow } from "@/lib/notifications";
-import { sendEmail } from "@/lib/emailApi";
+import { sendEmail, sendMeetingInvite } from "@/lib/emailApi";
+import { openCalendarEvent, createMeetingEvent } from "@/lib/deviceCalendar";
 import { useColors } from "@/hooks/useColors";
 import { theme } from "@/constants/theme";
 
 function TimelineItem({
   event,
   isLast,
+  contact,
 }: {
   event: TimelineEvent;
   isLast: boolean;
+  contact: Contact;
 }) {
   const colors = useColors();
+  const { getToken } = useAuth();
+  const { updateMeetingMetadata } = useApp();
 
   const iconMap: Record<TimelineEvent["type"], { name: any; color: string }> = {
     scanned: { name: "maximize", color: "#4F8EFF" },
@@ -52,6 +58,111 @@ function TimelineItem({
     month: "short",
     day: "numeric",
   });
+
+  const { meetingMetadata } = event;
+
+  const retryInvite = async () => {
+    if (!meetingMetadata || !contact.email) return;
+    updateMeetingMetadata(contact.id, event.id, {
+      inviteStatus: "pending",
+      inviteError: undefined,
+    });
+    let inviteError: string | undefined;
+    let finalInviteStatus: MeetingMetadata["inviteStatus"] = "failed";
+    try {
+      const token = await getToken().catch(() => null);
+      if (!token) {
+        inviteError = "Please sign in again to send the invitation.";
+      } else {
+        const res = await sendMeetingInvite({
+          uid: meetingMetadata.uid,
+          to: contact.email,
+          title: meetingMetadata.title,
+          startDate: meetingMetadata.startDate,
+          endDate: meetingMetadata.endDate,
+          location: meetingMetadata.location,
+          description: meetingMetadata.notes,
+          reminderMinutes: meetingMetadata.reminderMinutes,
+          token,
+        });
+        if (res.success) {
+          finalInviteStatus =
+            res.deliveryStatus === "sent"
+              ? "success"
+              : res.deliveryStatus;
+        } else {
+          inviteError = res.error || "Invitation delivery failed.";
+        }
+      }
+    } catch (error) {
+      inviteError =
+        error instanceof Error ? error.message : "Invitation delivery failed.";
+    } finally {
+      updateMeetingMetadata(contact.id, event.id, {
+        inviteStatus: finalInviteStatus,
+        inviteError:
+          finalInviteStatus === "failed" ? inviteError : undefined,
+      });
+    }
+
+    if (finalInviteStatus === "success") {
+      Alert.alert("Success", "Invite sent.");
+    } else if (finalInviteStatus === "pending") {
+      Alert.alert(
+        "Invitation processing",
+        "This invitation is already being processed and will not be sent twice.",
+      );
+    } else if (finalInviteStatus === "unknown") {
+      Alert.alert(
+        "Delivery unconfirmed",
+        "The invitation was submitted, but delivery could not be confirmed. It will not be resent automatically.",
+      );
+    } else {
+      Alert.alert(
+        "Failed",
+        inviteError || "Invitation delivery failed.",
+      );
+    }
+  };
+
+  const retryCalendar = async () => {
+    if (!meetingMetadata) return;
+    updateMeetingMetadata(contact.id, event.id, { calendarStatus: "pending" });
+    let calendarStatus: MeetingMetadata["calendarStatus"] = "failed";
+    let calendarEventId: string | undefined;
+    try {
+      const calRes = await createMeetingEvent({
+        uid: meetingMetadata.uid,
+        title: meetingMetadata.title,
+        startDate: meetingMetadata.startDate,
+        endDate: meetingMetadata.endDate,
+        location: meetingMetadata.location,
+        notes: meetingMetadata.notes,
+        alarmMinutes: meetingMetadata.reminderMinutes,
+      },
+      meetingMetadata.calendarEventId,
+    );
+      if (calRes.status === "success") {
+        calendarStatus = "success";
+        calendarEventId = calRes.eventId;
+      } else {
+        calendarStatus = calRes.status;
+      }
+    } catch {
+      calendarStatus = "failed";
+    } finally {
+      updateMeetingMetadata(contact.id, event.id, {
+        calendarEventId,
+        calendarStatus,
+      });
+    }
+
+    if (calendarStatus === "success") {
+      Alert.alert("Success", "Added to calendar.");
+    } else {
+      Alert.alert("Failed", "Calendar error");
+    }
+  };
 
   return (
     <View style={{ flexDirection: "row", gap: theme.spacing[12] }}>
@@ -87,6 +198,65 @@ function TimelineItem({
             {event.description}
           </Text>
         )}
+
+        {meetingMetadata && (
+          <View style={{ marginTop: 8, gap: 6, backgroundColor: colors.secondary, padding: 10, borderRadius: theme.radius.sm }}>
+            <Text style={{ color: colors.foreground, ...theme.typography.captionSemi }}>
+              {new Date(meetingMetadata.startDate).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+            </Text>
+            {meetingMetadata.location && (
+              <Text style={{ color: colors.mutedForeground, ...theme.typography.caption }}>
+                {meetingMetadata.location}
+              </Text>
+            )}
+            <Text style={{ color: colors.mutedForeground, ...theme.typography.caption }}>
+              Calendar: {meetingMetadata.calendarStatus.replaceAll("-", " ")}
+              {"  "}Invite: {meetingMetadata.inviteStatus.replaceAll("-", " ")}
+            </Text>
+
+            {meetingMetadata.calendarEventId && (
+              <Pressable
+                onPress={async () => {
+                  const opened = await openCalendarEvent(
+                    meetingMetadata.calendarEventId!,
+                  );
+                  if (!opened) {
+                    Alert.alert(
+                      "Calendar unavailable",
+                      "The calendar event could not be opened.",
+                    );
+                  }
+                }}
+                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              >
+                <Feather name="calendar" size={12} color={colors.primary} />
+                <Text style={{ color: colors.primary, ...theme.typography.captionSemi }}>Open in Calendar</Text>
+              </Pressable>
+            )}
+
+            {meetingMetadata.calendarStatus !== "success" &&
+              meetingMetadata.calendarStatus !== "pending" && (
+              <Pressable
+                onPress={retryCalendar}
+                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              >
+                <Feather name="alert-circle" size={12} color="#F59E0B" />
+                <Text style={{ color: "#F59E0B", ...theme.typography.captionSemi }}>Retry Calendar Sync</Text>
+              </Pressable>
+            )}
+
+            {meetingMetadata.inviteStatus === "failed" && contact.email && (
+              <Pressable
+                onPress={retryInvite}
+                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              >
+                <Feather name="alert-circle" size={12} color="#FF4757" />
+                <Text style={{ color: "#FF4757", ...theme.typography.captionSemi }}>Retry Sending Invite</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+
       </View>
     </View>
   );
@@ -103,6 +273,7 @@ export default function ContactDetailScreen() {
   const [savedToPhone, setSavedToPhone] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "email">("overview");
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
 
   const contact = contacts.find((c) => c.id === id);
 
@@ -199,6 +370,7 @@ export default function ContactDetailScreen() {
   }
 
   async function handleSendEmail() {
+    if (!contact) return;
     const emailBody =
       contact.introEmailDraft ||
       `Hi ${contact.firstName},\n\nGreat connecting with you!\n\nLooking forward to staying in touch.\n\nBest regards,`;
@@ -240,6 +412,7 @@ export default function ContactDetailScreen() {
   }
 
   function handleAddNote() {
+    if (!contact) return;
     if (!noteText.trim()) return;
     addTimelineEvent(contact.id, {
       type: "note",
@@ -257,6 +430,7 @@ export default function ContactDetailScreen() {
   }
 
   function handleDelete() {
+    if (!contact) return;
     Alert.alert(
       "Delete Contact",
       `Remove ${contact.firstName} ${contact.lastName} from your contacts?`,
@@ -439,44 +613,7 @@ export default function ContactDetailScreen() {
               label: "Meet",
               color: "#F59E0B",
               onPress: () => {
-                const bookMeeting = () => {
-                  const now = new Date().toISOString();
-                  updateContact(contact.id, {
-                    meetingBooked: true,
-                    timeline: [
-                      ...contact.timeline,
-                      {
-                        id:
-                          Date.now().toString() +
-                          Math.random().toString(36).substring(2, 11),
-                        type: "meeting",
-                        title: "Meeting booked",
-                        date: now,
-                      },
-                    ],
-                  });
-                  Haptics.notificationAsync(
-                    Haptics.NotificationFeedbackType.Success,
-                  );
-                  showMessage(
-                    "Meeting booked",
-                    "Added to this contact's timeline.",
-                  );
-                };
-                if (Platform.OS === "web") {
-                  if (window.confirm(`Log a meeting with ${contact.firstName} ${contact.lastName}?`)) {
-                    bookMeeting();
-                  }
-                  return;
-                }
-                Alert.alert(
-                  "Book a meeting",
-                  `Log a meeting with ${contact.firstName} ${contact.lastName}?`,
-                  [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Book meeting", onPress: bookMeeting },
-                  ],
-                );
+                setShowMeetingModal(true);
               },
             },
             {
@@ -712,6 +849,7 @@ export default function ContactDetailScreen() {
                     <TimelineItem
                       key={event.id}
                       event={event}
+                      contact={contact}
                       isLast={i === arr.length - 1}
                     />
                   ))
@@ -798,6 +936,12 @@ export default function ContactDetailScreen() {
           )}
         </Animated.View>
       </ScrollView>
+
+      <MeetingModal
+        visible={showMeetingModal}
+        contact={contact}
+        onClose={() => setShowMeetingModal(false)}
+      />
 
       {/* Send Email Modal */}
       <Modal visible={showEmailModal} animationType="slide" presentationStyle="pageSheet">

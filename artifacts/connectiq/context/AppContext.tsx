@@ -13,7 +13,10 @@ import {
   syncScheduledNotifications,
   type NotificationPrefs,
 } from "@/lib/notifications";
-import { CALENDAR_EXPORT_STORAGE_KEY } from "@/lib/deviceCalendar";
+import {
+  CALENDAR_EXPORT_STORAGE_KEY,
+  MEETING_CALENDAR_STORAGE_KEY,
+} from "@/lib/deviceCalendar";
 
 export type ContactCategory =
   | "Potential client"
@@ -52,6 +55,32 @@ export interface TimelineEvent {
   title: string;
   description?: string;
   date: string;
+  meetingMetadata?: MeetingMetadata;
+}
+
+export interface MeetingMetadata {
+    uid: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    location?: string;
+    notes?: string;
+    calendarEventId?: string;
+    calendarStatus:
+      | "pending"
+      | "success"
+      | "unsupported"
+      | "permission-denied"
+      | "no-calendar"
+      | "failed";
+    inviteStatus:
+      | "pending"
+      | "unknown"
+      | "success"
+      | "failed"
+      | "not-sent";
+    inviteError?: string;
+    reminderMinutes: number;
 }
 
 export interface Contact {
@@ -123,7 +152,13 @@ interface AppContextType {
   updateEvent: (id: string, updates: Partial<Event>) => void;
   deleteEvent: (id: string) => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
-  addTimelineEvent: (contactId: string, event: Omit<TimelineEvent, "id">) => void;
+  addTimelineEvent: (contactId: string, event: Omit<TimelineEvent, "id">) => string;
+  updateTimelineEvent: (contactId: string, eventId: string, updates: Partial<TimelineEvent>) => void;
+  updateMeetingMetadata: (
+    contactId: string,
+    eventId: string,
+    updates: Partial<MeetingMetadata>,
+  ) => void;
   signOut: () => Promise<void>;
   clearAllData: () => Promise<void>;
   isLoaded: boolean;
@@ -231,93 +266,106 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     void syncScheduledNotifications(notificationPrefs, contacts);
   }, [isLoaded, notificationPrefs, contacts]);
 
-  const saveContacts = useCallback(async (updated: Contact[]) => {
-    setContacts(updated);
-    await AsyncStorage.setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(updated));
-  }, []);
+  useEffect(() => {
+    if (!isLoaded) return;
+    void AsyncStorage.setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(contacts));
+  }, [contacts, isLoaded]);
 
-  const saveEvents = useCallback(async (updated: Event[]) => {
-    setEvents(updated);
-    await AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(updated));
-  }, []);
+  useEffect(() => {
+    if (!isLoaded) return;
+    void AsyncStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+  }, [events, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    void AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
+  }, [isLoaded, profile]);
 
   const addContact = useCallback(
     (contact: Omit<Contact, "id" | "dateAdded" | "timeline">) => {
-      const newContact: Contact = {
-        ...contact,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        dateAdded: new Date().toISOString(),
-        timeline: [
-          {
-            id: Date.now().toString(),
-            type: "scanned",
-            title: "Card scanned",
-            description: contact.eventName
-              ? `Met at ${contact.eventName}`
-              : "Contact added",
-            date: new Date().toISOString(),
-          },
-        ],
-      };
-      const updated = [newContact, ...contacts];
-      saveContacts(updated);
+      setContacts((prev) => {
+        const newContact: Contact = {
+          ...contact,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          dateAdded: new Date().toISOString(),
+          timeline: [
+            {
+              id: Date.now().toString(),
+              type: "scanned",
+              title: "Card scanned",
+              description: contact.eventName
+                ? `Met at ${contact.eventName}`
+                : "Contact added",
+              date: new Date().toISOString(),
+            },
+          ],
+        };
+        return [newContact, ...prev];
+      });
     },
-    [contacts, saveContacts]
+    []
   );
 
   const updateContact = useCallback(
     (id: string, updates: Partial<Contact>) => {
-      const updated = contacts.map((c) =>
-        c.id === id ? { ...c, ...updates } : c
-      );
-      saveContacts(updated);
+      setContacts((prev) => {
+        return prev.map((c) =>
+          c.id === id ? { ...c, ...updates } : c
+        );
+      });
     },
-    [contacts, saveContacts]
+    []
   );
 
   const deleteContact = useCallback(
     (id: string) => {
-      saveContacts(contacts.filter((c) => c.id !== id));
+      setContacts((prev) => {
+        return prev.filter((c) => c.id !== id);
+      });
     },
-    [contacts, saveContacts]
+    []
   );
 
   const addEvent = useCallback(
     (event: Omit<Event, "id">) => {
-      const newEvent: Event = {
-        ...event,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      };
-      const updated = [newEvent, ...events];
-      saveEvents(updated);
+      setEvents((prev) => {
+        const newEvent: Event = {
+          ...event,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        };
+        return [newEvent, ...prev];
+      });
     },
-    [events, saveEvents]
+    []
   );
 
   const updateEvent = useCallback(
     (id: string, updates: Partial<Event>) => {
-      const updated = events.map((e) =>
-        e.id === id ? { ...e, ...updates } : e
-      );
-      saveEvents(updated);
+      setEvents((prev) => {
+        return prev.map((e) =>
+          e.id === id ? { ...e, ...updates } : e
+        );
+      });
     },
-    [events, saveEvents]
+    []
   );
 
   const deleteEvent = useCallback(
     (id: string) => {
-      saveEvents(events.filter((e) => e.id !== id));
+      setEvents((prev) => {
+        return prev.filter((e) => e.id !== id);
+      });
     },
-    [events, saveEvents]
+    []
   );
 
   const updateProfile = useCallback(
     async (updates: Partial<UserProfile>) => {
-      const updated = { ...profile, ...updates };
-      setProfile(updated);
-      await AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(updated));
+      setProfile((prev) => {
+        return { ...prev, ...updates };
+      });
     },
-    [profile]
+    []
   );
 
   const consumeFreeScan = useCallback(() => {
@@ -341,6 +389,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       STORAGE_KEYS.FREE_SCANS,
       STORAGE_KEYS.NOTIF_PREFS,
       CALENDAR_EXPORT_STORAGE_KEY,
+      MEETING_CALENDAR_STORAGE_KEY,
       "@connectiq/onboardingAnchor",
     ]);
     await AsyncStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
@@ -367,25 +416,70 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addTimelineEvent = useCallback(
     (contactId: string, event: Omit<TimelineEvent, "id">) => {
-      const updated = contacts.map((c) =>
-        c.id === contactId
-          ? {
-              ...c,
-              timeline: [
-                ...c.timeline,
-                {
-                  ...event,
-                  id:
-                    Date.now().toString() +
-                    Math.random().toString(36).substr(2, 9),
-                },
-              ],
-            }
-          : c
-      );
-      saveContacts(updated);
+      const eventId =
+        Date.now().toString() + Math.random().toString(36).substring(2, 11);
+      setContacts((prev) => {
+        return prev.map((c) =>
+          c.id === contactId
+            ? {
+                ...c,
+                timeline: [
+                  ...c.timeline,
+                  {
+                    ...event,
+                    id: eventId,
+                  },
+                ],
+              }
+            : c
+        );
+      });
+      return eventId;
     },
-    [contacts, saveContacts]
+    []
+  );
+
+  const updateTimelineEvent = useCallback(
+    (contactId: string, eventId: string, updates: Partial<TimelineEvent>) => {
+      setContacts((prev) => {
+        return prev.map((c) =>
+          c.id === contactId
+            ? { ...c, timeline: c.timeline.map((item) => item.id === eventId ? { ...item, ...updates } : item) }
+            : c,
+        );
+      });
+    },
+    [],
+  );
+
+  const updateMeetingMetadata = useCallback(
+    (
+      contactId: string,
+      eventId: string,
+      updates: Partial<MeetingMetadata>,
+    ) => {
+      setContacts((prev) =>
+        prev.map((contact) =>
+          contact.id === contactId
+            ? {
+                ...contact,
+                timeline: contact.timeline.map((event) =>
+                  event.id === eventId && event.meetingMetadata
+                    ? {
+                        ...event,
+                        meetingMetadata: {
+                          ...event.meetingMetadata,
+                          ...updates,
+                        },
+                      }
+                    : event,
+                ),
+              }
+            : contact,
+        ),
+      );
+    },
+    [],
   );
 
   return (
@@ -402,6 +496,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         deleteEvent,
         updateProfile,
         addTimelineEvent,
+        updateTimelineEvent,
+        updateMeetingMetadata,
         signOut,
         clearAllData,
         isLoaded,

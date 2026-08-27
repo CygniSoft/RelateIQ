@@ -1,6 +1,17 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
+import { clerkClient, getAuth } from "@clerk/express";
 import nodemailer from "nodemailer";
+import {
+  claimMeetingInvite,
+  markMeetingInviteFailed,
+  markMeetingInviteSending,
+  markMeetingInviteSent,
+  releaseMeetingInviteClaim,
+} from "../lib/meetingInviteStore";
+import {
+  buildMeetingInviteIcs,
+  parseFutureIsoDate,
+} from "../lib/meetingInviteIcs";
 
 const router: IRouter = Router();
 
@@ -9,6 +20,11 @@ const CONTACT_RECIPIENT = "manager@cygnisoft.com";
 const CONTACT_WINDOW_MS = 15 * 60 * 1000;
 const CONTACT_MAX_REQUESTS = 5;
 const contactRequests = new Map<string, number[]>();
+const MEETING_INVITE_WINDOW_MS = 15 * 60 * 1000;
+const MEETING_INVITE_MAX_REQUESTS = 10;
+const meetingInviteRequests = new Map<string, number[]>();
+const UUID_LIKE_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function hasControlChars(value: string): boolean {
   // Reject CR/LF and other control characters to prevent header injection.
@@ -37,6 +53,72 @@ function isRateLimited(ip: string): boolean {
   recent.push(now);
   contactRequests.set(ip, recent);
   return false;
+}
+
+function isMeetingInviteRateLimited(key: string): boolean {
+  const now = Date.now();
+  const recent = (meetingInviteRequests.get(key) ?? []).filter(
+    (timestamp) => now - timestamp < MEETING_INVITE_WINDOW_MS,
+  );
+
+  if (recent.length >= MEETING_INVITE_MAX_REQUESTS) {
+    meetingInviteRequests.set(key, recent);
+    return true;
+  }
+
+  recent.push(now);
+  meetingInviteRequests.set(key, recent);
+  return false;
+}
+
+function isValidEmail(value: string): boolean {
+  return (
+    value.length > 0 &&
+    value.length <= 254 &&
+    !hasControlChars(value) &&
+    EMAIL_RE.test(value)
+  );
+}
+
+async function getVerifiedOrganizer(
+  userId: string,
+): Promise<{ email: string; name: string } | null> {
+  try {
+    const user = await clerkClient.users.getUser(userId);
+    const email = user.primaryEmailAddress;
+    if (
+      !email ||
+      email.verification?.status !== "verified" ||
+      !isValidEmail(email.emailAddress)
+    ) {
+      return null;
+    }
+    const rawName =
+      user.fullName?.trim() ||
+      [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
+      email.emailAddress;
+    const name = cleanBoundedString(rawName, 120, false) || email.emailAddress;
+    return { email: email.emailAddress, name };
+  } catch {
+    return null;
+  }
+}
+
+function cleanBoundedString(
+  value: unknown,
+  maxLength: number,
+  required = true,
+): string | null {
+  if (typeof value !== "string") return null;
+  const clean = value.trim();
+  if (
+    (required && clean.length === 0) ||
+    clean.length > maxLength ||
+    hasControlChars(clean)
+  ) {
+    return null;
+  }
+  return clean;
 }
 
 type SmtpAuth = { user: string; pass: string };
@@ -85,6 +167,180 @@ function resolveSmtpTransport(): ResolvedTransport | null {
 
   return null;
 }
+
+router.post("/meeting-invite", async (req, res): Promise<void> => {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const uid = typeof body.uid === "string" ? body.uid.trim() : "";
+  const to = cleanBoundedString(body.to, 254);
+  const title = cleanBoundedString(body.title, 255);
+  const location =
+    body.location === undefined ? undefined : cleanBoundedString(body.location, 500);
+  const description =
+    body.description === undefined
+      ? undefined
+      : cleanBoundedString(body.description, 5_000, false);
+  const startDate = parseFutureIsoDate(body.startDate);
+  const endDate = parseFutureIsoDate(body.endDate);
+  const reminderMinutes = body.reminderMinutes;
+
+  if (
+    uid.length > 64 ||
+    !UUID_LIKE_RE.test(uid) ||
+    !to ||
+    !isValidEmail(to) ||
+    !title ||
+    location === null ||
+    description === null ||
+    !startDate ||
+    !endDate ||
+    endDate.getTime() <= startDate.getTime() ||
+    endDate.getTime() - startDate.getTime() > 24 * 60 * 60 * 1000 ||
+    (reminderMinutes !== undefined &&
+      (!Number.isInteger(reminderMinutes) ||
+        typeof reminderMinutes !== "number" ||
+        reminderMinutes < 0 ||
+        reminderMinutes > 10_080))
+  ) {
+    res.status(400).json({ error: "Invalid meeting invitation request." });
+    return;
+  }
+
+  const organizer = await getVerifiedOrganizer(userId);
+  if (!organizer) {
+    res.status(422).json({
+      error: "A verified account email is required to send invitations.",
+    });
+    return;
+  }
+
+  let claim;
+  try {
+    claim = await claimMeetingInvite(userId, uid);
+  } catch {
+    req.log.error("Failed to claim meeting invitation");
+    res
+      .status(503)
+      .json({ error: "Meeting invitations are temporarily unavailable." });
+    return;
+  }
+  if (claim.outcome === "sent") {
+    res.json({ success: true, deduplicated: true, deliveryStatus: "sent" });
+    return;
+  }
+  if (claim.outcome === "unknown") {
+    res.status(202).json({ success: true, deliveryStatus: "unknown" });
+    return;
+  }
+  if (claim.outcome === "busy") {
+    res
+      .status(409)
+      .json({ success: true, deliveryStatus: "pending" });
+    return;
+  }
+  if (claim.outcome === "rate_limited") {
+    res.status(429).json({ error: "Too many requests. Please try again later." });
+    return;
+  }
+  // This is defense-in-depth only; durable per-user event rows above enforce
+  // the actual invitation quota across API processes.
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
+  if (isMeetingInviteRateLimited(`${userId}:${ip}`)) {
+    await releaseMeetingInviteClaim(userId, uid, claim.claimToken).catch(() =>
+      req.log.error("Failed to release meeting invitation claim"),
+    );
+    res.status(429).json({ error: "Too many requests. Please try again later." });
+    return;
+  }
+
+  const transport = resolveSmtpTransport();
+  if (!transport) {
+    req.log.error("SMTP is not configured for meeting invitations");
+    await releaseMeetingInviteClaim(userId, uid, claim.claimToken).catch(() =>
+      req.log.error("Failed to release meeting invitation claim"),
+    );
+    res
+      .status(503)
+      .json({ error: "Meeting invitations are temporarily unavailable." });
+    return;
+  }
+
+  const invite = buildMeetingInviteIcs({
+    uid,
+    to,
+    organizerName: organizer.name,
+    organizerEmail: organizer.email,
+    title,
+    startDate,
+    endDate,
+    location: location || undefined,
+    description: description || undefined,
+    reminderMinutes: reminderMinutes as number | undefined,
+  });
+
+  try {
+    const markedSending = await markMeetingInviteSending(
+      userId,
+      uid,
+      claim.claimToken,
+    );
+    if (!markedSending) {
+      req.log.error("Meeting invitation claim was not ready for delivery");
+      res.status(409).json({ success: true, deliveryStatus: "pending" });
+      return;
+    }
+  } catch {
+    req.log.error("Failed to record meeting invitation delivery start");
+    res
+      .status(503)
+      .json({ error: "Meeting invitations are temporarily unavailable." });
+    return;
+  }
+
+  try {
+    await nodemailer.createTransport(transport.options).sendMail({
+      from: buildFrom(transport.fromAddress, "ConnectIQ"),
+      to,
+      replyTo: organizer.email,
+      subject: `Meeting invitation: ${title}`,
+      text: "You have received a meeting invitation from ConnectIQ.",
+      attachments: [
+        {
+          filename: "meeting-invitation.ics",
+          content: invite,
+          contentType: "text/calendar; charset=utf-8; method=REQUEST",
+        },
+      ],
+    });
+  } catch {
+    req.log.error("Failed to send meeting invitation");
+    await markMeetingInviteFailed(userId, uid, claim.claimToken).catch(() =>
+      req.log.error("Failed to mark meeting invitation delivery failed"),
+    );
+    res
+      .status(502)
+      .json({ error: "Meeting invitations are temporarily unavailable." });
+    return;
+  }
+
+  try {
+    const recorded = await markMeetingInviteSent(userId, uid, claim.claimToken);
+    if (!recorded) {
+      req.log.error("Meeting invitation delivery record was not updated");
+    }
+  } catch {
+    // SMTP accepted the message. Do not invite a client retry or mark this
+    // failed when the durable confirmation cannot be written.
+    req.log.error("Failed to record meeting invitation delivery");
+  }
+  req.log.info("Meeting invitation sent");
+  res.json({ success: true, deliveryStatus: "sent" });
+});
 
 router.post("/contact", async (req, res): Promise<void> => {
   const ip = req.ip || req.socket.remoteAddress || "unknown";

@@ -191,7 +191,7 @@ async function runSync(
   if (prefs.meetingReminders) {
     for (const c of contacts) {
       for (const t of c.timeline || []) {
-        if (t.type !== "meeting") continue;
+        if (t.type !== "meeting" || t.meetingMetadata) continue;
         const start = new Date(t.date);
         if (isNaN(start.getTime())) continue;
         const remindAt = start.getTime() - 60 * 60 * 1000;

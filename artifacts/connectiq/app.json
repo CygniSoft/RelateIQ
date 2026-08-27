@@ -19,7 +19,7 @@
     "android": {
       "backgroundColor": "#080A12",
       "package": "com.cygnisoft.relateiq",
-      "versionCode": 34
+      "versionCode": 35
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -42,7 +42,7 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": "Allow RelateIQ+ to access your calendar to add follow-up reminders."
+          "calendarPermission": "Allow RelateIQ+ to create meeting events and follow-up reminders in your calendar."
         }
       ],
       [
