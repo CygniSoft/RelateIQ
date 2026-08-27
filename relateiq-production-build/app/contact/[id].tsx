@@ -440,12 +440,21 @@ export default function ContactDetailScreen() {
               color: "#F59E0B",
               onPress: () => {
                 const bookMeeting = () => {
-                  addTimelineEvent(contact.id, {
-                    type: "meeting",
-                    title: "Meeting booked",
-                    date: new Date().toISOString(),
+                  const now = new Date().toISOString();
+                  updateContact(contact.id, {
+                    meetingBooked: true,
+                    timeline: [
+                      ...contact.timeline,
+                      {
+                        id:
+                          Date.now().toString() +
+                          Math.random().toString(36).substring(2, 11),
+                        type: "meeting",
+                        title: "Meeting booked",
+                        date: now,
+                      },
+                    ],
                   });
-                  updateContact(contact.id, { meetingBooked: true });
                   Haptics.notificationAsync(
                     Haptics.NotificationFeedbackType.Success,
                   );
