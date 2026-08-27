@@ -57,10 +57,7 @@ export function GoogleSignInButton() {
       } =
         await startSSOFlow({
           strategy: "oauth_google",
-          redirectUrl: AuthSession.makeRedirectUri({
-            scheme: "relateiq",
-            path: "oauth-redirect",
-          }),
+          redirectUrl: AuthSession.makeRedirectUri(),
         });
 
       if (createdSessionId && setActive) {
