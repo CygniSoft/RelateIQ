@@ -96,6 +96,7 @@ export default function ScanScreen() {
   const [emailDraft, setEmailDraft] = useState("");
   const [aiSummary, setAiSummary] = useState("");
   const [dealValue, setDealValue] = useState("");
+  const [introEmailSent, setIntroEmailSent] = useState(false);
   const [reviewErrors, setReviewErrors] = useState<
     Partial<Record<keyof ExtractedCard, string>>
   >({});
@@ -222,7 +223,7 @@ export default function ScanScreen() {
     setStep("email");
   }
 
-  async function handleSaveContact() {
+  async function handleSaveContact(sendIntroEmail: boolean) {
     addContact({
       ...extracted,
       cardImageUri,
@@ -237,28 +238,31 @@ export default function ScanScreen() {
       priority,
       relationshipScore: priority === "High" ? 72 : priority === "Medium" ? 48 : 25,
       tags: [category, eventName].filter(Boolean),
-      emailSent: true,
+      emailSent: sendIntroEmail,
       replyReceived: false,
       meetingBooked: false,
       dealValue: dealValue ? parseInt(dealValue) * 1000 : undefined,
     });
 
-    void (async () => {
-      let token: string | undefined;
-      try {
-        token = (await getToken()) ?? undefined;
-      } catch {
-      }
-      await sendEmail({
-        to: extracted.email,
-        subject: `Great meeting you${eventName ? ` at ${eventName}` : ""}`,
-        body: emailDraft,
-        fromName: profile.name,
-        replyTo: profile.email || undefined,
-        token,
-      });
-    })().catch(() => {});
+    if (sendIntroEmail) {
+      void (async () => {
+        let token: string | undefined;
+        try {
+          token = (await getToken()) ?? undefined;
+        } catch {
+        }
+        await sendEmail({
+          to: extracted.email,
+          subject: `Great meeting you${eventName ? ` at ${eventName}` : ""}`,
+          body: emailDraft,
+          fromName: profile.name,
+          replyTo: profile.email || undefined,
+          token,
+        });
+      })().catch(() => {});
+    }
 
+    setIntroEmailSent(sendIntroEmail);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setStep("done");
     setTimeout(() => {
@@ -271,6 +275,7 @@ export default function ScanScreen() {
       setEmailDraft("");
       setAiSummary("");
       setDealValue("");
+      setIntroEmailSent(false);
     }, 2500);
   }
 
@@ -285,158 +290,168 @@ export default function ScanScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Step: Idle */}
       {step === "idle" && (
-        <Animated.View
-          entering={FadeIn.duration(300)}
-          style={{ flex: 1 }}
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingBottom: bottomPad,
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScreenHeader 
-            title="Scan Card" 
-            subtitle="Capture a business card to save the contact"
-          />
-
-          {!isPro && (
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                alignSelf: "flex-start",
-                gap: 6,
-                marginHorizontal: theme.spacing[20],
-                marginBottom: theme.spacing[16],
-                paddingHorizontal: theme.spacing[12],
-                paddingVertical: 7,
-                borderRadius: theme.radius.xl,
-                borderWidth: 1,
-                borderColor:
-                  freeScansLeft > 0 ? "rgba(123,94,255,0.3)" : "rgba(255,71,87,0.3)",
-                backgroundColor:
-                  freeScansLeft > 0 ? "rgba(123,94,255,0.12)" : "rgba(255,71,87,0.12)",
-              }}
-            >
-              <Feather
-                name={freeScansLeft > 0 ? "zap" : "lock"}
-                size={13}
-                color={freeScansLeft > 0 ? "#7B5EFF" : "#FF4757"}
-              />
-              <Text
-                style={{
-                  color: freeScansLeft > 0 ? "#B7A6FF" : "#FF8A94",
-                  ...theme.typography.captionSemi,
-                }}
-              >
-                {freeScansLeft > 0
-                  ? `${freeScansLeft} of ${FREE_SCAN_LIMIT} free scans left`
-                  : "Free scans used — upgrade to Pro"}
-              </Text>
-            </View>
-          )}
-
-          <View
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0,
-            }}
+          <Animated.View
+            entering={FadeIn.duration(300)}
+            style={{ flex: 1 }}
           >
-            <ScanFrame active={true} />
+            <ScreenHeader
+              title="Scan Card"
+              subtitle="Capture a business card to save the contact"
+            />
 
-            <Text
-              style={{
-                color: colors.mutedForeground,
-                ...theme.typography.bodySmall,
-                textAlign: "center",
-                marginTop: theme.spacing[24],
-                marginBottom: Platform.OS === "web" ? 8 : theme.spacing[32],
-              }}
-            >
-              Position the business card within the frame
-            </Text>
-
-            {Platform.OS === "web" && (
+            {!isPro && (
               <View
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
+                  alignSelf: "flex-start",
                   gap: 6,
-                  backgroundColor: "rgba(79,142,255,0.1)",
-                  borderRadius: theme.radius.md,
+                  marginHorizontal: theme.spacing[20],
+                  marginBottom: theme.spacing[16],
                   paddingHorizontal: theme.spacing[12],
                   paddingVertical: 7,
-                  marginBottom: theme.spacing[28],
+                  borderRadius: theme.radius.xl,
                   borderWidth: 1,
-                  borderColor: "rgba(79,142,255,0.25)",
+                  borderColor:
+                    freeScansLeft > 0 ? "rgba(123,94,255,0.3)" : "rgba(255,71,87,0.3)",
+                  backgroundColor:
+                    freeScansLeft > 0 ? "rgba(123,94,255,0.12)" : "rgba(255,71,87,0.12)",
                 }}
               >
-                <Feather name="info" size={13} color={colors.primary} />
-                <Text style={{ color: colors.primary, ...theme.typography.caption }}>
-                  Pick a card image to scan in web preview
+                <Feather
+                  name={freeScansLeft > 0 ? "zap" : "lock"}
+                  size={13}
+                  color={freeScansLeft > 0 ? "#7B5EFF" : "#FF4757"}
+                />
+                <Text
+                  style={{
+                    color: freeScansLeft > 0 ? "#B7A6FF" : "#FF8A94",
+                    ...theme.typography.captionSemi,
+                  }}
+                >
+                  {freeScansLeft > 0
+                    ? `${freeScansLeft} of ${FREE_SCAN_LIMIT} free scans left`
+                    : "Free scans used — upgrade to Pro"}
                 </Text>
               </View>
             )}
 
-            {/* Main scan button */}
-            <Pressable onPress={handleScan} hitSlop={10}>
-              <LinearGradient
-                colors={["#7B5EFF", "#4F8EFF"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: theme.radius.full,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: theme.spacing[24],
-                  ...theme.getShadow("#7B5EFF", "lg"),
-                }}
-              >
-                <Ionicons name="camera" size={32} color="#fff" />
-              </LinearGradient>
-            </Pressable>
+            <View
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 0,
+              }}
+            >
+              <ScanFrame active={true} />
 
-            <View style={{ flexDirection: "row", gap: theme.spacing[16] }}>
-              <Pressable
-                onPress={handlePickFromLibrary}
+              <Text
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                  paddingHorizontal: theme.spacing[16],
-                  paddingVertical: theme.spacing[10],
-                  borderRadius: theme.radius.xl,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  backgroundColor: colors.card,
+                  color: colors.mutedForeground,
+                  ...theme.typography.bodySmall,
+                  textAlign: "center",
+                  marginTop: theme.spacing[24],
+                  marginBottom: Platform.OS === "web" ? 8 : theme.spacing[32],
                 }}
               >
-                <Feather name="image" size={15} color={colors.mutedForeground} />
-                <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>
-                  From Library
-                </Text>
+                Position the business card within the frame
+              </Text>
+
+              {Platform.OS === "web" && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    backgroundColor: "rgba(79,142,255,0.1)",
+                    borderRadius: theme.radius.md,
+                    paddingHorizontal: theme.spacing[12],
+                    paddingVertical: 7,
+                    marginBottom: theme.spacing[28],
+                    borderWidth: 1,
+                    borderColor: "rgba(79,142,255,0.25)",
+                  }}
+                >
+                  <Feather name="info" size={13} color={colors.primary} />
+                  <Text style={{ color: colors.primary, ...theme.typography.caption }}>
+                    Pick a card image to scan in web preview
+                  </Text>
+                </View>
+              )}
+
+              {/* Main scan button */}
+              <Pressable onPress={handleScan} hitSlop={10}>
+                <LinearGradient
+                  colors={["#7B5EFF", "#4F8EFF"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: theme.radius.full,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: theme.spacing[24],
+                    ...theme.getShadow("#7B5EFF", "lg"),
+                  }}
+                >
+                  <Ionicons name="camera" size={32} color="#fff" />
+                </LinearGradient>
               </Pressable>
-              <Pressable
-                onPress={handleManualEntry}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                  paddingHorizontal: theme.spacing[16],
-                  paddingVertical: theme.spacing[10],
-                  borderRadius: theme.radius.xl,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  backgroundColor: colors.card,
-                }}
-              >
-                <Feather name="edit-3" size={15} color={colors.mutedForeground} />
-                <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>
-                  Manual Entry
-                </Text>
-              </Pressable>
+
+              <View style={{ flexDirection: "row", gap: theme.spacing[16] }}>
+                <Pressable
+                  onPress={handlePickFromLibrary}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    paddingHorizontal: theme.spacing[16],
+                    paddingVertical: theme.spacing[10],
+                    borderRadius: theme.radius.xl,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: colors.card,
+                  }}
+                >
+                  <Feather name="image" size={15} color={colors.mutedForeground} />
+                  <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>
+                    From Library
+                  </Text>
+                </Pressable>
+                <Pressable
+                  testID="manual-entry-button"
+                  onPress={handleManualEntry}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    paddingHorizontal: theme.spacing[16],
+                    paddingVertical: theme.spacing[10],
+                    borderRadius: theme.radius.xl,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: colors.card,
+                  }}
+                >
+                  <Feather name="edit-3" size={15} color={colors.mutedForeground} />
+                  <Text style={{ color: colors.mutedForeground, ...theme.typography.bodySmall }}>
+                    Manual Entry
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </ScrollView>
       )}
 
       {/* Step: Scanning (loading) */}
@@ -1044,7 +1059,7 @@ export default function ScanScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={handleSaveContact}
+                  onPress={() => void handleSaveContact(true)}
                   style={{ flex: 2 }}
                 >
                   <LinearGradient
@@ -1068,6 +1083,23 @@ export default function ScanScreen() {
                   </LinearGradient>
                 </Pressable>
               </View>
+              <Pressable
+                testID="save-without-email-button"
+                onPress={() => void handleSaveContact(false)}
+                style={{
+                  marginTop: theme.spacing[12],
+                  paddingVertical: theme.spacing[14],
+                  borderRadius: theme.radius.lg,
+                  alignItems: "center",
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                }}
+              >
+                <Text style={{ color: colors.foreground, ...theme.typography.bodyLargeSemi }}>
+                  Save Without Email
+                </Text>
+              </Pressable>
             </ScrollView>
           </KeyboardAvoidingView>
         </Animated.View>
@@ -1091,7 +1123,9 @@ export default function ScanScreen() {
             Contact Saved!
           </Text>
           <Text style={{ color: colors.mutedForeground, ...theme.typography.body }}>
-            Intro email has been sent
+            {introEmailSent
+              ? "Intro email has been sent"
+              : "You can follow up whenever you're ready"}
           </Text>
         </Animated.View>
       )}

@@ -13,15 +13,15 @@ version = "1.0.0"
 ensurePreviewReachable = "/status"
 name = "expo"
 paths = [ "/relateiq-production-build/" ]
-localPort = 26183
+localPort = 26184
 
 [services.development]
-run = "pnpm --filter @workspace/connectiq run dev"
+run = "pnpm --filter @workspace/relateiq-production-build run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/connectiq", "run", "build" ]
-run = [ "pnpm", "--filter", "@workspace/connectiq", "run", "serve" ]
+build = [ "pnpm", "--filter", "@workspace/relateiq-production-build", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/relateiq-production-build", "run", "serve" ]
 
 [services.env]
-PORT = "26183"
+PORT = "26184"
 BASE_PATH = "/relateiq-production-build/"

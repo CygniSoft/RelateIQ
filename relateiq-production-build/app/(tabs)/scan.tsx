@@ -96,6 +96,7 @@ export default function ScanScreen() {
   const [emailDraft, setEmailDraft] = useState("");
   const [aiSummary, setAiSummary] = useState("");
   const [dealValue, setDealValue] = useState("");
+  const [introEmailSent, setIntroEmailSent] = useState(false);
   const [reviewErrors, setReviewErrors] = useState<
     Partial<Record<keyof ExtractedCard, string>>
   >({});
@@ -222,7 +223,7 @@ export default function ScanScreen() {
     setStep("email");
   }
 
-  async function handleSaveContact() {
+  async function handleSaveContact(sendIntroEmail: boolean) {
     addContact({
       ...extracted,
       cardImageUri,
@@ -237,28 +238,31 @@ export default function ScanScreen() {
       priority,
       relationshipScore: priority === "High" ? 72 : priority === "Medium" ? 48 : 25,
       tags: [category, eventName].filter(Boolean),
-      emailSent: true,
+      emailSent: sendIntroEmail,
       replyReceived: false,
       meetingBooked: false,
       dealValue: dealValue ? parseInt(dealValue) * 1000 : undefined,
     });
 
-    void (async () => {
-      let token: string | undefined;
-      try {
-        token = (await getToken()) ?? undefined;
-      } catch {
-      }
-      await sendEmail({
-        to: extracted.email,
-        subject: `Great meeting you${eventName ? ` at ${eventName}` : ""}`,
-        body: emailDraft,
-        fromName: profile.name,
-        replyTo: profile.email || undefined,
-        token,
-      });
-    })().catch(() => {});
+    if (sendIntroEmail) {
+      void (async () => {
+        let token: string | undefined;
+        try {
+          token = (await getToken()) ?? undefined;
+        } catch {
+        }
+        await sendEmail({
+          to: extracted.email,
+          subject: `Great meeting you${eventName ? ` at ${eventName}` : ""}`,
+          body: emailDraft,
+          fromName: profile.name,
+          replyTo: profile.email || undefined,
+          token,
+        });
+      })().catch(() => {});
+    }
 
+    setIntroEmailSent(sendIntroEmail);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setStep("done");
     setTimeout(() => {
@@ -271,6 +275,7 @@ export default function ScanScreen() {
       setEmailDraft("");
       setAiSummary("");
       setDealValue("");
+      setIntroEmailSent(false);
     }, 2500);
   }
 
@@ -285,9 +290,14 @@ export default function ScanScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Step: Idle */}
       {step === "idle" && (
-        <Animated.View
+        <Animated.ScrollView
           entering={FadeIn.duration(300)}
-          style={{ flex: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingBottom: bottomPad,
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <ScreenHeader 
             title="Scan Card" 
@@ -416,6 +426,7 @@ export default function ScanScreen() {
                 </Text>
               </Pressable>
               <Pressable
+                testID="manual-entry-button"
                 onPress={handleManualEntry}
                 style={{
                   flexDirection: "row",
@@ -436,7 +447,7 @@ export default function ScanScreen() {
               </Pressable>
             </View>
           </View>
-        </Animated.View>
+        </Animated.ScrollView>
       )}
 
       {/* Step: Scanning (loading) */}
@@ -1044,7 +1055,7 @@ export default function ScanScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={handleSaveContact}
+                  onPress={() => void handleSaveContact(true)}
                   style={{ flex: 2 }}
                 >
                   <LinearGradient
@@ -1068,6 +1079,23 @@ export default function ScanScreen() {
                   </LinearGradient>
                 </Pressable>
               </View>
+              <Pressable
+                testID="save-without-email-button"
+                onPress={() => void handleSaveContact(false)}
+                style={{
+                  marginTop: theme.spacing[12],
+                  paddingVertical: theme.spacing[14],
+                  borderRadius: theme.radius.lg,
+                  alignItems: "center",
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                }}
+              >
+                <Text style={{ color: colors.foreground, ...theme.typography.bodyLargeSemi }}>
+                  Save Without Email
+                </Text>
+              </Pressable>
             </ScrollView>
           </KeyboardAvoidingView>
         </Animated.View>
@@ -1091,7 +1119,9 @@ export default function ScanScreen() {
             Contact Saved!
           </Text>
           <Text style={{ color: colors.mutedForeground, ...theme.typography.body }}>
-            Intro email has been sent
+            {introEmailSent
+              ? "Intro email has been sent"
+              : "You can follow up whenever you're ready"}
           </Text>
         </Animated.View>
       )}

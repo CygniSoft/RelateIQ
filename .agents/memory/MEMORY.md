@@ -13,3 +13,4 @@
 - [ConnectIQ EAS workspace packaging](connectiq-eas-workspace.md) — the production build directory must remain a uniquely named pnpm workspace package so remote EAS installs Expo before config evaluation.
 - [Meeting delivery idempotency](meeting-delivery-idempotency.md) — fail closed on uncertain SMTP delivery; native calendar retries reconcile by stable meeting UID before creating.
 - [Headless Expo Go manifests](headless-expo-go-manifests.md) — EAS-linked Expo Go workflows can hang on an unattended signing prompt; use offline dev mode unless CLI auth is available.
+- [Clerk Expo browser smoke auth](clerk-expo-browser-smoke-auth.md) — browser session injection can miss @clerk/expo; temporary +clerk_test users work for UI-only smoke tests.
