@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useSSO } from "@clerk/expo";
 import * as AuthSession from "expo-auth-session";
+import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect } from "react";
 import {
@@ -50,6 +51,13 @@ export function GoogleSignInButton() {
   }, []);
 
   const onPress = useCallback(async () => {
+    if (Constants.appOwnership === "expo") {
+      setError(
+        "Google sign-in requires the installed RelateIQ+ app and is not available inside Expo Go. Please sign in with email instead.",
+      );
+      return;
+    }
+
     try {
       setError(null);
       setLoading(true);
