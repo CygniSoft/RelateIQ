@@ -377,8 +377,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await AsyncStorage.removeItem(STORAGE_KEYS.PROFILE);
-    setProfile(DEFAULT_PROFILE);
+    // Signing out ends the Clerk session only. Profile, contacts, and events
+    // remain local to this device until the user explicitly clears app data.
   }, []);
 
   const clearAllData = useCallback(async () => {

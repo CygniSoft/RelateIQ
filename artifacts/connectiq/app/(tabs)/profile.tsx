@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
@@ -115,8 +116,11 @@ function EditProfileModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!visible) setErrors({});
-  }, [visible]);
+    if (visible) {
+      setForm({ ...profile });
+    }
+    setErrors({});
+  }, [visible, profile]);
 
   function clearError(key: string) {
     setErrors((prev) => {
@@ -158,7 +162,16 @@ function EditProfileModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: colors.background }}
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : Platform.OS === "android"
+              ? "height"
+              : undefined
+        }
+      >
         <View
           style={{
             flexDirection: "row",
@@ -184,8 +197,14 @@ function EditProfileModal({
           </Pressable>
         </View>
         <ScrollView
-          contentContainerStyle={{ padding: theme.spacing[20] }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            padding: theme.spacing[20],
+            paddingBottom: insets.bottom + 120,
+          }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
         >
           {fields.map((f) => (
             <View key={f.key} style={{ marginBottom: theme.spacing[16] }}>
@@ -225,7 +244,7 @@ function EditProfileModal({
             </View>
           ))}
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -723,7 +742,7 @@ export default function ProfileScreen() {
     if (Platform.OS === "web") {
       if (
         window.confirm(
-          "Sign out? Your contacts and events stay saved on this device, but your profile will be cleared.",
+          "Sign out? Your profile, contacts, and events will stay saved on this device.",
         )
       ) {
         void doSignOut();
@@ -732,7 +751,7 @@ export default function ProfileScreen() {
     }
     Alert.alert(
       "Sign Out",
-      "Are you sure you want to sign out? Your contacts and events stay saved on this device, but your profile will be cleared.",
+      "Are you sure you want to sign out? Your profile, contacts, and events will stay saved on this device.",
       [
         { text: "Cancel", style: "cancel" },
         {
