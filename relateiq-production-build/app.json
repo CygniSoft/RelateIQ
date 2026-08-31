@@ -2,7 +2,7 @@
   "expo": {
     "name": "RelateIQ+",
     "slug": "relateiq",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "relateiq",
@@ -19,7 +19,14 @@
     "android": {
       "backgroundColor": "#080A12",
       "package": "com.cygnisoft.relateiq",
-      "versionCode": 35
+      "versionCode": 35,
+      "permissions": [
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -91,6 +98,7 @@
       "eas": {
         "projectId": "b8ab10ef-87b4-4bd8-b581-c85be5eb53a0"
       }
-    }
+    },
+    "owner": "cygnisofts-organization"
   }
 }

@@ -15,6 +15,11 @@ import { authColors, authStyles } from "./authStyles";
 
 WebBrowser.maybeCompleteAuthSession();
 
+const googleRedirectUrl = AuthSession.makeRedirectUri({
+  scheme: "relateiq",
+  path: "sso-callback",
+});
+
 function getClerkErrorMessage(error: unknown): string {
   if (!error || typeof error !== "object") {
     return "Google sign-in could not complete. Please try again.";
@@ -57,7 +62,7 @@ export function GoogleSignInButton() {
       } =
         await startSSOFlow({
           strategy: "oauth_google",
-          redirectUrl: AuthSession.makeRedirectUri(),
+          redirectUrl: googleRedirectUrl,
         });
 
       if (createdSessionId && setActive) {

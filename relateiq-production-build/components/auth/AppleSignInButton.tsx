@@ -15,6 +15,11 @@ import { authColors, authStyles } from "./authStyles";
 
 WebBrowser.maybeCompleteAuthSession();
 
+const appleRedirectUrl = AuthSession.makeRedirectUri({
+  scheme: "relateiq",
+  path: "sso-callback",
+});
+
 /**
  * Apple provides an equivalent privacy-preserving sign-in option for iOS
  * users. Clerk manages the OAuth flow and keeps Apple private-relay emails
@@ -39,7 +44,7 @@ export function AppleSignInButton() {
       setLoading(true);
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy: "oauth_apple",
-        redirectUrl: AuthSession.makeRedirectUri(),
+        redirectUrl: appleRedirectUrl,
       });
 
       if (createdSessionId && setActive) {
